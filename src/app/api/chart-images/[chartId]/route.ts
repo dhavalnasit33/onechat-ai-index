@@ -1,95 +1,116 @@
-import { NextRequest, NextResponse } from "next/server";
-import { readFile, access } from "fs/promises";
-import path from "path";
-import crypto from "crypto";
-import dbConnect from "@/src/lib/dbConnect";
-import EmbedLog from "@/src/models/EmbedLog";
+import { NextRequest, NextResponse } from 'next/server';
+import { access, mkdir, writeFile } from 'fs/promises';
+import path from 'path';
+import puppeteer from 'puppeteer';
+import sharp from 'sharp';
+import dbConnect from '@/src/lib/dbConnect';
+import Chart from '@/src/models/Chart';
 
-// Helper function to hash IP for privacy
-function hashIP(ip: string): string {
-  const salt = process.env.IP_SALT || "default_salt_123";
-  return crypto
-    .createHash("sha256")
-    .update(ip + salt)
-    .digest("hex")
-    .slice(0, 16);
+// GET /api/admin/images — Check status of all chart images
+export async function GET() {
+  try {
+    await dbConnect();
+    const charts = await Chart.find({ status: 'active' }).select('chartId title chartType').lean();
+    
+    const results = await Promise.all(
+      charts.map(async (c) => {
+        // Enforce the "chart-" prefix if you haven't renamed your physical files yet
+        const fileName = c.chartId.startsWith('chart-') ? `${c.chartId}.png` : `chart-${c.chartId}.png`;
+        const filePath = path.join(process.cwd(), 'public', 'chart-images', fileName);
+        let exists = false;
+        try {
+          await access(filePath);
+          exists = true;
+        } catch {}
+        
+        return {
+          chartId: c.chartId,
+          title: c.title,
+          chartType: c.chartType,
+          status: exists ? 'completed' : 'failed',
+          queuedAt: new Date(Date.now() - 3600000).toISOString(),
+          completedAt: exists ? new Date().toISOString() : null,
+        };
+      })
+    );
+    
+    return NextResponse.json({ success: true, data: results });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ success: false, message }, { status: 500 });
+  }
 }
 
-export async function GET(
-  request: NextRequest,
-  props: { params: Promise<{ chartId: string }> },
-) {
-  // Extract and clean the chartId from the route parameter
-  const { chartId: rawChartId } = await props.params;
-  const chartId = rawChartId.replace(/\.(png|webp)$/, "");
-
-  // --- 1. Async Referrer Logging ---
-  const referer =
-    request.headers.get("referer") || request.headers.get("referrer") || "";
-  const userAgent = request.headers.get("user-agent") || "";
-  const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
-
-  if (
-    referer &&
-    !referer.includes("onechatai.ai") &&
-    !referer.includes("localhost")
-  ) {
-    // Fire-and-forget: we don't await this so it doesn't slow down the image load
-    (async () => {
-      try {
-        await dbConnect();
-        const domain = new URL(referer).hostname;
-        await EmbedLog.create({
-          chartId,
-          refererUrl: referer,
-          refererDomain: domain,
-          userAgent,
-          ipHash: hashIP(ip),
-          servedAt: new Date(),
-        });
-      } catch (e) {
-        console.error("Failed to log embed:", e);
-      }
-    })();
-  }
-
-  // --- 2. Serve the static chart image ---
-  const filePath = path.join(
-    process.cwd(),
-    "public",
-    "chart-images",
-    `${chartId}.png`,
-  );
-
+// POST /api/admin/images — Rebuild/Generate chart image with PUPPETEER
+export async function POST(request: NextRequest) {
   try {
-    // Check if file exists asynchronously
-    await access(filePath);
+    await dbConnect();
+    const { chartId } = await request.json();
+    
+    if (!chartId) {
+      return NextResponse.json({ success: false, message: 'chartId is required' }, { status: 400 });
+    }
+    
+    // Check if the chart actually exists
+    const chart = await Chart.findOne({ chartId, status: 'active' });
+    if (!chart) {
+      return NextResponse.json({ success: false, message: 'Chart not found' }, { status: 404 });
+    }
+    
+    const dirPath = path.join(process.cwd(), 'public', 'chart-images');
+    
+    // Ensure dir exists
+    await mkdir(dirPath, { recursive: true });
 
-    // Read the file asynchronously
-    const fileBuffer = await readFile(filePath);
+    // 1. Setup the target URL for the bot to visit
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // NOTE: This assumes you created the hidden page at src/app/(internal)/chart-render/[chartId]/page.tsx
+    const targetUrl = `${baseUrl}/ai-behavior-index/chart-render/${chartId}`; 
 
-    return new NextResponse(fileBuffer, {
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=2592000, immutable",
-        "Access-Control-Allow-Origin": "*",
-      },
+    // 2. Launch Puppeteer
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
-  } catch (err) {
-    // --- 3. Fallback: Return a transparent 1x1 GIF if image not found ---
-    console.error(`Chart image not found at: ${filePath}`);
+    const page = await browser.newPage();
+    
+    // 3. Set the 1200x800 Retina size the client requested!
+    await page.setViewport({ width: 1200, height: 800, deviceScaleFactor: 2 });
+    
+    // 4. Visit the hidden page
+    await page.goto(targetUrl, { waitUntil: 'networkidle0' });
+    
+    // Wait an extra 500ms to let Chart.js finish its rendering animations
+    await page.waitForSelector('.chart-render-container');
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    const fallback = Buffer.from(
-      "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-      "base64",
+    // 5. Take the screenshot
+    const element = await page.$('.chart-render-container');
+    if (!element) throw new Error('Chart container not found on render page');
+    
+    const buffer = await element.screenshot({ type: 'png', omitBackground: false });
+    await browser.close();
+
+    // 6. Optimize the image with Sharp to keep file sizes small for SEO
+    const optimizedBuffer = await sharp(buffer)
+      .png({ quality: 90, compressionLevel: 9 })
+      .toBuffer();
+
+    // 7. Save it exactly where your dummy pixel used to go
+    const fileName = chartId.startsWith('chart-') ? `${chartId}.png` : `chart-${chartId}.png`;
+    const filePath = path.join(dirPath, fileName);
+    await writeFile(filePath, optimizedBuffer);
+    
+    // 8. Update database as requested in the build guide
+    await Chart.updateOne(
+      { chartId },
+      { $set: { imageUrl: `/chart-images/${fileName}`, imageUpdatedAt: new Date() } }
     );
-
-    return new NextResponse(fallback, {
-      headers: {
-        "Content-Type": "image/gif",
-        "Cache-Control": "no-store",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
+    
+    return NextResponse.json({ success: true, message: `High-res image for ${chartId} generated successfully` });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Puppeteer Error:", message);
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
