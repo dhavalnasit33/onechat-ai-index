@@ -150,9 +150,9 @@ export const slugify = (text: string) =>
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, "_")
-    .replace(/[^\w-]+/g, "")
-    .replace(/--+/g, "_");
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]+/g, "")
+    .replace(/-+/g, "-");
 
 // export function prepareOtherToolFormValues(toolData: any) {
 //   if (!toolData) return null;

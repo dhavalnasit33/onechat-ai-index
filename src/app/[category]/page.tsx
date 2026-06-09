@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Menu } from 'lucide-react';
+import { Search, Menu, FileText } from 'lucide-react';
 import dbConnect from '@/src/lib/dbConnect';
 import Category from '@/src/models/Category';
 import Topic from '@/src/models/Topic';
@@ -67,7 +67,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const totalPages = Math.ceil(totalCount / limit);
 
   // Emojis mapping for topics
-  const icons = ['📱', '📚', '🛡️', '💼', '👨‍👩‍👧', '📈', '🕰️', '🏥', '🎓', '📖', '💻', '👥'];
+  // const icons = ['📱', '📚', '🛡️', '💼', '👨‍👩‍👧', '📈', '🕰️', '🏥', '🎓', '📖', '💻', '👥'];
 
   return (
     <div className="bg-[#f0f0f0] md:bg-white text-[#15151a] font-serif min-h-screen flex justify-center md:block">
@@ -190,7 +190,17 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                   key={topic._id.toString()}
                   className="bg-white border border-[#d7e3f0] rounded-md p-[18px] md:p-[22px] md:pb-[18px] flex flex-col cursor-pointer transition-all duration-150 hover:border-[#088DFF] hover:shadow-[0_8px_20px_rgba(8,141,255,0.1)] hover:-translate-y-0.5 md:min-h-[180px] text-left"
                 >
-                  <div className="text-[20px] md:text-[22px] leading-none mb-2.5 md:mb-3">{icons[i % icons.length]}</div>
+                  {/* <div className="text-[20px] md:text-[22px] leading-none mb-2.5 md:mb-3">{icons[i % icons.length]}</div> */}
+                   <div className="mb-2.5 md:mb-3 flex items-center justify-start">
+                {topic.iconUrl ? (
+    <img src={topic.iconUrl} alt={topic.title} className="w-8 h-8 object-contain mb-3" />
+  ) : (
+    <div className="mb-3 text-[#8a8a95]">
+      {/* This renders whenever there is no image */}
+      <FileText size={28} strokeWidth={1.5} /> 
+    </div>
+  )}
+                </div>
                   <h3 className="font-serif text-[17px] font-normal tracking-[-0.01em] text-[#15151a] leading-[1.25] mb-2 md:mb-2.5">
                     {topic.title}
                   </h3>

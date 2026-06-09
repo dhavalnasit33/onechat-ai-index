@@ -3,6 +3,30 @@ import dbConnect from '@/src/lib/dbConnect';
 import Category from '@/src/models/Category';
 import Topic from '@/src/models/Topic';
 
+// GET /api/admin/categories/[id] — Fetch a single category
+export async function GET(
+  _request: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
+  try {
+    await dbConnect();
+    const { id } = await props.params;
+    const category = await Category.findById(id).lean();
+
+    if (!category) {
+      return NextResponse.json(
+        { success: false, message: 'Category not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: category });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ success: false, message }, { status: 500 });
+  }
+}
+
 // PUT /api/admin/categories/[id] — Update category (iconUrl included via spread of body)
 export async function PUT(
   request: NextRequest,

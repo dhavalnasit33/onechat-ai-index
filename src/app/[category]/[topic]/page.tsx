@@ -1,23 +1,26 @@
-import React from 'react';
-import { Metadata } from 'next';
-import dbConnect from '@/src/lib/dbConnect';
-import Category from '@/src/models/Category';
-import Topic from '@/src/models/Topic';
-import Chart from '@/src/models/Chart';
-import TopicChartsClient from './TopicChartsClient';
+import React from "react";
+import { Metadata } from "next";
+import dbConnect from "@/src/lib/dbConnect";
+import Category from "@/src/models/Category";
+import Topic from "@/src/models/Topic";
+import Chart from "@/src/models/Chart";
+import TopicChartsClient from "./TopicChartsClient";
+import { FileText } from "lucide-react"; // Add this to your imports
 
 interface PageProps {
   params: Promise<{ category: string; topic: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   await dbConnect();
   const { category: categorySlug, topic: topicSlug } = await params;
   const topic = await Topic.findOne({ slug: topicSlug }).lean();
 
   if (!topic) {
     return {
-      title: 'Topic Not Found | AI Behavior Index',
+      title: "Topic Not Found | AI Behavior Index",
     };
   }
 
@@ -28,16 +31,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     if (pageTitle.length > 60) {
       pageTitle = baseTitle;
       if (pageTitle.length > 60) {
-        pageTitle = baseTitle.substring(0, 57) + '...';
+        pageTitle = baseTitle.substring(0, 57) + "...";
       }
     }
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://onechatai.ai';
-  const firstChart = await Chart.findOne({ topicId: topic._id, status: 'active' }).sort({ position: 1 }).lean();
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
+  const firstChart = await Chart.findOne({
+    topicId: topic._id,
+    status: "active",
+  })
+    .sort({ position: 1 })
+    .lean();
   const ogImageUrl = firstChart
     ? `${baseUrl}/api/chart-images/${firstChart.chartId}.png`
-    : (topic.ogImageUrl || '');
+    : topic.ogImageUrl || "";
 
   return {
     title: pageTitle,
@@ -50,7 +58,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: topic.metaDescription || topic.description,
       url: `${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/`,
       images: ogImageUrl ? [{ url: ogImageUrl }] : [],
-      type: 'article',
+      type: "article",
     },
   };
 }
@@ -66,28 +74,42 @@ export default async function TopicPage({ params }: PageProps) {
       <div className="min-h-screen flex items-center justify-center font-sans">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">Category Not Found</h1>
-          <p className="text-gray-500 mb-4">The category you are looking for does not exist.</p>
-          <a href="/ai-behavior-index" className="text-blue-500 underline">Back to index</a>
+          <p className="text-gray-500 mb-4">
+            The category you are looking for does not exist.
+          </p>
+          <a href="/ai-behavior-index" className="text-blue-500 underline">
+            Back to index
+          </a>
         </div>
       </div>
     );
   }
 
-  const topic = await Topic.findOne({ categoryId: category._id, slug: topicSlug }).lean();
+  const topic = await Topic.findOne({
+    categoryId: category._id,
+    slug: topicSlug,
+  }).lean();
   if (!topic) {
     return (
       <div className="min-h-screen flex items-center justify-center font-sans">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">Topic Not Found</h1>
-          <p className="text-gray-500 mb-4">The requested topic does not exist.</p>
-          <a href={`/ai-behavior-index/${category.slug}/`} className="text-blue-500 underline">Back to {category.name}</a>
+          <p className="text-gray-500 mb-4">
+            The requested topic does not exist.
+          </p>
+          <a
+            href={`/ai-behavior-index/${category.slug}/`}
+            className="text-blue-500 underline"
+          >
+            Back to {category.name}
+          </a>
         </div>
       </div>
     );
   }
 
   // Fetch charts belonging to this topic sorted by position
-  const chartsRaw = await Chart.find({ topicId: topic._id, status: 'active' })
+  const chartsRaw = await Chart.find({ topicId: topic._id, status: "active" })
     .sort({ position: 1 })
     .lean();
 
@@ -98,15 +120,19 @@ export default async function TopicPage({ params }: PageProps) {
     title: chart.title,
     chartType: chart.chartType,
     data: JSON.parse(JSON.stringify(chart.data)),
-    sourceLine: chart.sourceLine || '',
-    imageUrl: chart.imageUrl || '',
-    status: chart.status || 'active',
+    sourceLine: chart.sourceLine || "",
+    imageUrl: chart.imageUrl || "",
+    status: chart.status || "active",
     sources: (chart.sources || []).map((src: any) => ({
       position: src.position,
       sourceName: src.sourceName,
-      sourceUrl: src.sourceUrl || '',
-      publication: src.publication || '',
-      publicationDate: src.publicationDate ? (src.publicationDate instanceof Date ? src.publicationDate.toISOString() : new Date(src.publicationDate).toISOString()) : undefined,
+      sourceUrl: src.sourceUrl || "",
+      publication: src.publication || "",
+      publicationDate: src.publicationDate
+        ? src.publicationDate instanceof Date
+          ? src.publicationDate.toISOString()
+          : new Date(src.publicationDate).toISOString()
+        : undefined,
     })),
   }));
 
@@ -114,90 +140,98 @@ export default async function TopicPage({ params }: PageProps) {
   const relatedTopics = await Topic.find({
     categoryId: category._id,
     slug: { $ne: topic.slug },
-    status: 'published'
+    status: "published",
   })
     .limit(3)
     .lean();
 
   const formattedDate = topic.lastRefreshedAt
-    ? new Date(topic.lastRefreshedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    ? new Date(topic.lastRefreshedAt).toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      })
     : topic.publishedAt
-      ? new Date(topic.publishedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-      : 'June 2026';
+      ? new Date(topic.publishedAt).toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+        })
+      : "June 2026";
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://onechatai.ai';
-  const firstChart = charts.find(c => c.status === 'active') || charts[0];
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
+  const firstChart = charts.find((c) => c.status === "active") || charts[0];
   const ogImageUrl = firstChart
     ? `${baseUrl}/api/chart-images/${firstChart.chartId}.png`
-    : (topic.ogImageUrl || '');
+    : topic.ogImageUrl || "";
 
   // JSON-LD Schema objects
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": [
+    itemListElement: [
       {
         "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": `${baseUrl}/ai-behavior-index/`
+        position: 1,
+        name: "Home",
+        item: `${baseUrl}/ai-behavior-index/`,
       },
       {
         "@type": "ListItem",
-        "position": 2,
-        "name": category.name,
-        "item": `${baseUrl}/ai-behavior-index/${category.slug}/`
+        position: 2,
+        name: category.name,
+        item: `${baseUrl}/ai-behavior-index/${category.slug}/`,
       },
       {
         "@type": "ListItem",
-        "position": 3,
-        "name": topic.title,
-        "item": `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`
-      }
-    ]
+        position: 3,
+        name: topic.title,
+        item: `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
+      },
+    ],
   };
 
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": topic.title,
-    "description": topic.description,
-    "image": ogImageUrl,
-    "author": {
+    headline: topic.title,
+    description: topic.description,
+    image: ogImageUrl,
+    author: {
       "@type": "Organization",
-      "name": "OneChat AI",
-      "url": baseUrl
+      name: "OneChat AI",
+      url: baseUrl,
     },
-    "publisher": {
+    publisher: {
       "@type": "Organization",
-      "name": "OneChat AI",
-      "logo": {
+      name: "OneChat AI",
+      logo: {
         "@type": "ImageObject",
-        "url": `${baseUrl}/logo.png`
-      }
+        url: `${baseUrl}/logo.png`,
+      },
     },
-    "datePublished": topic.publishedAt || topic.createdAt || new Date().toISOString(),
-    "dateModified": topic.lastRefreshedAt || topic.updatedAt || new Date().toISOString(),
-    "mainEntityOfPage": `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`
+    datePublished:
+      topic.publishedAt || topic.createdAt || new Date().toISOString(),
+    dateModified:
+      topic.lastRefreshedAt || topic.updatedAt || new Date().toISOString(),
+    mainEntityOfPage: `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
   };
 
   const datasetSchema = {
     "@context": "https://schema.org",
     "@type": "Dataset",
-    "name": `${topic.title} Dataset`,
-    "description": topic.description,
-    "url": `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
-    "creator": {
+    name: `${topic.title} Dataset`,
+    description: topic.description,
+    url: `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
+    creator: {
       "@type": "Organization",
-      "name": "OneChat AI"
+      name: "OneChat AI",
     },
-    "distribution": [
+    distribution: [
       {
         "@type": "DataDownload",
-        "encodingFormat": "image/png",
-        "contentUrl": ogImageUrl
-      }
-    ]
+        encodingFormat: "image/png",
+        contentUrl: ogImageUrl,
+      },
+    ],
   };
 
   const schemas = [breadcrumbSchema, articleSchema, datasetSchema];
@@ -217,13 +251,30 @@ export default async function TopicPage({ params }: PageProps) {
           <div className="font-serif text-xs md:text-sm tracking-widest uppercase text-[#15151a] font-bold">
             <a href="/ai-behavior-index/">
               AI Behavior Index
-              <span className="text-[#8a8a95] font-normal tracking-[0.04em] text-[10px] md:text-xs ml-1 md:ml-1.5 normal-case block md:inline mt-0.5 md:mt-0">by OneChat AI</span>
+              <span className="text-[#8a8a95] font-normal tracking-[0.04em] text-[10px] md:text-xs ml-1 md:ml-1.5 normal-case block md:inline mt-0.5 md:mt-0">
+                by OneChat AI
+              </span>
             </a>
           </div>
           <nav className="hidden md:flex gap-7 font-sans text-sm text-[#4a4a55]">
-            <a href="/ai-behavior-index/" className="hover:text-[#15151a] transition-colors">Home</a>
-            <a href="/ai-behavior-index/methodology/" className="hover:text-[#15151a] transition-colors">Methodology</a>
-            <a href="/ai-behavior-index/for-journalists/" className="hover:text-[#15151a] transition-colors">For Journalists</a>
+            <a
+              href="/ai-behavior-index/"
+              className="hover:text-[#15151a] transition-colors"
+            >
+              Home
+            </a>
+            <a
+              href="/ai-behavior-index/methodology/"
+              className="hover:text-[#15151a] transition-colors"
+            >
+              Methodology
+            </a>
+            <a
+              href="/ai-behavior-index/for-journalists/"
+              className="hover:text-[#15151a] transition-colors"
+            >
+              For Journalists
+            </a>
           </nav>
         </div>
       </header>
@@ -231,9 +282,16 @@ export default async function TopicPage({ params }: PageProps) {
       {/* BREADCRUMB */}
       <div className="bg-white px-4 md:px-8 pt-3 md:pt-4">
         <div className="max-w-[1340px] mx-auto font-sans text-[11px] md:text-xs text-[#8a8a95] text-left">
-          <a href="/ai-behavior-index/" className="hover:text-[#15151a]">Home</a>
+          <a href="/ai-behavior-index/" className="hover:text-[#15151a]">
+            Home
+          </a>
           <span className="mx-1.5 md:mx-2 opacity-50">›</span>
-          <a href={`/ai-behavior-index/${category.slug}/`} className="hover:text-[#15151a]">{category.name}</a>
+          <a
+            href={`/ai-behavior-index/${category.slug}/`}
+            className="hover:text-[#15151a]"
+          >
+            {category.name}
+          </a>
           <span className="mx-1.5 md:mx-2 opacity-50">›</span>
           <span className="text-[#15151a] font-semibold">{topic.title}</span>
         </div>
@@ -253,8 +311,12 @@ export default async function TopicPage({ params }: PageProps) {
           </p>
           <div className="font-sans text-[11px] md:text-xs text-[#8a8a95] flex flex-wrap gap-4 md:gap-5">
             <span className="topic-meta-item">📊 {charts.length} charts</span>
-            <span className="topic-meta-item">📚 {topic.sourceCount} sources</span>
-            <span className="topic-meta-item">🗓 Last updated {formattedDate}</span>
+            <span className="topic-meta-item">
+              📚 {topic.sourceCount} sources
+            </span>
+            <span className="topic-meta-item">
+              🗓 Last updated {formattedDate}
+            </span>
             <span className="topic-meta-item">🔗 Free to embed</span>
           </div>
         </div>
@@ -277,14 +339,26 @@ export default async function TopicPage({ params }: PageProps) {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 font-sans">
               {relatedTopics.map((rel: any, idx: number) => {
-                const icons = ['📊', '📚', '⚡'];
+                const icons = ["📊", "📚", "⚡"];
                 return (
                   <a
                     href={`/ai-behavior-index/${category.slug}/${rel.slug}/`}
                     key={rel._id.toString()}
                     className="bg-white border border-[#d7e3f0] hover:border-[#088DFF] rounded p-5 flex flex-col hover:shadow-sm transition-all"
                   >
-                    <div className="text-xl mb-2">{icons[idx % icons.length]}</div>
+                    <div className="mb-3">
+                      {rel.iconUrl ? (
+                        <img
+                          src={rel.iconUrl}
+                          alt={rel.title}
+                          className="w-8 h-8 object-contain"
+                        />
+                      ) : (
+                        <div className="text-[#8a8a95]">
+                          <FileText size={28} strokeWidth={1.5} />
+                        </div>
+                      )}
+                    </div>
                     <div className="font-bold text-[#15151a] leading-snug mb-1.5 hover:text-[#0468BD] transition-colors">
                       {rel.title}
                     </div>
@@ -306,7 +380,7 @@ export default async function TopicPage({ params }: PageProps) {
             </div>
             <p className="text-[12.5px] md:text-[13px] text-[#4a4a55] leading-[1.55]">
               {topic.methodologyNote ||
-                'Every statistic shown is sourced from a publicly available study, survey, or report. We aggregate, organize, and contextualize this data — but the underlying research is conducted by the cited sources. Click any source link to access the original methodology. This index is refreshed quarterly.'}
+                "Every statistic shown is sourced from a publicly available study, survey, or report. We aggregate, organize, and contextualize this data — but the underlying research is conducted by the cited sources. Click any source link to access the original methodology. This index is refreshed quarterly."}
             </p>
           </div>
         </section>
@@ -316,12 +390,24 @@ export default async function TopicPage({ params }: PageProps) {
       <footer className="border-t border-[#d7e3f0] bg-white py-6 md:py-9 px-4 md:px-8 pb-8 md:pb-9">
         <div className="max-w-[1340px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center font-sans text-[11px] md:text-xs text-[#8a8a95]">
           <div className="text-[#4a4a55] mb-4 md:mb-0 leading-[1.5] text-left md:text-left">
-            Published by <a href="#" className="text-[#15151a] font-semibold no-underline">OneChat AI</a> <span className="hidden md:inline">— Your Personalized AI Super App, Curated for You</span>
+            Published by{" "}
+            <a href="#" className="text-[#15151a] font-semibold no-underline">
+              OneChat AI
+            </a>{" "}
+            <span className="hidden md:inline">
+              — Your Personalized AI Super App, Curated for You
+            </span>
           </div>
           <div className="flex gap-4 md:gap-6">
-            <a href="#" className="hover:text-[#4a4a55]">Privacy</a>
-            <a href="#" className="hover:text-[#4a4a55]">Terms</a>
-            <a href="#" className="hover:text-[#4a4a55]">Contact</a>
+            <a href="#" className="hover:text-[#4a4a55]">
+              Privacy
+            </a>
+            <a href="#" className="hover:text-[#4a4a55]">
+              Terms
+            </a>
+            <a href="#" className="hover:text-[#4a4a55]">
+              Contact
+            </a>
           </div>
         </div>
       </footer>
