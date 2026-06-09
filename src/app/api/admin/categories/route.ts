@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     const total = await Category.countDocuments();
-    const categories = await Category.find().sort({  createdAt: -1 }).skip(skip).limit(limit).lean(); // position: 1,
+    const categories = await Category.find().sort({ createdAt: -1, _id: 1 }).skip(skip).limit(limit).lean(); // position: 1,
 
     return NextResponse.json({ success: true, data: categories, total, page, limit });
   } catch (error: unknown) {

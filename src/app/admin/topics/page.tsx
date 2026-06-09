@@ -238,52 +238,34 @@ export default function AdminTopicsPage() {
       </div>
 
       {/* Pagination Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 13, color: 'var(--admin-text-muted)' }}>Show</span>
-          <select
-            className="admin-form-select"
-            value={limit}
-            onChange={(e) => {
-              setLimit(Number(e.target.value));
-              setPage(1);
-              setLoading(true);
-            }}
-            style={{ width: 'auto', padding: '4px 8px', fontSize: 13 }}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
-          <span style={{ fontSize: 13, color: 'var(--admin-text-muted)' }}>records per page</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button
-            className="admin-btn admin-btn-secondary admin-btn-sm"
-            onClick={() => {
-              setPage((p) => Math.max(1, p - 1));
-              setLoading(true);
-            }}
-            disabled={page === 1}
-          >
-            Previous
-          </button>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>
-            Page {page} of {Math.max(1, Math.ceil(total / limit))}
-          </span>
-          <button
-            className="admin-btn admin-btn-secondary admin-btn-sm"
-            onClick={() => {
-              setPage((p) => Math.min(Math.ceil(total / limit), p + 1));
-              setLoading(true);
-            }}
-            disabled={page >= Math.ceil(total / limit)}
-          >
-            Next
-          </button>
-        </div>
-      </div>
+    
+{total > limit && (
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+    <p style={{ fontSize: 13, color: 'var(--admin-text-muted)' }}>
+      Showing {Math.min((page - 1) * limit + 1, total)} to{" "}
+      {Math.min(page * limit, total)} of {total} topics
+    </p>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <button
+        className="admin-btn admin-btn-secondary admin-btn-sm"
+        onClick={() => setPage((p) => Math.max(1, p - 1))}
+        disabled={page === 1 || loading}
+      >
+        Previous
+      </button>
+      <span style={{ fontSize: 13, fontWeight: 600 }}>
+        Page {page} of {Math.max(1, Math.ceil(total / limit))}
+      </span>
+      <button
+        className="admin-btn admin-btn-secondary admin-btn-sm"
+        onClick={() => setPage((p) => Math.min(Math.ceil(total / limit), p + 1))}
+        disabled={page >= Math.ceil(total / limit) || loading}
+      >
+        Next
+      </button>
+    </div>
+  </div>
+)}
 
       <div className={`admin-toast ${toast.type} ${toast.show ? 'show' : ''}`}>{toast.message}</div>
     </>

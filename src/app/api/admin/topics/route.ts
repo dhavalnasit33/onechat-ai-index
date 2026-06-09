@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     const total = await Topic.countDocuments(filter);
     const topics = await Topic.find(filter)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: 1 })
       .skip(skip)
       .limit(limit)
       .populate('categoryId', 'name slug')
