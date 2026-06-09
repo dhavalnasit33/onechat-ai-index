@@ -5,7 +5,6 @@ import Category from "@/src/models/Category";
 import Topic from "@/src/models/Topic";
 import Chart from "@/src/models/Chart";
 import TopicChartsClient from "./TopicChartsClient";
-import { FileText } from "lucide-react"; // Add this to your imports
 
 interface PageProps {
   params: Promise<{ category: string; topic: string }>;
@@ -18,23 +17,11 @@ export async function generateMetadata({
   const { category: categorySlug, topic: topicSlug } = await params;
   const topic = await Topic.findOne({ slug: topicSlug }).lean();
 
-  if (!topic) {
-    return {
-      title: "Topic Not Found | AI Behavior Index",
-    };
-  }
+  if (!topic) return { title: "Topic Not Found | AI Behavior Index" };
 
   const baseTitle = topic.metaTitle || topic.title;
   let pageTitle = `${baseTitle} | AI Behavior Index`;
-  if (pageTitle.length > 60) {
-    pageTitle = `${baseTitle} | AI Index`;
-    if (pageTitle.length > 60) {
-      pageTitle = baseTitle;
-      if (pageTitle.length > 60) {
-        pageTitle = baseTitle.substring(0, 57) + "...";
-      }
-    }
-  }
+  if (pageTitle.length > 60) pageTitle = baseTitle.substring(0, 57) + "...";
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
   const firstChart = await Chart.findOne({
@@ -65,54 +52,20 @@ export async function generateMetadata({
 
 export default async function TopicPage({ params }: PageProps) {
   await dbConnect();
-
   const { category: categorySlug, topic: topicSlug } = await params;
 
   const category = await Category.findOne({ slug: categorySlug }).lean();
-  if (!category) {
-    return (
-      <div className="min-h-screen flex items-center justify-center font-sans">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Category Not Found</h1>
-          <p className="text-gray-500 mb-4">
-            The category you are looking for does not exist.
-          </p>
-          <a href="/ai-behavior-index" className="text-blue-500 underline">
-            Back to index
-          </a>
-        </div>
-      </div>
-    );
-  }
+  if (!category) return <div>Category Not Found</div>;
 
   const topic = await Topic.findOne({
     categoryId: category._id,
     slug: topicSlug,
   }).lean();
-  if (!topic) {
-    return (
-      <div className="min-h-screen flex items-center justify-center font-sans">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Topic Not Found</h1>
-          <p className="text-gray-500 mb-4">
-            The requested topic does not exist.
-          </p>
-          <a
-            href={`/ai-behavior-index/${category.slug}/`}
-            className="text-blue-500 underline"
-          >
-            Back to {category.name}
-          </a>
-        </div>
-      </div>
-    );
-  }
+  if (!topic) return <div>Topic Not Found</div>;
 
-  // Fetch charts belonging to this topic sorted by position
   const chartsRaw = await Chart.find({ topicId: topic._id, status: "active" })
     .sort({ position: 1 })
     .lean();
-
   const charts = chartsRaw.map((chart: any) => ({
     _id: chart._id.toString(),
     chartId: chart.chartId,
@@ -121,22 +74,15 @@ export default async function TopicPage({ params }: PageProps) {
     chartType: chart.chartType,
     data: JSON.parse(JSON.stringify(chart.data)),
     sourceLine: chart.sourceLine || "",
-    imageUrl: chart.imageUrl || "",
     status: chart.status || "active",
     sources: (chart.sources || []).map((src: any) => ({
       position: src.position,
       sourceName: src.sourceName,
       sourceUrl: src.sourceUrl || "",
       publication: src.publication || "",
-      publicationDate: src.publicationDate
-        ? src.publicationDate instanceof Date
-          ? src.publicationDate.toISOString()
-          : new Date(src.publicationDate).toISOString()
-        : undefined,
     })),
   }));
 
-  // Fetch 3 related topics from the same category
   const relatedTopics = await Topic.find({
     categoryId: category._id,
     slug: { $ne: topic.slug },
@@ -144,186 +90,105 @@ export default async function TopicPage({ params }: PageProps) {
   })
     .limit(3)
     .lean();
-
   const formattedDate = topic.lastRefreshedAt
     ? new Date(topic.lastRefreshedAt).toLocaleDateString("en-US", {
         month: "long",
         year: "numeric",
       })
-    : topic.publishedAt
-      ? new Date(topic.publishedAt).toLocaleDateString("en-US", {
-          month: "long",
-          year: "numeric",
-        })
-      : "June 2026";
-
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
-  const firstChart = charts.find((c) => c.status === "active") || charts[0];
-  const ogImageUrl = firstChart
-    ? `${baseUrl}/api/chart-images/${firstChart.chartId}.png`
-    : topic.ogImageUrl || "";
-
-  // JSON-LD Schema objects
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: `${baseUrl}/ai-behavior-index/`,
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: category.name,
-        item: `${baseUrl}/ai-behavior-index/${category.slug}/`,
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: topic.title,
-        item: `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
-      },
-    ],
-  };
-
-  const articleSchema = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: topic.title,
-    description: topic.description,
-    image: ogImageUrl,
-    author: {
-      "@type": "Organization",
-      name: "OneChat AI",
-      url: baseUrl,
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "OneChat AI",
-      logo: {
-        "@type": "ImageObject",
-        url: `${baseUrl}/logo.png`,
-      },
-    },
-    datePublished:
-      topic.publishedAt || topic.createdAt || new Date().toISOString(),
-    dateModified:
-      topic.lastRefreshedAt || topic.updatedAt || new Date().toISOString(),
-    mainEntityOfPage: `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
-  };
-
-  const datasetSchema = {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
-    name: `${topic.title} Dataset`,
-    description: topic.description,
-    url: `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
-    creator: {
-      "@type": "Organization",
-      name: "OneChat AI",
-    },
-    distribution: [
-      {
-        "@type": "DataDownload",
-        encodingFormat: "image/png",
-        contentUrl: ogImageUrl,
-      },
-    ],
-  };
-
-  const schemas = [breadcrumbSchema, articleSchema, datasetSchema];
+    : "June 2026";
 
   return (
-    <div className="bg-[#f9fbfd] min-h-screen text-[#15151a]">
-      {schemas.map((schema, idx) => (
-        <script
-          key={idx}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-        />
-      ))}
+    <div className="bg-[#ffffff] min-h-screen text-[#1a1a1a] font-sans text-[14px] md:text-[15px] leading-[1.55] md:leading-[1.6]">
       {/* SITE HEADER */}
-      <header className="border-b border-[#d7e3f0] bg-white sticky top-0 z-20">
-        <div className="max-w-[1340px] mx-auto px-4 md:px-8 py-3.5 flex items-center justify-between">
-          <div className="font-serif text-xs md:text-sm tracking-widest uppercase text-[#15151a] font-bold">
-            <a href="/ai-behavior-index/">
-              AI Behavior Index
-              <span className="text-[#8a8a95] font-normal tracking-[0.04em] text-[10px] md:text-xs ml-1 md:ml-1.5 normal-case block md:inline mt-0.5 md:mt-0">
-                by OneChat AI
-              </span>
-            </a>
-          </div>
-          <nav className="hidden md:flex gap-7 font-sans text-sm text-[#4a4a55]">
+      <header className="bg-white border-b border-[#e5e5e5] py-3 md:py-4 sticky top-0 z-50">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8 flex items-center justify-between">
+          <a
+            href="/ai-behavior-index"
+            className="font-serif text-[14px] md:text-[18px] font-bold text-[#1e3a5f] no-underline tracking-[-0.2px]"
+          >
+            OneChat<span className="text-[#6C56E5]">AI</span> · Behavior Index
+          </a>
+          <nav className="hidden md:flex gap-[28px] items-center">
             <a
-              href="/ai-behavior-index/"
-              className="hover:text-[#15151a] transition-colors"
+              href="/"
+              className="text-[#1a1a1a] text-[14px] font-medium hover:text-[#6C56E5]"
             >
               Home
             </a>
             <a
-              href="/ai-behavior-index/methodology/"
-              className="hover:text-[#15151a] transition-colors"
+              href="/categories"
+              className="text-[#1a1a1a] text-[14px] font-medium hover:text-[#6C56E5]"
+            >
+              Categories
+            </a>
+            <a
+              href="/methodology"
+              className="text-[#1a1a1a] text-[14px] font-medium hover:text-[#6C56E5]"
             >
               Methodology
             </a>
             <a
-              href="/ai-behavior-index/for-journalists/"
-              className="hover:text-[#15151a] transition-colors"
+              href="/journalists"
+              className="text-[#1a1a1a] text-[14px] font-medium hover:text-[#6C56E5]"
             >
               For Journalists
             </a>
+            <a
+              href="/app"
+              className="bg-[#6C56E5] text-white px-[18px] py-[8px] rounded-md font-semibold text-[14px]"
+            >
+              Try OneChat AI
+            </a>
           </nav>
+          <button className="md:hidden text-[#1a1a1a] text-lg p-2">☰</button>
         </div>
       </header>
 
       {/* BREADCRUMB */}
-      <div className="bg-white px-4 md:px-8 pt-3 md:pt-4">
-        <div className="max-w-[1340px] mx-auto font-sans text-[11px] md:text-xs text-[#8a8a95] text-left">
-          <a href="/ai-behavior-index/" className="hover:text-[#15151a]">
+      <div className="bg-[#eaf2fb] py-2 md:py-3 overflow-x-auto whitespace-nowrap">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8 text-[11px] md:text-[13px]">
+          <a href="/" className="text-[#1e3a5f] hover:underline">
             Home
           </a>
-          <span className="mx-1.5 md:mx-2 opacity-50">›</span>
+          <span className="text-[#888] mx-[6px] md:mx-[8px]">/</span>
           <a
-            href={`/ai-behavior-index/${category.slug}/`}
-            className="hover:text-[#15151a]"
+            href={`/ai-behavior-index/${category.slug}`}
+            className="text-[#1e3a5f] hover:underline"
           >
             {category.name}
           </a>
-          <span className="mx-1.5 md:mx-2 opacity-50">›</span>
-          <span className="text-[#15151a] font-semibold">{topic.title}</span>
+          <span className="text-[#888] mx-[6px] md:mx-[8px]">/</span>
+          <span className="text-[#555]">{topic.title}</span>
         </div>
       </div>
 
       {/* TOPIC HERO */}
-      <div className="bg-white border-b border-[#d7e3f0] px-4 md:px-8 pt-6 pb-8 md:pt-10 md:pb-12 text-left">
-        <div className="max-w-[1340px] mx-auto">
-          <span className="font-sans text-[10px] md:text-[11px] tracking-[0.18em] uppercase text-[#0468BD] font-bold mb-3 block">
-            By {category.name}
+      <div className="max-w-[1200px] mx-auto px-4 md:px-8 pt-6 pb-5 md:pt-[48px] md:pb-[32px]">
+        <span className="inline-block bg-[#eaf2fb] text-[#1e3a5f] text-[10px] md:text-[12px] font-semibold uppercase tracking-[0.6px] md:tracking-[0.8px] px-2.5 py-1 md:px-[14px] md:py-[5px] rounded-full mb-3 md:mb-4">
+          By {category.name}
+        </span>
+        <h1 className="font-serif text-[24px] md:text-[44px] font-bold leading-[1.15] text-[#1a1a1a] mb-2.5 md:mb-4 max-w-[900px]">
+          {topic.title}
+        </h1>
+        <p className="text-[13px] md:text-[18px] leading-[1.55] md:leading-[1.6] text-[#555] max-w-[800px] mb-3.5 md:mb-5">
+          {topic.description}
+        </p>
+        <div className="flex flex-wrap gap-3 md:gap-6 text-[#888] text-[11px] md:text-[13px] pt-3 md:pt-5 border-t border-[#e5e5e5]">
+          <span className="flex items-center gap-1.5">
+            📊 {charts.length} charts
           </span>
-          <h1 className="font-serif text-3xl md:text-5xl font-bold tracking-tight text-[#15151a] leading-tight mb-4 max-w-[900px]">
-            {topic.title}
-          </h1>
-          <p className="font-serif text-[#4a4a55] text-base md:text-lg leading-relaxed mb-6 max-w-[780px]">
-            {topic.description}
-          </p>
-          <div className="font-sans text-[11px] md:text-xs text-[#8a8a95] flex flex-wrap gap-4 md:gap-5">
-            <span className="topic-meta-item">📊 {charts.length} charts</span>
-            <span className="topic-meta-item">
-              📚 {topic.sourceCount} sources
-            </span>
-            <span className="topic-meta-item">
-              🗓 Last updated {formattedDate}
-            </span>
-            <span className="topic-meta-item">🔗 Free to embed</span>
-          </div>
+          <span className="flex items-center gap-1.5">
+            📚 {topic.sourceCount || 9} sources
+          </span>
+          <span className="flex items-center gap-1.5">
+            🗓 Last updated {formattedDate}
+          </span>
+          <span className="flex items-center gap-1.5">🔗 Free to embed</span>
         </div>
       </div>
 
       {/* MAIN CONTENT */}
-      <main className="max-w-[1340px] mx-auto p-4 md:p-8">
+      <main className="max-w-[1200px] mx-auto px-4 md:px-8 pb-8 md:pb-[64px]">
         <TopicChartsClient
           charts={charts}
           categorySlug={category.slug}
@@ -331,84 +196,96 @@ export default async function TopicPage({ params }: PageProps) {
           topicTitle={topic.title}
         />
 
-        {/* RELATED TOPICS */}
-        {relatedTopics.length > 0 && (
-          <section className="mt-16 pt-8 border-t border-[#d7e3f0] text-left">
-            <h3 className="font-serif text-xl md:text-2xl font-bold text-[#15151a] mb-6">
-              Related topics in {category.name}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 font-sans">
-              {relatedTopics.map((rel: any, idx: number) => {
-                const icons = ["📊", "📚", "⚡"];
-                return (
-                  <a
-                    href={`/ai-behavior-index/${category.slug}/${rel.slug}/`}
-                    key={rel._id.toString()}
-                    className="bg-white border border-[#d7e3f0] hover:border-[#088DFF] rounded p-5 flex flex-col hover:shadow-sm transition-all"
-                  >
-                    <div className="mb-3">
-                      {rel.iconUrl ? (
-                        <img
-                          src={rel.iconUrl}
-                          alt={rel.title}
-                          className="w-8 h-8 object-contain"
-                        />
-                      ) : (
-                        <div className="text-[#8a8a95]">
-                          <FileText size={28} strokeWidth={1.5} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="font-bold text-[#15151a] leading-snug mb-1.5 hover:text-[#0468BD] transition-colors">
-                      {rel.title}
-                    </div>
-                    <p className="text-xs text-[#8a8a95] line-clamp-2">
-                      {rel.description}
-                    </p>
-                  </a>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
         {/* METHODOLOGY BLOCK */}
-        <section className="mt-12 pt-8 border-t border-[#d7e3f0] text-left">
-          <div className="p-[18px] md:p-[22px] bg-white border border-[#d7e3f0] rounded md:rounded-md">
-            <div className="font-sans text-[10px] tracking-[0.16em] uppercase text-[#8a8a95] font-bold mb-2">
-              A note on methodology
-            </div>
-            <p className="text-[12.5px] md:text-[13px] text-[#4a4a55] leading-[1.55]">
-              {topic.methodologyNote ||
-                "Every statistic shown is sourced from a publicly available study, survey, or report. We aggregate, organize, and contextualize this data — but the underlying research is conducted by the cited sources. Click any source link to access the original methodology. This index is refreshed quarterly."}
+        <div className="bg-[#fafafc] border-l-[3px] md:border-l-[4px] border-[#6C56E5] rounded-r-md md:rounded-r-lg p-[14px_16px] md:p-[24px_28px] my-5 md:mt-[40px] md:mb-0">
+          <h3 className="font-serif text-[14px] md:text-[17px] mb-1.5 md:mb-2 text-[#1a1a1a] font-bold">
+            About this data
+          </h3>
+          <p className="text-[12px] md:text-[14px] text-[#555] mb-1.5 md:mb-2">
+            {topic.methodologyNote ||
+              "All statistics on this page are compiled from publicly available studies. We do not conduct primary research. Each chart cites its source studies, and we link to original publications wherever possible."}
+          </p>
+          <p className="text-[12px] md:text-[14px] text-[#555]">
+            Data is refreshed quarterly. Have a study to suggest? Contact{" "}
+            <a
+              href="mailto:support@onechatai.ai"
+              className="text-[#6C56E5] font-semibold hover:underline"
+            >
+              support@onechatai.ai
+            </a>
+            .
+          </p>
+        </div>
+
+        {/* JOURNALIST CTA */}
+        <div className="bg-[#1e3a5f] text-white rounded-[10px] md:rounded-xl p-[20px_18px] md:p-[36px_40px] mt-5 md:mt-[32px] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-8">
+          <div>
+            <h3 className="font-serif text-[16px] md:text-[22px] mb-1.5 font-bold">
+              Writing about AI usage trends?
+            </h3>
+            <p className="text-[12px] md:text-[14px] text-white/80 m-0">
+              All charts on this page are free to embed in articles,
+              newsletters, and reports.
             </p>
           </div>
-        </section>
+          <a
+            href="#"
+            className="block md:inline-block w-full md:w-auto text-center bg-white text-[#1e3a5f] px-4.5 py-2.5 md:px-[24px] md:py-[12px] rounded-md font-semibold text-[13px] md:text-[14px] whitespace-nowrap"
+          >
+            Press resources →
+          </a>
+        </div>
+
+        {/* RELATED TOPICS */}
+        {relatedTopics.length > 0 && (
+          <div className="mt-6 md:mt-[48px]">
+            <h3 className="font-serif text-[16px] md:text-[22px] mb-3 md:mb-5 font-bold text-[#1a1a1a]">
+              Related topics in {category.name}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-5">
+              {relatedTopics.map((rel: any) => (
+                <a
+                  href={`/ai-behavior-index/${category.slug}/${rel.slug}/`}
+                  key={rel._id.toString()}
+                  className="block bg-white border border-[#e5e5e5] rounded-lg p-3 md:p-[20px_22px] text-[#1a1a1a] transition-all hover:border-[#6C56E5] md:hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(108,86,229,0.1)]"
+                >
+                  <div className="text-[9.5px] md:text-[11px] text-[#6C56E5] uppercase tracking-[0.5px] md:tracking-[0.8px] font-semibold mb-1 md:mb-2">
+                    {category.name}
+                  </div>
+                  <div className="font-serif text-[14px] md:text-[17px] font-bold leading-[1.3] mb-1 md:mb-1.5">
+                    {rel.title}
+                  </div>
+                  <div className="text-[11px] md:text-[12px] text-[#888]">
+                    Updated recently
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* FOOTER */}
-      <footer className="border-t border-[#d7e3f0] bg-white py-6 md:py-9 px-4 md:px-8 pb-8 md:pb-9">
-        <div className="max-w-[1340px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center font-sans text-[11px] md:text-xs text-[#8a8a95]">
-          <div className="text-[#4a4a55] mb-4 md:mb-0 leading-[1.5] text-left md:text-left">
-            Published by{" "}
-            <a href="#" className="text-[#15151a] font-semibold no-underline">
-              OneChat AI
+      <footer className="bg-[#fafafc] border-t border-[#e5e5e5] py-5 md:py-[32px] md:pb-[24px] mt-6 md:mt-[64px] text-center">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8">
+          <p className="font-serif text-[11.5px] md:text-[14px] text-[#555] mb-1.5 md:mb-2 leading-[1.4]">
+            Published by <strong className="text-[#1a1a1a]">OneChat AI</strong>{" "}
+            — Your Personalized AI Super App
+          </p>
+          <p className="text-[10px] md:text-[12px] text-[#888]">
+            <a href="#" className="text-[#555] hover:underline mx-1 md:mx-2">
+              Methodology
             </a>{" "}
-            <span className="hidden md:inline">
-              — Your Personalized AI Super App, Curated for You
-            </span>
-          </div>
-          <div className="flex gap-4 md:gap-6">
-            <a href="#" className="hover:text-[#4a4a55]">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-[#4a4a55]">
-              Terms
-            </a>
-            <a href="#" className="hover:text-[#4a4a55]">
+            ·
+            <a href="#" className="text-[#555] hover:underline mx-1 md:mx-2">
+              For Journalists
+            </a>{" "}
+            ·
+            <a href="#" className="text-[#555] hover:underline mx-1 md:mx-2">
               Contact
-            </a>
-          </div>
+            </a>{" "}
+            ·<span className="mx-1 md:mx-2">© 2026 OneChat AI</span>
+          </p>
         </div>
       </footer>
     </div>

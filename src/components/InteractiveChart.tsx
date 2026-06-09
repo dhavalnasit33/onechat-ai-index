@@ -1,6 +1,5 @@
-'use client';
-
-import React from 'react';
+"use client";
+import React from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,11 +12,10 @@ import {
   Tooltip,
   Legend,
   Filler,
-  ChartOptions
-} from 'chart.js';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+  ChartOptions,
+} from "chart.js";
+import { Bar, Line, Doughnut } from "react-chartjs-2";
 
-// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -28,318 +26,223 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
-const PALETTE = ['#088DFF', '#E5483F', '#F39323', '#0468BD', '#A8A8B0'];
+// Statista Style Palette
+const PALETTE = ["#088DFF", "#E5483F", "#F39323", "#0468BD", "#A8A8B0"];
 
-interface InteractiveChartProps {
+export default function InteractiveChart({
+  chartType,
+  data,
+}: {
   chartId: string;
-  chartType: 'vbar' | 'hbar' | 'line' | 'donut' | 'hero_stat';
+  chartType: "vbar" | "hbar" | "line" | "donut" | "hero_stat";
   data: any;
-}
+}) {
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-export default function InteractiveChart({ chartId, chartType, data }: InteractiveChartProps) {
-  if (chartType === 'hero_stat') {
+  // Hero Stat UI mapped perfectly to your gradient card
+  if (chartType === "hero_stat") {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center py-6">
-        <div className="text-5xl md:text-6xl font-extrabold text-[#088DFF] mb-2 tracking-tight">
+      <>
+        <div className="font-serif text-[56px] md:text-[96px] font-bold leading-none text-[#1e3a5f] tracking-[-1px] md:tracking-[-2px]">
           {data.value}
         </div>
-        <div className="font-sans text-sm md:text-base text-[#15151a] font-semibold max-w-xs leading-snug">
+        <div className="text-[14px] md:text-[19px] text-[#1a1a1a] mt-2 md:mt-3 font-medium leading-[1.4]">
           {data.label}
         </div>
         {data.trend && (
-          <div className="font-sans text-xs text-gray-500 mt-2 bg-gray-100 rounded-full px-3 py-1 font-medium">
-            {data.trend.direction === 'up' ? '↑' : '↓'} {data.trend.amount}
+          <div className="inline-flex items-center gap-1 bg-white text-[#1d5436] text-[11px] md:text-[13px] font-semibold px-[10px] py-[4px] md:px-[14px] md:py-[6px] rounded-full border border-[#c7e7d4] mt-2.5 md:mt-4">
+            <span className="font-bold">↑</span> {data.trend.amount}{" "}
+            {data.trend.direction === "up" ? "" : ""}
           </div>
         )}
-      </div>
+      </>
     );
   }
 
-  const formatAxisValue = (value: any, format?: string) => {
-    if (format === 'percentage') {
-      return value + '%';
-    }
-    return value;
+  // Base options adapted dynamically based on screen size approximations
+  const commonOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 700, easing: "easeOutQuart" },
+    plugins: {
+      tooltip: {
+        padding: isMobile ? 8 : 10,
+        backgroundColor: "rgba(26, 26, 46, 0.95)",
+        titleFont: { size: isMobile ? 12 : 13, weight: "600" },
+        bodyFont: { size: isMobile ? 11 : 12 },
+        cornerRadius: 5,
+        boxPadding: 5,
+        displayColors: true,
+      },
+    },
   };
 
-  if (chartType === 'vbar') {
-    const chartData = {
-      labels: data.data.map((d: any) => d.label),
-      datasets: [
-        {
-          label: data.yLabel || '',
-          data: data.data.map((d: any) => d.value),
-          backgroundColor: data.data.map((d: any, i: number) => d.color || PALETTE[i % PALETTE.length]),
-          borderRadius: 4,
-          maxBarThickness: 80,
-        },
-      ],
-    };
-
-    const options: ChartOptions<'bar'> = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          padding: 10,
-          backgroundColor: 'rgba(26, 26, 46, 0.95)',
-          titleFont: { size: 13, weight: 'bold' },
-          bodyFont: { size: 12 },
-          cornerRadius: 6,
-          displayColors: true,
-          boxPadding: 6,
-          callbacks: {
-            label: (context) => ` ${context.parsed.y}%`
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 100,
-          ticks: {
-            callback: (v) => formatAxisValue(v, data.yFormat),
-          },
-        },
-        x: {
-          grid: { display: false },
-        },
-      },
-    };
-
+  if (chartType === "vbar") {
     return (
-      <>
-        <Bar data={chartData} options={options} />
-        <table className="sr-only">
-          <caption>{data.yLabel || 'Vertical Bar Chart'}</caption>
-          <thead>
-            <tr>
-              <th scope="col">Category</th>
-              <th scope="col">Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.data.map((d: any, idx: number) => (
-              <tr key={idx}>
-                <td>{d.label}</td>
-                <td>{d.value}%</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </>
+      <Bar
+        data={{
+          labels: data.data.map((d: any) => d.label),
+          datasets: [
+            {
+              data: data.data.map((d: any) => d.value),
+              backgroundColor: data.data.map(
+                (d: any, i: number) => d.color || PALETTE[i % PALETTE.length],
+              ),
+              borderRadius: 4,
+              maxBarThickness: isMobile ? 50 : 80,
+            },
+          ],
+        }}
+        options={{
+          ...commonOptions,
+          plugins: { ...commonOptions.plugins, legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: (v) => v + "%",
+                font: { size: isMobile ? 10 : 12 },
+              },
+              grid: { color: "#f0f0f0" },
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: isMobile ? 10 : 12 } },
+            },
+          },
+        }}
+      />
     );
   }
 
-  if (chartType === 'hbar') {
-    const chartData = {
-      labels: data.data.map((d: any) => d.label),
-      datasets: [
-        {
-          label: data.xLabel || '',
-          data: data.data.map((d: any) => d.value),
-          backgroundColor: data.data.map((d: any, i: number) => d.color || PALETTE[i % PALETTE.length]),
-          borderRadius: 4,
-          maxBarThickness: 28,
-        },
-      ],
-    };
-
-    const options: ChartOptions<'bar'> = {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          padding: 10,
-          backgroundColor: 'rgba(26, 26, 46, 0.95)',
-          titleFont: { size: 13, weight: 'bold' },
-          bodyFont: { size: 12 },
-          cornerRadius: 6,
-          displayColors: true,
-          boxPadding: 6,
-          callbacks: {
-            label: (context) => ` ${context.parsed.x}%`
-          }
-        }
-      },
-      scales: {
-        x: {
-          beginAtZero: true,
-          max: 100,
-          ticks: {
-            callback: (v) => formatAxisValue(v, data.yFormat),
-          },
-        },
-        y: {
-          grid: { display: false },
-        },
-      },
-    };
-
+  if (chartType === "hbar") {
     return (
-      <>
-        <Bar data={chartData} options={options} />
-        <table className="sr-only">
-          <caption>{data.xLabel || 'Horizontal Bar Chart'}</caption>
-          <thead>
-            <tr>
-              <th scope="col">Category</th>
-              <th scope="col">Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.data.map((d: any, idx: number) => (
-              <tr key={idx}>
-                <td>{d.label}</td>
-                <td>{d.value}%</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </>
+      <Bar
+        data={{
+          labels: data.data.map((d: any) => d.label),
+          datasets: [
+            {
+              data: data.data.map((d: any) => d.value),
+              backgroundColor: data.data.map(
+                (d: any, i: number) => d.color || PALETTE[0],
+              ),
+              borderRadius: 4,
+              maxBarThickness: isMobile ? 22 : 28,
+            },
+          ],
+        }}
+        options={{
+          ...commonOptions,
+          indexAxis: "y",
+          plugins: { ...commonOptions.plugins, legend: { display: false } },
+          scales: {
+            x: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: (v) => v + "%",
+                font: { size: isMobile ? 10 : 12 },
+              },
+              grid: { color: "#f0f0f0" },
+            },
+            y: {
+              grid: { display: false },
+              ticks: { font: { size: isMobile ? 10.5 : 12 } },
+            },
+          },
+        }}
+      />
     );
   }
 
-  if (chartType === 'line') {
-    const chartData = {
-      labels: data.series[0].data.map((p: any) => p.x),
-      datasets: data.series.map((s: any, i: number) => ({
-        label: s.name,
-        data: s.data.map((p: any) => p.y),
-        borderColor: s.color || PALETTE[i % PALETTE.length],
-        backgroundColor: s.color ? `${s.color}14` : `${PALETTE[i % PALETTE.length]}14`,
-        borderWidth: 3,
-        pointBackgroundColor: s.color || PALETTE[i % PALETTE.length],
-        tension: 0.3,
-        fill: true,
-      })),
-    };
-
-    const options: ChartOptions<'line'> = {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        mode: 'index',
-        intersect: false,
-      },
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: {
-          padding: 10,
-          backgroundColor: 'rgba(26, 26, 46, 0.95)',
-          titleFont: { size: 13, weight: 'bold' },
-          bodyFont: { size: 12 },
-          cornerRadius: 6,
-          displayColors: true,
-          boxPadding: 6,
-          callbacks: {
-            label: (context) => ` ${context.dataset.label}: ${context.parsed.y}%`
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 100,
-          ticks: {
-            callback: (v) => formatAxisValue(v, data.yFormat),
-          },
-        },
-        x: {
-          grid: { display: false },
-        },
-      },
-    };
-
+  if (chartType === "donut") {
     return (
-      <>
-        <Line data={chartData} options={options} />
-        <table className="sr-only">
-          <caption>Line Chart data</caption>
-          <thead>
-            <tr>
-              <th scope="col">Time/Value</th>
-              {data.series.map((s: any, idx: number) => (
-                <th scope="col" key={idx}>{s.name}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.series[0]?.data.map((p: any, pIdx: number) => (
-              <tr key={pIdx}>
-                <td>{p.x}</td>
-                {data.series.map((s: any, sIdx: number) => (
-                  <td key={sIdx}>{s.data[pIdx]?.y}%</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </>
+      <Doughnut
+        data={{
+          labels: data.data.map((d: any) => d.label),
+          datasets: [
+            {
+              data: data.data.map((d: any) => d.value),
+              backgroundColor: data.data.map(
+                (d: any, i: number) => d.color || PALETTE[i % PALETTE.length],
+              ),
+              borderWidth: 2,
+              borderColor: "#fff",
+            },
+          ],
+        }}
+        options={{
+          ...commonOptions,
+          cutout: "62%",
+          plugins: {
+            ...commonOptions.plugins,
+            legend: {
+              display: true,
+              position: isMobile ? "bottom" : "right",
+              labels: {
+                padding: isMobile ? 8 : 14,
+                font: { size: isMobile ? 10 : 12, weight: "500" },
+                boxWidth: 12,
+                boxHeight: 12,
+              },
+            },
+          },
+        }}
+      />
     );
   }
 
-  if (chartType === 'donut') {
-    const chartData = {
-      labels: data.data.map((d: any) => d.label),
-      datasets: [
-        {
-          data: data.data.map((d: any) => d.value),
-          backgroundColor: data.data.map((d: any, i: number) => d.color || PALETTE[i % PALETTE.length]),
-          borderWidth: 2,
-          borderColor: '#fff',
-        },
-      ],
-    };
-
-    const options: ChartOptions<'doughnut'> = {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '62%',
-      plugins: {
-        legend: { position: 'right' },
-        tooltip: {
-          padding: 10,
-          backgroundColor: 'rgba(26, 26, 46, 0.95)',
-          titleFont: { size: 13, weight: 'bold' },
-          bodyFont: { size: 12 },
-          cornerRadius: 6,
-          displayColors: true,
-          boxPadding: 6,
-          callbacks: {
-            label: (context) => ` ${context.label}: ${context.parsed}%`
-          }
-        }
-      },
-    };
-
+  if (chartType === "line") {
     return (
-      <>
-        <Doughnut data={chartData} options={options} />
-        <table className="sr-only">
-          <caption>Doughnut Chart data</caption>
-          <thead>
-            <tr>
-              <th scope="col">Category</th>
-              <th scope="col">Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.data.map((d: any, idx: number) => (
-              <tr key={idx}>
-                <td>{d.label}</td>
-                <td>{d.value}%</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </>
+      <Line
+        data={{
+          labels: data.series[0].data.map((p: any) => p.x),
+          datasets: data.series.map((s: any, i: number) => ({
+            label: s.name,
+            data: s.data.map((p: any) => p.y),
+            borderColor: PALETTE[i % PALETTE.length],
+            backgroundColor: `${PALETTE[i % PALETTE.length]}14`,
+            borderWidth: 3,
+            pointBackgroundColor: PALETTE[i % PALETTE.length],
+            tension: 0.3,
+            fill: true,
+          })),
+        }}
+        options={{
+          ...commonOptions,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            ...commonOptions.plugins,
+            legend: {
+              display: true,
+              position: "bottom",
+              labels: {
+                padding: 12,
+                font: { size: isMobile ? 11 : 12, weight: "600" },
+              },
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: (v) => v + "%",
+                font: { size: isMobile ? 10 : 12 },
+              },
+              grid: { color: "#f0f0f0" },
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: isMobile ? 10 : 12 } },
+            },
+          },
+        }}
+      />
     );
   }
 

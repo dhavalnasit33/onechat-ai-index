@@ -1,154 +1,173 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import InteractiveChart from '@/src/components/InteractiveChart';
-import EmbedModal from '@/src/components/EmbedModal';
-
-interface Source {
-  position?: number;
-  sourceName: string;
-  sourceUrl?: string;
-  publication?: string;
-  publicationDate?: Date;
-}
+import React, { useState } from "react";
+import InteractiveChart from "@/src/components/InteractiveChart";
+import EmbedModal from "@/src/components/EmbedModal";
 
 interface ChartData {
   _id: string;
   chartId: string;
   position: number;
   title: string;
-  chartType: 'vbar' | 'hbar' | 'line' | 'donut' | 'hero_stat';
+  chartType: "vbar" | "hbar" | "line" | "donut" | "hero_stat";
   data: any;
   sourceLine?: string;
-  imageUrl?: string;
-  sources?: Source[];
-}
-
-interface TopicChartsClientProps {
-  charts: ChartData[];
-  categorySlug: string;
-  topicSlug: string;
-  topicTitle: string;
+  sources?: any[];
 }
 
 export default function TopicChartsClient({
   charts,
   categorySlug,
   topicSlug,
-  topicTitle
-}: TopicChartsClientProps) {
+  topicTitle,
+}: {
+  charts: ChartData[];
+  categorySlug: string;
+  topicSlug: string;
+  topicTitle: string;
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeChart, setActiveChart] = useState({ name: '', id: '' });
+  const [activeChart, setActiveChart] = useState({ name: "", id: "" });
 
   const openModal = (name: string, id: string) => {
     setActiveChart({ name, id });
     setIsModalOpen(true);
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    document.body.style.overflow = '';
-  };
-
-  const heroStatChart = charts.find(c => c.chartType === 'hero_stat');
-  const regularCharts = charts.filter(c => c.chartType !== 'hero_stat').sort((a, b) => a.position - b.position);
+  const heroStatChart = charts.find((c) => c.chartType === "hero_stat");
+  const regularCharts = charts
+    .filter((c) => c.chartType !== "hero_stat")
+    .sort((a, b) => a.position - b.position);
 
   return (
     <>
-      {/* HERO STAT */}
+      {/* HERO STAT CARD */}
       {heroStatChart && (
-        <div className="bg-white border border-[#d7e3f0] rounded-md p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between mb-8 shadow-sm relative text-left" id={`chart-${heroStatChart.chartId}`}>
-          <div className="flex-1">
+        <div className="bg-gradient-to-br from-[#eaf2fb] to-[#d8e6f5] rounded-xl p-[24px_20px] md:p-[48px_56px] mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-10 relative overflow-hidden">
+          <div
+            className="absolute top-0 right-0 w-[140px] md:w-[240px] h-[140px] md:h-[240px] rounded-full pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(108,86,229,0.08), transparent 70%)",
+            }}
+          ></div>
+          <div className="relative z-10 flex-1">
             <InteractiveChart
               chartId={heroStatChart.chartId}
               chartType="hero_stat"
               data={heroStatChart.data}
             />
           </div>
-          <div className="mt-4 md:mt-0 flex flex-col items-end justify-between h-full min-h-[80px]">
+
+          {/* Mobile Actions / Desktop Absolute positioning logic combined dynamically */}
+          <div className="relative z-10 mt-3 pt-3 border-t border-[#1e3a5f]/15 md:border-none md:mt-0 md:pt-0 flex items-center justify-between gap-2 md:block md:static">
+            <div className="text-[10px] md:text-[11px] text-[#888] leading-[1.4] flex-1 md:absolute md:bottom-[20px] md:right-[24px]">
+              Source: {heroStatChart.sourceLine || "Compiled by OneChat AI"}
+            </div>
             <button
-              className="px-4 py-1.5 border border-[#d7e3f0] hover:border-[#088DFF] hover:bg-[#088DFF]/5 text-[#4a4a55] hover:text-[#088DFF] rounded-md font-sans text-xs font-semibold cursor-pointer transition-colors"
-              onClick={() => openModal(heroStatChart.title, heroStatChart.chartId)}
+              onClick={() =>
+                openModal(heroStatChart.title, heroStatChart.chartId)
+              }
+              className="bg-white border border-[#d0d0d0] text-[#1a1a1a] px-[12px] py-[6px] md:px-[14px] md:py-[6px] rounded-md text-[11.5px] md:text-[12px] font-semibold flex items-center gap-1.5 hover:bg-[#eaf2fb] hover:border-[#1e3a5f] hover:text-[#1e3a5f] md:absolute md:top-[20px] md:right-[24px]"
             >
+              <span className="font-mono text-[#6C56E5] font-bold text-[11px]">
+                {"</>"}
+              </span>{" "}
               Embed
             </button>
-            {heroStatChart.sourceLine && (
-              <div className="text-[11px] text-[#8a8a95] mt-4 font-sans">{heroStatChart.sourceLine}</div>
-            )}
           </div>
         </div>
       )}
 
       {/* CHART GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {regularCharts.map((chart) => {
-          const isFullWidth = chart.chartType === 'line' || chart.position === 1;
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6">
+        {regularCharts.map((chart, idx) => {
+          // Typically Line charts or position 1, 5 take full width like in the HTML design
+          const isFullWidth =
+            chart.chartType === "line" ||
+            chart.position === 1 ||
+            chart.position === 5;
           return (
             <div
               key={chart._id}
-              className={`bg-white border border-[#d7e3f0] rounded-md overflow-hidden flex flex-col mb-4 md:mb-0 shadow-sm ${isFullWidth ? 'lg:col-span-2' : ''}`}
-              id={`chart-${chart.chartId}`}
+              className={`bg-white border border-[#e5e5e5] rounded-[10px] p-[16px_16px_14px] md:p-[24px_28px] relative transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] flex flex-col ${isFullWidth ? "md:col-span-2" : ""}`}
             >
-              <div className="p-5 md:p-7 pb-3 flex justify-between items-start border-b border-[#f4f7fa]">
-                <div className="text-left">
-                  <div className="font-sans text-[9.5px] md:text-[10px] tracking-[0.16em] uppercase text-[#8a8a95] font-bold mb-1">
-                    Chart {chart.position} · {chart.chartType === 'vbar' || chart.chartType === 'hbar' ? 'Comparison' : chart.chartType === 'line' ? 'Trend' : 'Breakdown'}
+              {/* Header */}
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4 mb-1.5 md:mb-2">
+                <div className="flex-1">
+                  <div className="text-[10px] md:text-[11px] text-[#888] uppercase tracking-[0.6px] md:tracking-[0.8px] font-semibold mb-1">
+                    Chart {chart.position} ·{" "}
+                    {chart.chartType === "donut" ? "Preference" : "Comparison"}
                   </div>
-                  <div className="font-sans text-base md:text-lg font-extrabold text-[#15151a] leading-tight tracking-tight">
+                  <div className="font-serif text-[15.5px] md:text-[20px] font-bold text-[#1a1a1a] leading-[1.25]">
                     {chart.title}
                   </div>
                 </div>
                 <button
-                  className="px-3 py-1.5 border border-[#d7e3f0] hover:border-[#088DFF] hover:bg-[#088DFF]/5 text-[#4a4a55] hover:text-[#088DFF] rounded-md font-sans text-xs font-semibold cursor-pointer transition-colors shrink-0 ml-4"
                   onClick={() => openModal(chart.title, chart.chartId)}
+                  className="hidden md:flex bg-white border border-[#d0d0d0] text-[#1a1a1a] px-[14px] py-[6px] rounded-md text-[12px] font-semibold items-center gap-1.5 hover:bg-[#eaf2fb] hover:border-[#1e3a5f] hover:text-[#1e3a5f] whitespace-nowrap"
                 >
+                  <span className="font-mono text-[#6C56E5] font-bold text-[11px]">
+                    {"</>"}
+                  </span>{" "}
                   Embed
                 </button>
               </div>
-              <div className="px-5 md:px-7 py-6 flex-1 flex flex-col justify-center min-h-[280px] md:min-h-[320px] relative">
+
+              {/* Chart Container */}
+              <div
+                className={`relative w-full mt-2 md:mt-3 ${chart.chartType === "donut" ? "h-[220px] md:h-[320px]" : chart.chartType === "hbar" ? "h-[280px] md:h-[320px]" : "h-[240px] md:h-[320px]"}`}
+              >
                 <InteractiveChart
                   chartId={chart.chartId}
                   chartType={chart.chartType}
                   data={chart.data}
                 />
               </div>
-              {chart.sourceLine && (
-                <div className="px-5 md:px-7 py-3 border-t border-[#f4f7fa] bg-[#fdfefe] flex justify-between items-center font-sans text-[10px] md:text-[10.5px] text-[#8a8a95]">
-                  <div>
-                    Source:{' '}
-                    {chart.sources && chart.sources.length > 0 ? (
-                      chart.sources.map((src, idx) => (
-                        <span key={idx}>
-                          {idx > 0 && ', '}
-                          {src.sourceUrl ? (
-                            <a href={src.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-[#4a4a55] underline font-semibold">
-                              {src.sourceName}
-                            </a>
-                          ) : (
-                            <span className="text-[#4a4a55] font-semibold">{src.sourceName}</span>
-                          )}
-                          {src.publication && ` (${src.publication})`}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-[#4a4a55] font-semibold">{chart.sourceLine}</span>
-                    )}
-                  </div>
-                  <div className="hidden md:block font-serif text-[11px] text-[#15151a] tracking-[0.06em] italic uppercase">
-                    <strong className="font-bold not-italic">OneChat AI</strong>
-                  </div>
-                </div>
-              )}
+
+              {/* Source & Mobile Embed */}
+              <div className="mt-2.5 md:mt-4 pt-2 md:pt-3 border-t border-dashed border-[#e5e5e5] text-[10.5px] md:text-[12px] text-[#555] leading-[1.5]">
+                <span className="font-semibold text-[#1a1a1a] uppercase tracking-[0.4px] md:tracking-[0.5px] text-[9.5px] md:text-[10.5px]">
+                  Source:{" "}
+                </span>
+                {chart.sources && chart.sources.length > 0 ? (
+                  chart.sources.map((src, i) => (
+                    <span key={i}>
+                      {i > 0 && "; "}
+                      {src.sourceUrl ? (
+                        <a
+                          href={src.sourceUrl}
+                          target="_blank"
+                          className="text-[#6C56E5] hover:underline"
+                        >
+                          {src.sourceName}
+                        </a>
+                      ) : (
+                        src.sourceName
+                      )}
+                    </span>
+                  ))
+                ) : (
+                  <span>{chart.sourceLine}</span>
+                )}
+              </div>
+              <button
+                onClick={() => openModal(chart.title, chart.chartId)}
+                className="md:hidden mt-2.5 w-full bg-white border border-[#d0d0d0] text-[#1a1a1a] py-2 rounded-md text-[12px] font-semibold flex items-center justify-center gap-1.5 min-h-[38px]"
+              >
+                <span className="font-mono text-[#6C56E5] font-bold text-[11px]">
+                  {"</>"}
+                </span>{" "}
+                Embed this chart
+              </button>
             </div>
           );
         })}
       </div>
-
-      {/* Embed Modal component */}
       <EmbedModal
         isOpen={isModalOpen}
-        onClose={closeModal}
+        onClose={() => setIsModalOpen(false)}
         chartName={activeChart.name}
         chartId={activeChart.id}
         categorySlug={categorySlug}
