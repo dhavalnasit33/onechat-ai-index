@@ -2,24 +2,46 @@ import dbConnect from "@/src/lib/dbConnect";
 import Chart from "@/src/models/Chart";
 import InteractiveChart from "@/src/components/InteractiveChart";
 
+// 1. Define params as a Promise to fix the Next.js Sync Dynamic API error
 export default async function ChartRenderPage({
   params,
 }: {
-  params: { chartId: string };
+  params: Promise<{ chartId: string }>;
 }) {
   await dbConnect();
 
-  // 1. Fetch the exact chart the bot wants to photograph
-  const chart = await Chart.findOne({ chartId: params.chartId }).lean();
+  // 2. Await the params before using them
+  const resolvedParams = await params;
+  const chart = await Chart.findOne({ chartId: resolvedParams.chartId }).lean();
 
   if (!chart) {
     return <div>Chart not found</div>;
   }
 
-  // 2. Render it at the exact dimensions Habib requested
+  // 3. Use a fixed full-screen overlay to hide your main site's Navbar/Footer from the bot
   return (
-    <div style={{ padding: "40px", fontFamily: "-apple-system, sans-serif" }}>
-      <div style={{ width: "1120px", height: "720px", position: "relative" }}>
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "white",
+        zIndex: 99999 /* Ensures it sits on top of everything */,
+        padding: "40px",
+        fontFamily: "-apple-system, sans-serif",
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          width: "1120px",
+          height: "720px",
+          position: "relative",
+          margin: "0 auto",
+        }}
+      >
         <h2
           style={{
             fontFamily: "Georgia, serif",
@@ -30,7 +52,6 @@ export default async function ChartRenderPage({
           {chart.title}
         </h2>
 
-        {/* Pass the exact props your component expects! */}
         <div
           style={{ height: "600px", width: "100%" }}
           className="chart-render-container"
