@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, UploadCloud, X } from 'lucide-react';
 import { apiUrl } from '@/src/lib/basePath';
+import { uploadFileToServer, deleteImage } from '@/src/lib/utils';
 
 interface CategoryOption {
   _id: string;
@@ -16,6 +17,15 @@ export default function NewTopicPage() {
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // ── Icon upload state ──────────────────────────────────────────────────────
+  const [iconUrl, setIconUrl] = useState('');
+  const [iconUploading, setIconUploading] = useState(false);
+  const [iconDragging, setIconDragging] = useState(false);
+  const [iconError, setIconError] = useState('');
+  const iconInputRef = useRef<HTMLInputElement>(null);
+  // ──────────────────────────────────────────────────────────────────────────
+
   const [form, setForm] = useState({
     title: '',
     slug: '',
@@ -35,6 +45,33 @@ export default function NewTopicPage() {
       });
   }, []);
 
+  // ── Icon upload helpers ────────────────────────────────────────────────────
+  const handleIconFiles = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    setIconError('');
+    setIconUploading(true);
+    try {
+      const url = await uploadFileToServer(file, 'onechatai-index-topic-icons');
+      setIconUrl(url);
+    } catch (err: any) {
+      setIconError(err.message || 'Upload failed');
+    } finally {
+      setIconUploading(false);
+      if (iconInputRef.current) iconInputRef.current.value = '';
+    }
+  };
+
+  const handleIconRemove = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (iconUrl) {
+      try { await deleteImage(iconUrl); } catch { /* ignore */ }
+    }
+    setIconUrl('');
+    if (iconInputRef.current) iconInputRef.current.value = '';
+  };
+  // ──────────────────────────────────────────────────────────────────────────
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.categoryId || !form.description) {
@@ -49,7 +86,7 @@ export default function NewTopicPage() {
       const res = await fetch(apiUrl('/api/admin/topics'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, iconUrl }), // ← iconUrl included
       });
       const json = await res.json();
       if (json.success) {
@@ -96,7 +133,8 @@ export default function NewTopicPage() {
 
       <div className="admin-card">
         <form onSubmit={handleSubmit}>
-          {/* Basic Info */}
+
+          {/* ── Basic Info ─────────────────────────────────────────────────── */}
           <div className="admin-form-section">
             <h3 className="admin-form-section-title">Basic Information</h3>
             <div className="admin-form-row">
@@ -156,9 +194,91 @@ export default function NewTopicPage() {
                 onChange={(e) => updateField('description', e.target.value)}
               />
             </div>
+
+            {/* ── Icon Upload ─────────────────────────────────────────────── */}
+            <div className="admin-form-group">
+              <label className="admin-form-label">Topic Icon</label>
+              <div
+                onClick={() => !iconUploading && iconInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setIconDragging(true); }}
+                onDragLeave={() => setIconDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIconDragging(false);
+                  handleIconFiles(e.dataTransfer.files);
+                }}
+                style={{
+                  border: `2px dashed ${iconDragging ? 'var(--admin-primary, #0468BD)' : 'var(--admin-border, #d7e3f0)'}`,
+                  borderRadius: 8,
+                  padding: iconUrl ? '12px' : '24px 16px',
+                  cursor: iconUploading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: iconDragging ? 'rgba(4,104,189,0.04)' : 'var(--admin-surface, #fff)',
+                  transition: 'border-color 0.15s, background 0.15s',
+                  minHeight: iconUrl ? 'auto' : 90,
+                }}
+              >
+                <input
+                  ref={iconInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleIconFiles(e.target.files)}
+                  disabled={iconUploading}
+                />
+
+                {iconUploading ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--admin-text-muted, #8a8a95)' }}>
+                    <Loader2 size={22} style={{ animation: 'spin 1s linear infinite' }} />
+                    <span style={{ fontSize: 12 }}>Uploading…</span>
+                  </div>
+                ) : iconUrl ? (
+                  <div style={{ position: 'relative', display: 'inline-flex' }}>
+                    <img
+                      src={iconUrl}
+                      alt="Topic icon preview"
+                      style={{ height: 64, width: 64, objectFit: 'contain', borderRadius: 6, border: '1px solid var(--admin-border, #d7e3f0)', background: '#f9fbfd' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleIconRemove}
+                      title="Remove icon"
+                      style={{
+                        position: 'absolute', top: -8, right: -8,
+                        width: 20, height: 20, borderRadius: '50%',
+                        background: 'var(--admin-danger, #e53935)', border: 'none',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', color: '#fff', padding: 0,
+                      }}
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: 'var(--admin-text-muted, #8a8a95)' }}>
+                    <UploadCloud size={24} />
+                    <span style={{ fontSize: 12, textAlign: 'center', lineHeight: 1.4 }}>
+                      Drag & drop or <strong style={{ color: 'var(--admin-primary, #0468BD)' }}>click to upload</strong>
+                      <br />PNG, JPG, SVG, WebP
+                    </span>
+                  </div>
+                )}
+              </div>
+              {iconError && (
+                <p style={{ fontSize: 12, color: 'var(--admin-danger, #e53935)', marginTop: 4 }}>{iconError}</p>
+              )}
+              {iconUrl && (
+                <p style={{ fontSize: 11, color: 'var(--admin-text-dim, #aaa)', marginTop: 4, wordBreak: 'break-all' }}>{iconUrl}</p>
+              )}
+            </div>
+            {/* ────────────────────────────────────────────────────────────── */}
+
           </div>
 
-          {/* Methodology */}
+          {/* ── Methodology ────────────────────────────────────────────────── */}
           <div className="admin-form-section">
             <h3 className="admin-form-section-title">Methodology</h3>
             <div className="admin-form-group">
@@ -172,7 +292,7 @@ export default function NewTopicPage() {
             </div>
           </div>
 
-          {/* SEO */}
+          {/* ── SEO ────────────────────────────────────────────────────────── */}
           <div className="admin-form-section">
             <h3 className="admin-form-section-title">SEO</h3>
             <div className="admin-form-group">
@@ -197,13 +317,14 @@ export default function NewTopicPage() {
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
-            <button className="admin-btn admin-btn-primary" type="submit" disabled={saving}>
+            <button className="admin-btn admin-btn-primary" type="submit" disabled={saving || iconUploading}>
               <Save size={16} /> {saving ? 'Creating...' : 'Create Topic'}
             </button>
             <Link href="/admin/topics" className="admin-btn admin-btn-secondary">
               Cancel
             </Link>
           </div>
+
         </form>
       </div>
     </>

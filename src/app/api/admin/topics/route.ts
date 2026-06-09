@@ -2,16 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/src/lib/dbConnect';
 import Topic from '@/src/models/Topic';
 
-const getPagination = (searchParams: URLSearchParams) => {
-  const requestedPage = Number.parseInt(searchParams.get('page') || '1', 10);
-  const requestedLimit = Number.parseInt(searchParams.get('limit') || '10', 10);
-
-  return {
-    requestedPage: Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1,
-    limit: Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 100) : 10,
-  };
-};
-
 // GET /api/admin/topics — List topics with filters & pagination
 export async function GET(request: NextRequest) {
   try {
@@ -56,14 +46,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: topics, total, page, limit });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json(
-      { success: false, message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
 
-// POST /api/admin/topics — Create a new topic
+// POST /api/admin/topics — Create a new topic (iconUrl included)
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
@@ -85,6 +72,7 @@ export async function POST(request: NextRequest) {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
 
+    // body may contain iconUrl — it's passed through via spread
     const topic = await Topic.create({
       ...body,
       slug: finalSlug,

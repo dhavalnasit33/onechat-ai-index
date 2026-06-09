@@ -31,6 +31,8 @@ export default async function Home() {
     return acc;
   }, {});
 
+  console.log("chartMap", chartMap);
+
   return (
     <div className="bg-white text-[#15151a] font-serif leading-relaxed text-[15px] md:text-[16px] min-h-screen overflow-x-hidden w-full max-w-[100vw]">
       {/* TOP NAV */}

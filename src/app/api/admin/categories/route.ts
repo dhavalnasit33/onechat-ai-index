@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const all = searchParams.get('all') === 'true';
 
     if (all) {
-      const categories = await Category.find().sort({ createdAt: -1 }).lean(); // position: 1, 
+      const categories = await Category.find().sort({ createdAt: -1 }).lean();
       return NextResponse.json({ success: true, data: categories, total: categories.length });
     }
 
@@ -19,15 +19,16 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     const total = await Category.countDocuments();
-    const categories = await Category.find().sort({ createdAt: -1, _id: 1 }).skip(skip).limit(limit).lean(); // position: 1,
+    const categories = await Category.find()
+      .sort({ createdAt: -1, _id: 1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
     return NextResponse.json({ success: true, data: categories, total, page, limit });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json(
-      { success: false, message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
 
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const body = await request.json();
-    const { name, slug, description, position } = body;
+    const { name, slug, description, position, iconUrl } = body; // ← iconUrl added
 
     if (!name || !slug) {
       return NextResponse.json(
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
       slug: slug.toLowerCase().trim(),
       description: description || '',
       position: position ?? 0,
+      iconUrl: iconUrl || '',      // ← NEW
     });
 
     return NextResponse.json({ success: true, data: category }, { status: 201 });

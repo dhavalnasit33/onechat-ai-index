@@ -35,6 +35,7 @@ export default function AdminImagesPage() {
           setJobs(res.data || []);
         }
       })
+      .catch(() => showToast('Failed to load image jobs', 'error'))
       .finally(() => setLoading(false));
   };
 

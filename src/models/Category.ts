@@ -6,6 +6,7 @@ export interface ICategory extends Document {
   description?: string;
   position: number;
   topicCount: number;
+  iconUrl?: string;        // ← NEW: uploaded icon image URL
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,6 +37,10 @@ const CategorySchema = new Schema<ICategory>(
     topicCount: {
       type: Number,
       default: 0,
+    },
+    iconUrl: {           // ← NEW
+      type: String,
+      default: '',
     },
   },
   {

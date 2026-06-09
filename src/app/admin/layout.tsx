@@ -1,9 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { AdminAuthProvider, useAdminAuth } from '@/src/contexts/AdminAuthContext';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  AdminAuthProvider,
+  useAdminAuth,
+} from "@/src/contexts/AdminAuthContext";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -12,28 +15,24 @@ import {
   LogOut,
   Menu,
   X,
-} from 'lucide-react';
-import './admin.css';
+} from "lucide-react";
+import "./admin.css";
 
 const navItems = [
   {
-    section: 'Overview',
+    section: "Overview",
+    links: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard }],
+  },
+  {
+    section: "Content",
     links: [
-      { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+      { href: "/admin/categories", label: "Categories", icon: FolderOpen },
+      { href: "/admin/topics", label: "Topics", icon: BarChart3 },
     ],
   },
   {
-    section: 'Content',
-    links: [
-      { href: '/admin/categories', label: 'Categories', icon: FolderOpen },
-      { href: '/admin/topics', label: 'Topics', icon: BarChart3 },
-    ],
-  },
-  {
-    section: 'Media',
-    links: [
-      { href: '/admin/images', label: 'Image Queue', icon: ImageIcon },
-    ],
+    section: "Media",
+    links: [{ href: "/admin/images", label: "Image Queue", icon: ImageIcon }],
   },
 ];
 
@@ -44,11 +43,15 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // If on the login page, render without the shell
-  const isLoginPage = pathname === '/admin/login' || pathname === '/admin/login/' || pathname.endsWith('/admin/login') || pathname.endsWith('/admin/login/');
+  const isLoginPage =
+    pathname === "/admin/login" ||
+    pathname === "/admin/login/" ||
+    pathname.endsWith("/admin/login") ||
+    pathname.endsWith("/admin/login/");
 
   useEffect(() => {
     if (!loading && !isAuthenticated && !isLoginPage) {
-      router.push('/ai-behavior-index/admin/login');
+      router.push("/admin/login");
     }
   }, [loading, isAuthenticated, isLoginPage, router]);
 
@@ -56,14 +59,14 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   if (loading && !isLoginPage) {
     return (
       <div className="admin-login-page">
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: "center" }}>
           <div
             className="admin-skeleton"
-            style={{ width: 200, height: 24, margin: '0 auto 12px' }}
+            style={{ width: 200, height: 24, margin: "0 auto 12px" }}
           />
           <div
             className="admin-skeleton"
-            style={{ width: 140, height: 16, margin: '0 auto' }}
+            style={{ width: 140, height: 16, margin: "0 auto" }}
           />
         </div>
       </div>
@@ -82,12 +85,12 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
   const userInitials = user?.name
     ? user.name
-        .split(' ')
+        .split(" ")
         .map((n) => n[0])
-        .join('')
+        .join("")
         .toUpperCase()
         .slice(0, 2)
-    : '??';
+    : "??";
 
   return (
     <div className="admin-shell">
@@ -102,12 +105,12 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile overlay */}
       <div
-        className={`admin-sidebar-overlay ${sidebarOpen ? 'open' : ''}`}
+        className={`admin-sidebar-overlay ${sidebarOpen ? "open" : ""}`}
         onClick={() => setSidebarOpen(false)}
       />
 
       {/* Sidebar */}
-      <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}>
+      <aside className={`admin-sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="admin-sidebar-brand">
           <h1>
             <span className="brand-dot" />
@@ -122,15 +125,17 @@ function AdminShell({ children }: { children: React.ReactNode }) {
               <p className="admin-sidebar-section-label">{section.section}</p>
               {section.links.map((link) => {
                 const Icon = link.icon;
+                // Fix: Dashboard should only be active on exact match,
+                // other items can use startsWith
                 const isActive =
-                  link.href === '/ai-behavior-index/admin'
-                    ? pathname === '/ai-behavior-index/admin' || pathname === '/ai-behavior-index/admin/'
+                  link.href === "/admin"
+                    ? pathname === "/admin" || pathname === "/admin/"
                     : pathname.startsWith(link.href);
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`admin-nav-link ${isActive ? 'active' : ''}`}
+                    className={`admin-nav-link ${isActive ? "active" : ""}`}
                     onClick={() => setSidebarOpen(false)}
                   >
                     <Icon size={18} />
@@ -146,8 +151,8 @@ function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="admin-user-badge">
             <div className="avatar">{userInitials}</div>
             <div className="user-info">
-              <div className="user-name">{user?.name || 'Admin'}</div>
-              <div className="user-email">{user?.email || ''}</div>
+              <div className="user-name">{user?.name || "Admin"}</div>
+              <div className="user-email">{user?.email || ""}</div>
             </div>
           </div>
           <button className="admin-logout-btn" onClick={logout}>

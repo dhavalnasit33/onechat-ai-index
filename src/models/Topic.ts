@@ -9,6 +9,7 @@ export interface ITopic extends Document {
   metaTitle?: string;
   metaDescription?: string;
   ogImageUrl?: string;
+  iconUrl?: string;        // ← NEW: uploaded icon image URL
   status: 'draft' | 'published' | 'archived';
   dataPointsCount: number;
   sourceCount: number;
@@ -56,6 +57,10 @@ const TopicSchema = new Schema<ITopic>(
       type: String,
       default: '',
     },
+    iconUrl: {           // ← NEW
+      type: String,
+      default: '',
+    },
     status: {
       type: String,
       enum: ['draft', 'published', 'archived'],
@@ -86,14 +91,11 @@ const TopicSchema = new Schema<ITopic>(
 // Compound unique index on { categoryId: 1, slug: 1 }
 TopicSchema.index({ categoryId: 1, slug: 1 }, { unique: true });
 
-// Text search index on { title: 'text', description: 'text' } with weights { title: 10, description: 5 }
+// Text search index on { title: 'text', description: 'text' }
 TopicSchema.index(
   { title: 'text', description: 'text' },
   {
-    weights: {
-      title: 10,
-      description: 5,
-    },
+    weights: { title: 10, description: 5 },
     name: 'TopicTextIndex',
   }
 );
