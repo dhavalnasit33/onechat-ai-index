@@ -1,10 +1,28 @@
 import React from "react";
+import { Metadata } from "next";
 import { Search, Menu, X } from "lucide-react";
 import dbConnect from "@/src/lib/dbConnect";
 import Category from "@/src/models/Category";
 import Topic from "@/src/models/Topic";
+import Chart from "@/src/models/Chart";
 import Header from "@/src/components/Header";
 import Footer from "@/src/components/Footer";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}): Promise<Metadata> {
+  const { q = "" } = await searchParams;
+  const title = q ? `Search: "${q}" | AI Behavior Index` : "Search Topics | AI Behavior Index";
+  const description = q
+    ? `Search results for "${q}" in the AI Behavior Index.`
+    : "Search all topics, Adoption trends, and AI tools statistics on the AI Behavior Index.";
+  return {
+    title,
+    description,
+  };
+}
 
 interface PageProps {
   searchParams: Promise<{ q?: string; sort?: string; page?: string }>;
@@ -101,6 +119,24 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
       totalCount = await Topic.countDocuments(fallbackFilter);
     }
+  }
+
+  let matchingCharts: any[] = [];
+  if (q) {
+    const escapedQ = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const chartFilter: any = {
+      status: "active",
+      $or: [
+        { title: { $regex: escapedQ, $options: "i" } },
+        { heading: { $regex: escapedQ, $options: "i" } },
+      ],
+    };
+    matchingCharts = await Chart.find(chartFilter)
+      .populate({
+        path: "topicId",
+        populate: { path: "categoryId" }
+      })
+      .lean();
   }
 
   const totalPages = Math.ceil(totalCount / limit);
@@ -234,8 +270,12 @@ export default async function SearchPage({ searchParams }: PageProps) {
                       href={`/ai-behavior-index/${categorySlug}/${topic.slug}/`}
                       className={`group grid grid-cols-[32px_1fr] md:grid-cols-[40px_1fr] gap-[12px] md:gap-[18px] py-[18px] md:py-[22px] border-b border-[#eaf2fb] ${i === topics.length - 1 ? "border-none" : ""} text-left no-underline text-inherit`}
                     >
-                      <div className="text-[18px] md:text-[22px] leading-none pt-[3px] md:pt-1">
-                        {icons[i % icons.length]}
+                      <div className="text-[18px] md:text-[22px] leading-none pt-[3px] md:pt-1 flex items-center justify-center w-[22px] h-[22px]">
+                        {topic.iconUrl ? (
+                          <img src={topic.iconUrl} alt="" className="w-full h-full object-contain" />
+                        ) : (
+                          <span>{icons[i % icons.length]}</span>
+                        )}
                       </div>
                       <div className="min-w-0">
                         <div className="font-sans text-[9.5px] md:text-[10px] tracking-[0.14em] uppercase text-[#0468BD] font-bold mb-[5px] md:mb-[6px]">
@@ -278,6 +318,50 @@ export default async function SearchPage({ searchParams }: PageProps) {
               </div>
             )}
           </section>
+
+          {matchingCharts.length > 0 && (
+            <section className="mt-8 pt-8 border-t border-[#d7e3f0] mb-8">
+              <div className="font-sans text-[10px] tracking-[0.18em] uppercase text-[#8a8a95] font-bold mb-[18px] text-left">
+                Matching charts
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {matchingCharts.map((chart: any) => {
+                  const topic = chart.topicId;
+                  const category = topic?.categoryId;
+                  const iconToUse = chart.icon || "📊";
+
+                  return (
+                    <a
+                      key={chart._id.toString()}
+                      href={`/ai-behavior-index/${category?.slug}/${topic?.slug}/`}
+                      className="bg-white border border-[#d7e3f0] rounded-md p-5 flex flex-col transition-all duration-200 hover:border-[#088DFF] hover:shadow-[0_4px_12px_rgba(8,141,255,0.08)] hover:-translate-y-[1px] text-left no-underline text-inherit"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <span className="font-sans text-[9px] tracking-wider uppercase text-[#0468BD] font-bold">
+                          {category?.name || "Chart"} {topic ? `· ${topic.title}` : ""}
+                        </span>
+                        <span className="text-lg flex items-center justify-center w-5 h-5">
+                          {iconToUse.startsWith('http') || iconToUse.startsWith('/') ? (
+                            <img src={iconToUse} alt="" className="w-full h-full object-contain" />
+                          ) : (
+                            iconToUse
+                          )}
+                        </span>
+                      </div>
+                      <h4 className="font-serif text-[16px] font-bold text-[#15151a] mb-1.5 leading-[1.3] hover:text-[#088DFF] transition-colors">
+                        {chart.heading || chart.title}
+                      </h4>
+                      {chart.sourceLine && (
+                        <p className="font-sans text-[11px] text-[#8a8a95] mt-auto">
+                          {chart.sourceLine}
+                        </p>
+                      )}
+                    </a>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           {/* PAGINATION */}
           {totalPages > 1 && (

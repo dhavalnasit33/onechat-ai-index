@@ -73,6 +73,8 @@ export default async function TopicPage({ params }: PageProps) {
     chartId: chart.chartId,
     position: chart.position,
     title: chart.title,
+    heading: chart.heading || "",
+    icon: chart.icon || "",
     chartType: chart.chartType,
     data: JSON.parse(JSON.stringify(chart.data)),
     sourceLine: chart.sourceLine || "",

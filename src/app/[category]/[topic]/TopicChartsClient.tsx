@@ -9,6 +9,8 @@ interface ChartData {
   chartId: string;
   position: number;
   title: string;
+  heading?: string;
+  icon?: string;
   chartType: "vbar" | "hbar" | "line" | "donut" | "hero_stat";
   data: any;
   sourceLine?: string;
@@ -67,7 +69,7 @@ export default function TopicChartsClient({
             </div>
             <button
               onClick={() =>
-                openModal(heroStatChart.title, heroStatChart.chartId)
+                openModal(heroStatChart.heading || heroStatChart.title, heroStatChart.chartId)
               }
               className="bg-white border border-[#d0d0d0] text-[#1a1a1a] px-[12px] py-[6px] md:px-[14px] md:py-[6px] rounded-md text-[11.5px] md:text-[12px] font-semibold flex items-center gap-1.5 hover:bg-[#eaf2fb] hover:border-[#1e3a5f] hover:text-[#1e3a5f] md:absolute md:top-[20px] md:right-[24px]"
             >
@@ -100,12 +102,21 @@ export default function TopicChartsClient({
                     Chart {chart.position} ·{" "}
                     {chart.chartType === "donut" ? "Preference" : "Comparison"}
                   </div>
-                  <div className="font-serif text-[15.5px] md:text-[20px] font-bold text-[#1a1a1a] leading-[1.25]">
-                    {chart.title}
+                  <div className="font-serif text-[15.5px] md:text-[20px] font-bold text-[#1a1a1a] leading-[1.25] flex items-center gap-2">
+                    {chart.icon && (
+                      <span className="text-lg md:text-xl flex items-center justify-center w-5 h-5 md:w-6 md:h-6 shrink-0">
+                        {chart.icon.startsWith("http") || chart.icon.startsWith("/") ? (
+                          <img src={chart.icon} alt="" className="w-full h-full object-contain" />
+                        ) : (
+                          chart.icon
+                        )}
+                      </span>
+                    )}
+                    <span>{chart.heading || chart.title}</span>
                   </div>
                 </div>
                 <button
-                  onClick={() => openModal(chart.title, chart.chartId)}
+                  onClick={() => openModal(chart.heading || chart.title, chart.chartId)}
                   className="hidden md:flex bg-white border border-[#d0d0d0] text-[#1a1a1a] px-[14px] py-[6px] rounded-md text-[12px] font-semibold items-center gap-1.5 hover:bg-[#eaf2fb] hover:border-[#1e3a5f] hover:text-[#1e3a5f] whitespace-nowrap"
                 >
                   <span className="font-mono text-[#6C56E5] font-bold text-[11px]">
@@ -153,7 +164,7 @@ export default function TopicChartsClient({
                 )}
               </div>
               <button
-                onClick={() => openModal(chart.title, chart.chartId)}
+                onClick={() => openModal(chart.heading || chart.title, chart.chartId)}
                 className="md:hidden mt-2.5 w-full bg-white border border-[#d0d0d0] text-[#1a1a1a] py-2 rounded-md text-[12px] font-semibold flex items-center justify-center gap-1.5 min-h-[38px]"
               >
                 <span className="font-mono text-[#6C56E5] font-bold text-[11px]">

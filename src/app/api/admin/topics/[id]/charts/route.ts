@@ -34,7 +34,7 @@ export async function POST(
     const { id } = await props.params;
     const body = await request.json();
 
-    const { title, chartType, chartId, position, data, sources } = body;
+    const { title, chartType, chartId, position, data, sources, heading, icon, displayHome } = body;
 
     if (!title || !chartType || !chartId) {
       return NextResponse.json(
@@ -51,6 +51,9 @@ export async function POST(
       position: position ?? 0,
       data: data || {},
       sources: sources || [],
+      heading: heading || '',
+      icon: icon || '',
+      displayHome: displayHome ?? false,
     });
 
     return NextResponse.json({ success: true, data: chart }, { status: 201 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Metadata } from 'next';
 import { Search, Menu, FileText } from 'lucide-react';
 import dbConnect from '@/src/lib/dbConnect';
 import Category from '@/src/models/Category';
@@ -9,6 +10,38 @@ import Footer from '@/src/components/Footer';
 interface PageProps {
   params: Promise<{ category: string }>;
   searchParams: Promise<{ q?: string; sort?: string; page?: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ category: string }>;
+}): Promise<Metadata> {
+  await dbConnect();
+  const { category: categorySlug } = await params;
+  const category = await Category.findOne({ slug: categorySlug }).lean();
+
+  if (!category) return { title: 'Category Not Found | AI Behavior Index' };
+
+  const pageTitle = category.metaTitle || `${category.name} | AI Behavior Index`;
+  const description = category.metaDescription || category.description || `Explore AI usage statistics for ${category.name}.`;
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://onechatai.ai';
+  const ogImageUrl = category.featuredImage || category.iconUrl || '';
+
+  return {
+    title: pageTitle,
+    description: description,
+    alternates: {
+      canonical: `${baseUrl}/ai-behavior-index/${categorySlug}/`,
+    },
+    openGraph: {
+      title: pageTitle,
+      description: description,
+      url: `${baseUrl}/ai-behavior-index/${categorySlug}/`,
+      images: ogImageUrl ? [{ url: ogImageUrl }] : [],
+    },
+  };
 }
 
 export default async function CategoryPage({ params, searchParams }: PageProps) {

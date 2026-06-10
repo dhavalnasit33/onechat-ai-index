@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
 import { apiUrl } from '@/src/lib/basePath';
 import InteractiveChart from '@/src/components/InteractiveChart';
+import IconUploadField from '@/src/components/admin/IconUploadField';
 
 interface DataRow {
   label: string;
@@ -145,6 +146,9 @@ export default function ChartEditorPage({
   const [sourceLine, setSourceLine] = useState('');
   const [dataRows, setDataRows] = useState<DataRow[]>([{ label: '', value: '', color: '' }]);
   const [sources, setSources] = useState<SourceRow[]>([]);
+  const [heading, setHeading] = useState('');
+  const [icon, setIcon] = useState('');
+  const [displayHome, setDisplayHome] = useState(false);
 
   // Metadata/Extra Fields
   const [xLabel, setXLabel] = useState('');
@@ -180,6 +184,9 @@ export default function ChartEditorPage({
           setChartType(c.chartType);
           setPosition(c.position);
           setSourceLine(c.sourceLine || '');
+          setHeading(c.heading || '');
+          setIcon(c.icon || '');
+          setDisplayHome(c.displayHome || false);
           setSources(
             (c.sources as Record<string, unknown>[] | undefined)?.map((s, i) => ({
               position: Number(s.position ?? i),
@@ -288,6 +295,9 @@ export default function ChartEditorPage({
       chartType,
       position,
       sourceLine,
+      heading,
+      icon,
+      displayHome,
       data: buildChartDataPayload(chartType, dataRows, lineSeries, xLabel, yLabel, yFormat, trendDirection, trendAmount),
       sources: sources.map((s) => ({
         ...s,
@@ -411,6 +421,37 @@ export default function ChartEditorPage({
                 onChange={(e) => setSourceLine(e.target.value)}
               />
             </div>
+
+            <div className="admin-form-row">
+              <div className="admin-form-group">
+                <label className="admin-form-label">Heading / Card Title Override</label>
+                <input
+                  className="admin-form-input"
+                  placeholder="e.g. Weekly adoption cohort"
+                  value={heading}
+                  onChange={(e) => setHeading(e.target.value)}
+                />
+              </div>
+              <div className="admin-form-group" style={{ display: 'flex', alignItems: 'center', height: '100%', marginTop: 'auto', paddingBottom: 12 }}>
+                <label className="admin-form-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={displayHome}
+                    onChange={(e) => setDisplayHome(e.target.checked)}
+                    style={{ width: 18, height: 18, cursor: 'pointer' }}
+                  />
+                  Display on Home Page Dashboard
+                </label>
+              </div>
+            </div>
+
+            <IconUploadField
+              value={icon}
+              onChange={setIcon}
+              folder="onechatai-index-chart-icons"
+              label="Chart Icon (Emoji or Uploaded Image)"
+              disabled={saving}
+            />
           </div>
 
           {/* Data Editor */}

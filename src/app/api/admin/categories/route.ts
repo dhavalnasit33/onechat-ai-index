@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const body = await request.json();
-    const { name, slug, description, position, iconUrl } = body; // ← iconUrl added
+    const { name, slug, description, position, iconUrl, keyphrase, metaTitle, metaDescription, featuredImage } = body;
 
     if (!name || !slug) {
       return NextResponse.json(
@@ -51,7 +51,11 @@ export async function POST(request: NextRequest) {
       slug: slug.toLowerCase().trim(),
       description: description || '',
       position: position ?? 0,
-      iconUrl: iconUrl || '',      // ← NEW
+      iconUrl: iconUrl || '',
+      keyphrase: keyphrase || '',
+      metaTitle: metaTitle || '',
+      metaDescription: metaDescription || '',
+      featuredImage: featuredImage || '',
     });
 
     return NextResponse.json({ success: true, data: category }, { status: 201 });

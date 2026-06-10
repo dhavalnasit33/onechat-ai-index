@@ -20,6 +20,9 @@ export interface IChart extends Document {
   imageUpdatedAt?: Date;
   status: 'active' | 'removed';
   sources: ISource[];
+  heading?: string;
+  icon?: string;
+  displayHome?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -97,6 +100,18 @@ const ChartSchema = new Schema<IChart>(
       enum: ['active', 'removed'],
       default: 'active',
       required: true,
+    },
+    heading: {
+      type: String,
+      default: '',
+    },
+    icon: {
+      type: String,
+      default: '',
+    },
+    displayHome: {
+      type: Boolean,
+      default: false,
     },
     sources: [SourceSchema],
   },

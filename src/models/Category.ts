@@ -7,6 +7,10 @@ export interface ICategory extends Document {
   position: number;
   topicCount: number;
   iconUrl?: string;        // ← NEW: uploaded icon image URL
+  keyphrase?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  featuredImage?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +43,22 @@ const CategorySchema = new Schema<ICategory>(
       default: 0,
     },
     iconUrl: {           // ← NEW
+      type: String,
+      default: '',
+    },
+    keyphrase: {
+      type: String,
+      default: '',
+    },
+    metaTitle: {
+      type: String,
+      default: '',
+    },
+    metaDescription: {
+      type: String,
+      default: '',
+    },
+    featuredImage: {
       type: String,
       default: '',
     },

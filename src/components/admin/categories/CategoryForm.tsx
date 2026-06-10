@@ -13,6 +13,10 @@ export const categorySchema = z.object({
   description: z.string().optional(),
   position: z.number().min(0, "Position must be 0 or greater"),
   iconUrl: z.string().optional(),
+  keyphrase: z.string().optional(),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  featuredImage: z.string().optional(),
 });
 
 export type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -44,6 +48,10 @@ export default function CategoryForm({
       description: initialData?.description || "",
       position: initialData?.position ?? 0,
       iconUrl: initialData?.iconUrl || "",
+      keyphrase: (initialData as any)?.keyphrase || "",
+      metaTitle: (initialData as any)?.metaTitle || "",
+      metaDescription: (initialData as any)?.metaDescription || "",
+      featuredImage: (initialData as any)?.featuredImage || "",
     },
   });
 
@@ -135,6 +143,46 @@ export default function CategoryForm({
           onChange={(url) => setValue("iconUrl", url, { shouldDirty: true, shouldValidate: true })}
           folder="onechatai-index-category-icons"
           label="Category Icon"
+          disabled={isSubmitting}
+        />
+      </div>
+
+      <div className="admin-form-section" style={{ marginTop: 24 }}>
+        <h3 className="admin-form-section-title">SEO & Metadata</h3>
+        
+        <div className="admin-form-group">
+          <label className="admin-form-label">Focus Keyphrase</label>
+          <input
+            className="admin-form-input"
+            placeholder="e.g. economy statistics, generative AI"
+            {...register("keyphrase")}
+          />
+        </div>
+
+        <div className="admin-form-row">
+          <div className="admin-form-group">
+            <label className="admin-form-label">Meta Title</label>
+            <input
+              className="admin-form-input"
+              placeholder="e.g. Economy Statistics | AI Behavior Index"
+              {...register("metaTitle")}
+            />
+          </div>
+          <div className="admin-form-group">
+            <label className="admin-form-label">Meta Description</label>
+            <textarea
+              className="admin-form-textarea"
+              placeholder="e.g. Search and explore in-depth AI statistics regarding the economy..."
+              {...register("metaDescription")}
+            />
+          </div>
+        </div>
+
+        <IconUploadField
+          value={watch("featuredImage") ?? ""}
+          onChange={(url) => setValue("featuredImage", url, { shouldDirty: true, shouldValidate: true })}
+          folder="onechatai-index-category-images"
+          label="Featured Image (OG Share Image)"
           disabled={isSubmitting}
         />
       </div>
