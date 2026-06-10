@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import InteractiveChart from "@/src/components/InteractiveChart";
 import EmbedModal from "@/src/components/EmbedModal";
+import { Code2 } from "lucide-react";
 
 interface ChartData {
   _id: string;
@@ -11,7 +12,14 @@ interface ChartData {
   title: string;
   heading?: string;
   icon?: string;
-  chartType: "vbar" | "hbar" | "line" | "donut" | "hero_stat" | "timeline" | "text_block";
+  chartType:
+    | "vbar"
+    | "hbar"
+    | "line"
+    | "donut"
+    | "hero_stat"
+    | "timeline"
+    | "text_block";
   data: any;
   sourceLine?: string;
   sources?: any[];
@@ -70,8 +78,12 @@ export default function TopicChartsClient({
 
           {/* Mobile Actions / Desktop Absolute positioning logic combined dynamically */}
           <div className="relative z-10 mt-3 pt-3 border-t border-[#1e3a5f]/15 md:border-none md:mt-0 md:pt-0 flex items-center justify-between gap-2 md:block md:static">
-            <div className="text-[10px] md:text-[11px] text-[#888] leading-[1.4] flex-1 md:absolute md:bottom-[20px] md:right-[24px]">
-              Source: {heroStatChart.sourceLine || "Compiled by OneChat AI"}
+            <div className="text-[10px] md:text-[11px] text-[#888] leading-[1.4] flex-1 md:absolute md:bottom-[20px] md:right-[24px] md:text-right md:max-w-[50%]">
+              {heroStatChart.sourceLine
+                ? heroStatChart.sourceLine.toLowerCase().startsWith("source:")
+                  ? heroStatChart.sourceLine
+                  : `Source: ${heroStatChart.sourceLine}`
+                : "Compiled by OneChat AI"}
             </div>
             <button
               onClick={() =>
@@ -80,12 +92,10 @@ export default function TopicChartsClient({
                   heroStatChart.chartId,
                 )
               }
-              className="cursor-pointer bg-white border border-[#d0d0d0] text-[#1a1a1a] px-[12px] py-[6px] md:px-[14px] md:py-[6px] rounded-md text-[11.5px] md:text-[12px] font-semibold flex items-center gap-1.5 hover:bg-[#eaf2fb] hover:border-[#1e3a5f] hover:text-[#1e3a5f] md:absolute md:top-[20px] md:right-[24px]"
+              className=" cursor-pointer inline-flex items-center gap-1.5 bg-white border border-[#d4d4d8] rounded-lg px-3.5 py-2 text-[13px] font-semibold text-[#111827] shadow-sm transition-all duration-200 hover:border-[#c4b5fd] hover:bg-[#faf8ff] md:absolute md:top-5 md:right-6 "
             >
-              <span className="font-mono text-[#6C56E5] font-bold text-[11px]">
-                {"</>"}
-              </span>{" "}
-              Embed
+              <Code2 size={14} className="text-[#6C56E5]" strokeWidth={2.25} />
+              <span>Embed</span>
             </button>
           </div>
         </div>
@@ -95,12 +105,12 @@ export default function TopicChartsClient({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6">
         {regularCharts.map((chart, idx) => {
           // Typically Line charts or position 1, 5 take full width like in the HTML design
-         const isFullWidth =
-  chart.chartType === "line" ||
-  chart.chartType === "timeline" ||
-  chart.chartType === "text_block" ||
-  chart.position === 1 ||
-  chart.position === 5;
+          const isFullWidth =
+            chart.chartType === "line" ||
+            chart.chartType === "timeline" ||
+            chart.chartType === "text_block" ||
+            chart.position === 1 ||
+            chart.position === 5;
           return (
             <div
               key={chart._id}
@@ -135,24 +145,31 @@ export default function TopicChartsClient({
                   onClick={() =>
                     openModal(chart.heading || chart.title, chart.chartId)
                   }
-                  className="cursor-pointer hidden md:flex bg-white border border-[#d0d0d0] text-[#1a1a1a] px-[14px] py-[6px] rounded-md text-[12px] font-semibold items-center gap-1.5 hover:bg-[#eaf2fb] hover:border-[#1e3a5f] hover:text-[#1e3a5f] whitespace-nowrap"
+                  className=" cursor-pointer inline-flex items-center gap-1.5 bg-white border border-[#d4d4d8] rounded-lg px-3.5 py-2 text-[13px] font-semibold text-[#111827] shadow-sm transition-all duration-200 hover:border-[#c4b5fd] hover:bg-[#faf8ff] md:absolute md:top-5 md:right-6 "
                 >
-                  <span className="font-mono text-[#6C56E5] font-bold text-[11px]">
-                    {"</>"}
-                  </span>{" "}
-                  Embed
+                  <Code2
+                    size={14}
+                    className="text-[#6C56E5]"
+                    strokeWidth={2.25}
+                  />
+                  <span>Embed</span>
                 </button>
               </div>
 
               {/* Chart Container */}
-             <div
-  className={`relative w-full mt-2 md:mt-3 ${
-    chart.chartType === "timeline" ? "h-auto max-h-[400px] py-2" :
-    chart.chartType === "text_block" ? "h-auto py-4" :
-    chart.chartType === "donut" ? "h-[220px] md:h-[320px]" : 
-    chart.chartType === "hbar" ? "h-[280px] md:h-[320px]" : "h-[240px] md:h-[320px]"
-  }`}
->
+              <div
+                className={`relative w-full mt-2 md:mt-3 ${
+                  chart.chartType === "timeline"
+                    ? "h-auto max-h-[400px] py-2"
+                    : chart.chartType === "text_block"
+                      ? "h-auto py-4"
+                      : chart.chartType === "donut"
+                        ? "h-[220px] md:h-[320px]"
+                        : chart.chartType === "hbar"
+                          ? "h-[280px] md:h-[320px]"
+                          : "h-[240px] md:h-[320px]"
+                }`}
+              >
                 <InteractiveChart
                   chartId={chart.chartId}
                   chartType={chart.chartType}
@@ -190,12 +207,14 @@ export default function TopicChartsClient({
                 onClick={() =>
                   openModal(chart.heading || chart.title, chart.chartId)
                 }
-                className="cursor-pointer md:hidden mt-2.5 w-full bg-white border border-[#d0d0d0] text-[#1a1a1a] py-2 rounded-md text-[12px] font-semibold flex items-center justify-center gap-1.5 min-h-[38px]"
+                className=" cursor-pointer inline-flex items-center gap-1.5 bg-white border border-[#d4d4d8] rounded-lg px-3.5 py-2 text-[13px] font-semibold text-[#111827] shadow-sm transition-all duration-200 hover:border-[#c4b5fd] hover:bg-[#faf8ff] md:absolute md:top-5 md:right-6 "
               >
-                <span className="font-mono text-[#6C56E5] font-bold text-[11px]">
-                  {"</>"}
-                </span>{" "}
-                Embed this chart
+                <Code2
+                  size={14}
+                  className="text-[#6C56E5]"
+                  strokeWidth={2.25}
+                />
+                <span>Embed this chart</span>
               </button>
             </div>
           );

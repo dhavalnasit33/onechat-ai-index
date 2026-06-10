@@ -108,8 +108,8 @@ export default async function TopicPage({ params }: PageProps) {
 
       {/* BREADCRUMB */}
       <div className="bg-[#eaf2fb] py-2 md:py-3 overflow-x-auto whitespace-nowrap">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 text-[11px] md:text-[13px]">
-          <a href="/" className="text-[#1e3a5f] hover:underline">
+        <div className="max-w-[1340px] mx-auto px-4 text-[11px] md:text-[13px]">
+          <a href="/ai-behavior-index/" className="text-[#1e3a5f] hover:underline">
             Home
           </a>
           <span className="text-[#888] mx-[6px] md:mx-[8px]">/</span>
@@ -125,7 +125,7 @@ export default async function TopicPage({ params }: PageProps) {
       </div>
 
       {/* TOPIC HERO */}
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 pt-6 pb-5 md:pt-[48px] md:pb-[32px]">
+      <div className="max-w-[1340px] mx-auto px-4 pt-6 pb-5 md:pt-[48px] md:pb-[32px]">
         <span className="inline-block bg-[#eaf2fb] text-[#1e3a5f] text-[10px] md:text-[12px] font-semibold uppercase tracking-[0.6px] md:tracking-[0.8px] px-2.5 py-1 md:px-[14px] md:py-[5px] rounded-full mb-3 md:mb-4">
           By {category.name}
         </span>
@@ -155,7 +155,7 @@ export default async function TopicPage({ params }: PageProps) {
       </div>
 
       {/* MAIN CONTENT */}
-      <main className="max-w-[1200px] mx-auto px-4 md:px-8 pb-8 md:pb-[64px]">
+      <main className="max-w-[1340px] mx-auto px-4 pb-8 md:pb-[64px]">
         <TopicChartsClient
           charts={charts}
           categorySlug={category.slug}

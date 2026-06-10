@@ -1,6 +1,6 @@
 import React from "react";
 import { Metadata } from "next";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, ChevronDown } from "lucide-react";
 import dbConnect from "@/src/lib/dbConnect";
 import Category from "@/src/models/Category";
 import Topic from "@/src/models/Topic";
@@ -15,7 +15,9 @@ export async function generateMetadata({
   searchParams: Promise<{ q?: string }>;
 }): Promise<Metadata> {
   const { q = "" } = await searchParams;
-  const title = q ? `Search: "${q}" | AI Behavior Index` : "Search Topics | AI Behavior Index";
+  const title = q
+    ? `Search: "${q}" | AI Behavior Index`
+    : "Search Topics | AI Behavior Index";
   const description = q
     ? `Search results for "${q}" in the AI Behavior Index.`
     : "Search all topics, Adoption trends, and AI tools statistics on the AI Behavior Index.";
@@ -135,7 +137,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
     matchingCharts = await Chart.find(chartFilter)
       .populate({
         path: "topicId",
-        populate: { path: "categoryId" }
+        populate: { path: "categoryId" },
       })
       .lean();
   }
@@ -153,7 +155,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
         {/* BREADCRUMB */}
         <div className="bg-white px-4 md:px-8 pt-3 md:pt-4">
-          <div className="max-w-[1340px] mx-auto font-sans text-[11px] md:text-[12px] text-[#8a8a95] text-left">
+          <div className="max-w-[1340px] px-4 mx-auto font-sans text-[11px] md:text-[12px] text-[#8a8a95] text-left">
             <a
               href="/ai-behavior-index/"
               className="hover:text-[#15151a] transition-colors"
@@ -167,13 +169,13 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
         {/* SEARCH HEADER */}
         <section className="bg-white border-b border-[#eaf2fb] px-4 md:px-8 pt-5 pb-4 md:pt-8 md:pb-[22px] text-left">
-          <div className="max-w-[1340px] mx-auto">
-            <div className="font-sans text-[10px] md:text-[11px] tracking-[0.18em] uppercase text-[#0468BD] font-bold mb-[10px] md:mb-[12px]">
+          <div className="max-w-[1340px] px-4 mx-auto">
+            <div className="font-sans text-[10px] md:text-[11px] tracking-[0.18em] uppercase text-[#6C56E5] font-bold mb-[10px] md:mb-[12px]">
               Search results
             </div>
             <h1 className="font-serif text-[24px] md:text-[36px] leading-[1.15] md:leading-[1.1] font-normal tracking-[-0.015em] text-[#15151a] mb-[6px] md:mb-1">
               Results for{" "}
-              <span className="font-bold text-[#0468BD]">
+              <span className="font-bold text-[#6C56E5]">
                 "{q || "All topics"}"
               </span>
             </h1>
@@ -195,7 +197,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
         {/* SEARCH TOOLBAR */}
         <div className="bg-white border-b border-[#d7e3f0] px-4 py-[14px] md:px-8 md:py-[18px] sticky top-[53px] md:top-[57px] z-15">
-          <div className="max-w-[1340px] mx-auto flex flex-col md:flex-row md:items-center gap-[12px] md:gap-4 flex-wrap">
+          <div className="max-w-[1340px] px-4 mx-auto flex flex-col md:flex-row md:items-center gap-[12px] md:gap-4 flex-wrap">
             {/* Input Wrap */}
             <form
               action="/ai-behavior-index/search/"
@@ -230,191 +232,224 @@ export default async function SearchPage({ searchParams }: PageProps) {
               <span className="font-sans text-[10px] md:text-[11px] tracking-[0.14em] uppercase text-[#8a8a95] font-bold whitespace-nowrap">
                 Sort <span className="hidden md:inline">by</span>
               </span>
-              <select
-                id="sort-select"
-                defaultValue={sort}
-                className="font-sans text-[12px] md:text-[13px] text-[#15151a] bg-white border border-[#d7e3f0] rounded-full py-[7px] md:py-[8px] px-3 md:px-[14px] cursor-pointer font-medium outline-none hover:border-[#1e3a5f] flex-1 md:flex-none md:max-w-[160px] transition-colors"
-              >
-                <option value="relevance">Most relevant</option>
-                <option value="recent">Most recent</option>
-                <option value="a-z">A–Z</option>
-              </select>
+              <div className="relative min-w-[180px]">
+                <select
+                  id="sort-select"
+                  defaultValue={sort}
+                  className=" appearance-none w-full bg-white border-2 border-[#D9D2FF] rounded-xl px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 outline-none transition-all duration-200 hover:border-[#6C56E5] focus:border-[#6C56E5] focus:ring-4 focus:ring-[#6C56E5]/10 cursor-pointer"
+                >
+                  <option value="relevance">Most Relevant</option>
+                  <option value="recent">Most Recent</option>
+                  <option value="a-z">A → Z</option>
+                </select>
+
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6C56E5] pointer-events-none"
+                />
+              </div>
             </div>
           </div>
         </div>
 
         {/* MAIN CONTENT */}
-        <main className="max-w-[920px] mx-auto p-[16px] md:p-[32px]">
-          {/* RESULTS LIST */}
-          <section className="mb-0 md:mb-8">
-            <div className="hidden md:block font-sans text-[10px] tracking-[0.18em] uppercase text-[#8a8a95] font-bold mb-[18px] text-left">
-              Matching topics
-            </div>
-
-            {topics.length === 0 ? (
-              <div className="text-center py-20 text-[#8a8a95] font-sans">
-                <p className="text-lg font-medium">No results found.</p>
-                <p className="text-sm mt-1">
-                  Try searching for other keywords like "Gen Z", "Adoption", or
-                  "ChatGPT".
-                </p>
+        <main className="p-[16px] md:p-[32px]">
+          <div className="max-w-[1340px] px-4 mx-auto ">
+            {/* RESULTS LIST */}
+            <section className="mb-0 md:mb-8">
+              <div className="hidden md:block font-sans text-[10px] tracking-[0.18em] uppercase text-[#8a8a95] font-bold mb-[18px] text-left">
+                Matching topics
               </div>
-            ) : (
-              <div className="flex flex-col">
-                {topics.map((topic: any, i: number) => {
-                  const categorySlug = topic.categoryId?.slug || "unknown";
-                  const categoryName =
-                    topic.categoryId?.name || "Uncategorized";
-                  return (
-                    <a
-                      key={topic._id.toString()}
-                      href={`/ai-behavior-index/${categorySlug}/${topic.slug}/`}
-                      className={`group grid grid-cols-[32px_1fr] md:grid-cols-[40px_1fr] gap-[12px] md:gap-[18px] py-[18px] md:py-[22px] border-b border-[#eaf2fb] ${i === topics.length - 1 ? "border-none" : ""} text-left no-underline text-inherit`}
-                    >
-                      <div className="text-[18px] md:text-[22px] leading-none pt-[3px] md:pt-1 flex items-center justify-center w-[22px] h-[22px] text-[#0468BD]">
-                        <RenderIcon icon={topic.iconUrl || icons[i % icons.length]} size={22} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-sans text-[9.5px] md:text-[10px] tracking-[0.14em] uppercase text-[#0468BD] font-bold mb-[5px] md:mb-[6px]">
-                          {categoryName}
-                          <span className="text-[#8a8a95] font-normal mx-[6px] md:mx-[8px]">
-                            ·
-                          </span>
-                          <span className="text-[#8a8a95] font-medium">
-                            <span className="hidden md:inline">Updated </span>
-                            {topic.publishedAt
-                              ? new Date(topic.publishedAt).toLocaleDateString(
-                                "en-US",
-                                { month: "short", year: "numeric" },
-                              )
-                              : "Q2 2026"}
-                          </span>
+
+              {topics.length === 0 ? (
+                <div className="text-center py-20 text-[#8a8a95] font-sans">
+                  <p className="text-lg font-medium">No results found.</p>
+                  <p className="text-sm mt-1">
+                    Try searching for other keywords like "Gen Z", "Adoption",
+                    or "ChatGPT".
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  {topics.map((topic: any, i: number) => {
+                    const categorySlug = topic.categoryId?.slug || "unknown";
+                    const categoryName =
+                      topic.categoryId?.name || "Uncategorized";
+                    return (
+                      <a
+                        key={topic._id.toString()}
+                        href={`/ai-behavior-index/${categorySlug}/${topic.slug}/`}
+                        className={`group grid grid-cols-[32px_1fr] md:grid-cols-[40px_1fr] gap-[12px] md:gap-[18px] py-[18px] md:py-[22px] border-b border-[#eaf2fb] ${i === topics.length - 1 ? "border-none" : ""} text-left no-underline text-inherit`}
+                      >
+                        <div className="text-[18px] md:text-[22px] leading-none pt-[3px] md:pt-1 flex items-center justify-center w-[22px] h-[22px] text-[#6C56E5]">
+                          <RenderIcon
+                            icon={topic.iconUrl || icons[i % icons.length]}
+                            size={22}
+                          />
                         </div>
-                        <h3
-                          className="font-serif text-[18px] md:text-[22px] font-normal tracking-[-0.01em] text-[#15151a] leading-[1.2] mb-[7px] md:mb-[8px] transition-colors group-hover:text-[#0468BD]"
-                          dangerouslySetInnerHTML={{
-                            __html: highlightMatch(topic.title, q),
-                          }}
-                        />
-                        <p
-                          className="font-sans text-[12.5px] md:text-[13.5px] text-[#4a4a55] leading-[1.55] mb-[10px] md:mb-[12px]"
-                          dangerouslySetInnerHTML={{
-                            __html: highlightMatch(topic.description, q),
-                          }}
-                        />
-                        <div className="font-sans text-[10.5px] md:text-[11px] text-[#8a8a95] flex gap-[12px] md:gap-[14px] flex-wrap">
-                          <strong className="text-[#4a4a55] font-semibold">
-                            {topic.dataPointsCount} data points
-                          </strong>
-                          <span>{topic.sourceCount} sources</span>
+                        <div className="min-w-0">
+                          <div className="font-sans text-[9.5px] md:text-[10px] tracking-[0.14em] uppercase text-[#6C56E5] font-bold mb-[5px] md:mb-[6px]">
+                            {categoryName}
+                            <span className="text-[#8a8a95] font-normal mx-[6px] md:mx-[8px]">
+                              ·
+                            </span>
+                            <span className="text-[#8a8a95] font-medium">
+                              <span className="hidden md:inline">Updated </span>
+                              {topic.publishedAt
+                                ? new Date(
+                                    topic.publishedAt,
+                                  ).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    year: "numeric",
+                                  })
+                                : "Q2 2026"}
+                            </span>
+                          </div>
+                          <h3
+                            className="font-serif text-[18px] md:text-[22px] font-normal tracking-[-0.01em] text-[#15151a] leading-[1.2] mb-[7px] md:mb-[8px] transition-colors group-hover:text-[#6C56E5]"
+                            dangerouslySetInnerHTML={{
+                              __html: highlightMatch(topic.title, q),
+                            }}
+                          />
+                          <p
+                            className="font-sans text-[12.5px] md:text-[13.5px] text-[#4a4a55] leading-[1.55] mb-[10px] md:mb-[12px]"
+                            dangerouslySetInnerHTML={{
+                              __html: highlightMatch(topic.description, q),
+                            }}
+                          />
+                          <div className="font-sans text-[10.5px] md:text-[11px] text-[#8a8a95] flex gap-[12px] md:gap-[14px] flex-wrap">
+                            <strong className="text-[#4a4a55] font-semibold">
+                              {topic.dataPointsCount} data points
+                            </strong>
+                            <span>{topic.sourceCount} sources</span>
+                          </div>
                         </div>
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          {matchingCharts.length > 0 && (
-            <section className="mt-8 pt-8 border-t border-[#d7e3f0] mb-8">
-              <div className="font-sans text-[10px] tracking-[0.18em] uppercase text-[#8a8a95] font-bold mb-[18px] text-left">
-                Matching charts
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {matchingCharts.map((chart: any) => {
-                  const topic = chart.topicId;
-                  const category = topic?.categoryId;
-                  const iconToUse = chart.icon || "📊";
-
-                  return (
-                    <a
-                      key={chart._id.toString()}
-                      href={`/ai-behavior-index/${category?.slug}/${topic?.slug}/`}
-                      className="bg-white border border-[#d7e3f0] rounded-md p-5 flex flex-col transition-all duration-200 hover:border-[#088DFF] hover:shadow-[0_4px_12px_rgba(8,141,255,0.08)] hover:-translate-y-[1px] text-left no-underline text-inherit"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <span className="font-sans text-[9px] tracking-wider uppercase text-[#0468BD] font-bold">
-                          {category?.name || "Chart"} {topic ? `· ${topic.title}` : ""}
-                        </span>
-                        <span className="text-lg flex items-center justify-center w-5 h-5 text-[#0468BD]">
-                          <RenderIcon icon={iconToUse} size={18} />
-                        </span>
-                      </div>
-                      <h4 className="font-serif text-[16px] font-bold text-[#15151a] mb-1.5 leading-[1.3] hover:text-[#088DFF] transition-colors">
-                        {chart.heading || chart.title}
-                      </h4>
-                      {chart.sourceLine && (
-                        <p className="font-sans text-[11px] text-[#8a8a95] mt-auto">
-                          {chart.sourceLine}
-                        </p>
-                      )}
-                    </a>
-                  );
-                })}
-              </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
             </section>
-          )}
 
-          {/* PAGINATION */}
-          {totalPages > 1 && (
-            <nav className="flex justify-center items-center gap-[4px] md:gap-[6px] py-[24px] md:py-[28px] pb-[28px] md:pb-[40px] font-sans">
-              <a
-                href={
-                  currentPage > 1
-                    ? `?page=${currentPage - 1}&q=${q}&sort=${sort}`
-                    : "#"
-                }
-                className={`inline-flex items-center justify-center min-w-[36px] md:min-w-[38px] h-[36px] md:h-[38px] px-[10px] md:px-[12px] rounded-md text-[12.5px] md:text-[13px] font-semibold border border-transparent transition-colors ${currentPage === 1 ? "text-[#8a8a95] opacity-50 cursor-not-allowed" : "text-[#4a4a55] hover:bg-[#eaf2fb] hover:text-[#15151a]"}`}
-              >
-                ‹ <span className="hidden md:inline ml-1">Prev</span>
-              </a>
-              {Array.from({ length: totalPages }).map((_, idx) => {
-                const pageNum = idx + 1;
-                return (
-                  <a
-                    key={pageNum}
-                    href={`?page=${pageNum}&q=${q}&sort=${sort}`}
-                    className={`inline-flex items-center justify-center min-w-[36px] md:min-w-[38px] h-[36px] md:h-[38px] px-[10px] md:px-[12px] rounded-md text-[12.5px] md:text-[13px] font-semibold border border-transparent transition-colors ${currentPage === pageNum ? "text-white bg-[#1e3a5f] hover:bg-[#1e3a5f]" : "text-[#4a4a55] hover:bg-[#eaf2fb] hover:text-[#15151a]"}`}
-                  >
-                    {pageNum}
-                  </a>
-                );
-              })}
-              <a
-                href={
-                  currentPage < totalPages
-                    ? `?page=${currentPage + 1}&q=${q}&sort=${sort}`
-                    : "#"
-                }
-                className={`inline-flex items-center justify-center min-w-[36px] md:min-w-[38px] h-[36px] md:h-[38px] px-[10px] md:px-[12px] rounded-md text-[12.5px] md:text-[13px] font-semibold border border-transparent transition-colors ${currentPage === totalPages ? "text-[#8a8a95] opacity-50 cursor-not-allowed" : "text-[#4a4a55] hover:bg-[#eaf2fb] hover:text-[#15151a]"}`}
-              >
-                <span className="hidden md:inline mr-1">Next</span> ›
-              </a>
-            </nav>
-          )}
+            {matchingCharts.length > 0 && (
+              <section className="mt-8 pt-8 border-t border-[#d7e3f0] mb-8">
+                <div className="font-sans text-[10px] tracking-[0.18em] uppercase text-[#8a8a95] font-bold mb-[18px] text-left">
+                  Matching charts
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {matchingCharts.map((chart: any) => {
+                    const topic = chart.topicId;
+                    const category = topic?.categoryId;
+                    const iconToUse = chart.icon || "📊";
 
-          {/* METHODOLOGY NOTE */}
-          <div className="my-[4px] md:my-[8px] mb-[24px] md:mb-[32px] p-[18px_20px] md:p-[22px_26px] bg-white border border-[#d7e3f0] rounded md:rounded-[4px] text-left">
-            <div className="font-sans text-[10px] tracking-[0.16em] uppercase text-[#8a8a95] font-bold mb-[8px]">
-              A note on methodology
+                    return (
+                      <a
+                        key={chart._id.toString()}
+                        href={`/ai-behavior-index/${category?.slug}/${topic?.slug}/`}
+                        className="bg-white border border-[#d7e3f0] rounded-md p-5 flex flex-col transition-all duration-200 hover:border-[#088DFF] hover:shadow-[0_4px_12px_rgba(8,141,255,0.08)] hover:-translate-y-[1px] text-left no-underline text-inherit"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <span className="font-sans text-[9px] tracking-wider uppercase text-[#6C56E5] font-bold">
+                            {category?.name || "Chart"}{" "}
+                            {topic ? `· ${topic.title}` : ""}
+                          </span>
+                          <span className="text-lg flex items-center justify-center w-5 h-5 text-[#6C56E5]">
+                            <RenderIcon icon={iconToUse} size={18} />
+                          </span>
+                        </div>
+                        <h4 className="font-serif text-[16px] font-bold text-[#15151a] mb-1.5 leading-[1.3] hover:text-[#088DFF] transition-colors">
+                          {chart.heading || chart.title}
+                        </h4>
+                        {chart.sourceLine && (
+                          <p className="font-sans text-[11px] text-[#8a8a95] mt-auto">
+                            {chart.sourceLine}
+                          </p>
+                        )}
+                      </a>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* PAGINATION */}
+            {totalPages > 1 && (
+              <nav className="flex justify-center items-center gap-2 py-8 font-sans">
+                {/* Previous */}
+                <a
+                  href={
+                    currentPage > 1
+                      ? `?page=${currentPage - 1}&q=${q}&sort=${sort}`
+                      : "#"
+                  }
+                  className={`inline-flex items-center justify-center h-10 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    currentPage === 1
+                      ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                      : "text-[#6C56E5] border border-[#D9D2FF] hover:bg-[#F4F1FF]"
+                  }`}
+                >
+                  ← <span className="hidden md:inline ml-2">Previous</span>
+                </a>
+
+                {/* Page Numbers */}
+                {Array.from({ length: totalPages }).map((_, idx) => {
+                  const pageNum = idx + 1;
+
+                  return (
+                    <a
+                      key={pageNum}
+                      href={`?page=${pageNum}&q=${q}&sort=${sort}`}
+                      className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                        currentPage === pageNum
+                          ? "bg-[#6C56E5] text-white shadow-md shadow-[#6C56E5]/30"
+                          : "text-gray-700 border border-[#E5E7EB] hover:border-[#6C56E5] hover:bg-[#F4F1FF] hover:text-[#6C56E5]"
+                      }`}
+                    >
+                      {pageNum}
+                    </a>
+                  );
+                })}
+
+                {/* Next */}
+                <a
+                  href={
+                    currentPage < totalPages
+                      ? `?page=${currentPage + 1}&q=${q}&sort=${sort}`
+                      : "#"
+                  }
+                  className={`inline-flex items-center justify-center h-10 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    currentPage === totalPages
+                      ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                      : "text-[#6C56E5] border border-[#D9D2FF] hover:bg-[#F4F1FF]"
+                  }`}
+                >
+                  <span className="hidden md:inline mr-2">Next</span> →
+                </a>
+              </nav>
+            )}
+
+            {/* METHODOLOGY NOTE */}
+            <div className="my-[4px] md:my-[8px] mb-[24px] md:mb-[32px] p-[18px_20px] md:p-[22px_26px] bg-white border border-[#d7e3f0] rounded md:rounded-[4px] text-left">
+              <div className="font-sans text-[10px] tracking-[0.16em] uppercase text-[#8a8a95] font-bold mb-[8px]">
+                A note on methodology
+              </div>
+              <p className="font-sans text-[12.5px] md:text-[13px] text-[#4a4a55] leading-[1.55] max-w-[1340px]">
+                Every statistic shown is sourced from a publicly available
+                study, survey, or report. We aggregate, organize, and
+                contextualize this data — but the underlying research is
+                conducted by the cited sources. Click any source link to access
+                the original methodology. This index is refreshed quarterly to
+                incorporate new research as it becomes available. If you run
+                into any issues or have a study to suggest, contact us at{" "}
+                <a
+                  href="mailto:support@onechatai.ai"
+                  className="text-[#4a4a55] underline"
+                >
+                  support@onechatai.ai
+                </a>
+                .
+              </p>
             </div>
-            <p className="font-sans text-[12.5px] md:text-[13px] text-[#4a4a55] leading-[1.55] max-w-[800px]">
-              Every statistic shown is sourced from a publicly available study,
-              survey, or report. We aggregate, organize, and contextualize this
-              data — but the underlying research is conducted by the cited
-              sources. Click any source link to access the original methodology.
-              This index is refreshed quarterly to incorporate new research as
-              it becomes available. If you run into any issues or have a study
-              to suggest, contact us at{" "}
-              <a
-                href="mailto:support@onechatai.ai"
-                className="text-[#4a4a55] underline"
-              >
-                support@onechatai.ai
-              </a>
-              .
-            </p>
           </div>
         </main>
 

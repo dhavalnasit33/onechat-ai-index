@@ -48,7 +48,8 @@ export default function Footer() {
             Terms
           </Link>
           <a
-            href="mailto:research@aibehaviorindex.org"
+            // href="mailto:research@aibehaviorindex.org"
+            href="#"
             className="hover:text-[#15151a] transition-colors no-underline text-inherit"
           >
             Contact

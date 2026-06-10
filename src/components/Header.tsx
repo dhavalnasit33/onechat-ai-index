@@ -43,13 +43,15 @@ export default function Header({ activeTab = "none" }: HeaderProps) {
           <Link
             href="/for-journalists/"
             className={`hover:text-[#15151a] transition-colors ${
-              activeTab === "for-journalists" ? "text-[#15151a] font-semibold" : ""
+              activeTab === "for-journalists"
+                ? "text-[#15151a] font-semibold"
+                : ""
             }`}
           >
             For Journalists
           </Link>
           <a
-            href="/app"
+            href="https://onechatai.ai/"
             className="bg-[#6C56E5] hover:bg-[#5b46d6] text-white px-4 py-2 rounded-md font-semibold text-[13px] md:text-[14px] transition-colors ml-2 no-underline"
           >
             Try OneChat AI
@@ -67,7 +69,9 @@ export default function Header({ activeTab = "none" }: HeaderProps) {
               <Link
                 href="/"
                 className={`px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline ${
-                  activeTab === "home" ? "text-[#15151a] font-semibold bg-[#f9fbfd]" : ""
+                  activeTab === "home"
+                    ? "text-[#15151a] font-semibold bg-[#f9fbfd]"
+                    : ""
                 }`}
               >
                 Explore
@@ -75,7 +79,9 @@ export default function Header({ activeTab = "none" }: HeaderProps) {
               <Link
                 href="/methodology/"
                 className={`px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline ${
-                  activeTab === "methodology" ? "text-[#15151a] font-semibold bg-[#f9fbfd]" : ""
+                  activeTab === "methodology"
+                    ? "text-[#15151a] font-semibold bg-[#f9fbfd]"
+                    : ""
                 }`}
               >
                 Methodology
@@ -83,17 +89,19 @@ export default function Header({ activeTab = "none" }: HeaderProps) {
               <Link
                 href="/for-journalists/"
                 className={`px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline ${
-                  activeTab === "for-journalists" ? "text-[#15151a] font-semibold bg-[#f9fbfd]" : ""
+                  activeTab === "for-journalists"
+                    ? "text-[#15151a] font-semibold bg-[#f9fbfd]"
+                    : ""
                 }`}
               >
                 For Journalists
               </Link>
-              <a
-                href="/app"
+              <Link
+                href="https://onechatai.ai/"
                 className="px-5 py-4 hover:bg-[#f9fbfd] hover:text-[#6C56E5] text-[#6C56E5] font-semibold transition-colors no-underline"
               >
                 Try OneChat AI
-              </a>
+              </Link>
             </nav>
           </div>
         </details>

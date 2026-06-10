@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import "./admin.css";
+import FaviconLoader from "@/src/components/FaviconLoader";
 
 const navItems = [
   {
@@ -175,6 +176,8 @@ export default function AdminLayout({
 }) {
   return (
     <AdminAuthProvider>
+         <FaviconLoader />
+
       <AdminShell>{children}</AdminShell>
     </AdminAuthProvider>
   );
