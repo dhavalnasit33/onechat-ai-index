@@ -4,6 +4,7 @@ import dbConnect from "@/src/lib/dbConnect";
 import Category from "@/src/models/Category";
 import Topic from "@/src/models/Topic";
 import Chart from "@/src/models/Chart";
+import { BarChart2, BookOpen, Calendar, Link as LinkIcon } from "lucide-react";
 import TopicChartsClient from "./TopicChartsClient";
 import Header from "@/src/components/Header";
 import Footer from "@/src/components/Footer";
@@ -96,9 +97,9 @@ export default async function TopicPage({ params }: PageProps) {
     .lean();
   const formattedDate = topic.lastRefreshedAt
     ? new Date(topic.lastRefreshedAt).toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      })
+      month: "long",
+      year: "numeric",
+    })
     : "June 2026";
 
   return (
@@ -137,15 +138,17 @@ export default async function TopicPage({ params }: PageProps) {
         </p>
         <div className="flex flex-wrap gap-3 md:gap-6 text-[#888] text-[11px] md:text-[13px] pt-3 md:pt-5 border-t border-[#e5e5e5]">
           <span className="flex items-center gap-1.5">
-            📊 {charts.length} charts
+            <BarChart2 size={14} className="text-[#888]" /> {charts.length} charts
           </span>
           <span className="flex items-center gap-1.5">
-            📚 {topic.sourceCount || 9} sources
+            <BookOpen size={14} className="text-[#888]" /> {topic.sourceCount || 9} sources
           </span>
           <span className="flex items-center gap-1.5">
-            🗓 Last updated {formattedDate}
+            <Calendar size={14} className="text-[#888]" /> Last updated {formattedDate}
           </span>
-          <span className="flex items-center gap-1.5">🔗 Free to embed</span>
+          <span className="flex items-center gap-1.5">
+            <LinkIcon size={14} className="text-[#888]" /> Free to embed
+          </span>
         </div>
       </div>
 

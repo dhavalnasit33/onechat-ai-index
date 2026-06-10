@@ -7,6 +7,7 @@ import Topic from "@/src/models/Topic";
 import Chart from "@/src/models/Chart";
 import Header from "@/src/components/Header";
 import Footer from "@/src/components/Footer";
+import RenderIcon from "@/src/components/RenderIcon";
 
 export async function generateMetadata({
   searchParams,
@@ -270,12 +271,8 @@ export default async function SearchPage({ searchParams }: PageProps) {
                       href={`/ai-behavior-index/${categorySlug}/${topic.slug}/`}
                       className={`group grid grid-cols-[32px_1fr] md:grid-cols-[40px_1fr] gap-[12px] md:gap-[18px] py-[18px] md:py-[22px] border-b border-[#eaf2fb] ${i === topics.length - 1 ? "border-none" : ""} text-left no-underline text-inherit`}
                     >
-                      <div className="text-[18px] md:text-[22px] leading-none pt-[3px] md:pt-1 flex items-center justify-center w-[22px] h-[22px]">
-                        {topic.iconUrl ? (
-                          <img src={topic.iconUrl} alt="" className="w-full h-full object-contain" />
-                        ) : (
-                          <span>{icons[i % icons.length]}</span>
-                        )}
+                      <div className="text-[18px] md:text-[22px] leading-none pt-[3px] md:pt-1 flex items-center justify-center w-[22px] h-[22px] text-[#0468BD]">
+                        <RenderIcon icon={topic.iconUrl || icons[i % icons.length]} size={22} />
                       </div>
                       <div className="min-w-0">
                         <div className="font-sans text-[9.5px] md:text-[10px] tracking-[0.14em] uppercase text-[#0468BD] font-bold mb-[5px] md:mb-[6px]">
@@ -287,9 +284,9 @@ export default async function SearchPage({ searchParams }: PageProps) {
                             <span className="hidden md:inline">Updated </span>
                             {topic.publishedAt
                               ? new Date(topic.publishedAt).toLocaleDateString(
-                                  "en-US",
-                                  { month: "short", year: "numeric" },
-                                )
+                                "en-US",
+                                { month: "short", year: "numeric" },
+                              )
                               : "Q2 2026"}
                           </span>
                         </div>
@@ -340,12 +337,8 @@ export default async function SearchPage({ searchParams }: PageProps) {
                         <span className="font-sans text-[9px] tracking-wider uppercase text-[#0468BD] font-bold">
                           {category?.name || "Chart"} {topic ? `· ${topic.title}` : ""}
                         </span>
-                        <span className="text-lg flex items-center justify-center w-5 h-5">
-                          {iconToUse.startsWith('http') || iconToUse.startsWith('/') ? (
-                            <img src={iconToUse} alt="" className="w-full h-full object-contain" />
-                          ) : (
-                            iconToUse
-                          )}
+                        <span className="text-lg flex items-center justify-center w-5 h-5 text-[#0468BD]">
+                          <RenderIcon icon={iconToUse} size={18} />
                         </span>
                       </div>
                       <h4 className="font-serif text-[16px] font-bold text-[#15151a] mb-1.5 leading-[1.3] hover:text-[#088DFF] transition-colors">
