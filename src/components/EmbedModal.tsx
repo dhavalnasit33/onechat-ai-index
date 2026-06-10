@@ -79,14 +79,13 @@ export default function EmbedModal({
               {["html", "markdown", "citation"].map((tab) => (
                 <button
                   key={tab}
-                  className={`flex-1 md:flex-none px-3 py-2 text-[11.5px] md:text-[13px] font-semibold border-b-2 capitalize transition-colors ${activeTab === tab ? "text-[#6C56E5] border-[#6C56E5]" : "text-[#888] border-transparent"}`}
+                  className={`cursor-pointer flex-1 md:flex-none px-3 py-2 text-[11.5px] md:text-[13px] font-semibold border-b-2 capitalize transition-colors ${activeTab === tab ? "text-[#6C56E5] border-[#6C56E5]" : "text-[#888] border-transparent"}`}
                   onClick={() => setActiveTab(tab as any)}
                 >
                   {tab}
                 </button>
               ))}
             </div>
-
             <pre className="bg-[#1a1a2e] text-[#e6e6f0] p-[12px_14px] md:p-[16px_18px] rounded-md font-mono text-[10.5px] md:text-[12px] leading-[1.5] md:leading-[1.55] whitespace-pre-wrap break-all max-h-[200px] md:max-h-[240px] overflow-y-auto">
               {activeTab === "html"
                 ? getHtmlCode()
@@ -97,7 +96,7 @@ export default function EmbedModal({
 
             <div className="mt-3.5 md:mt-4 flex justify-end">
               <button
-                className="w-full md:w-auto bg-[#6C56E5] text-white px-5 py-3 md:py-2.5 rounded-lg md:rounded-md font-semibold text-[14px] md:text-[13px] hover:bg-[#4c3aae] transition-colors"
+                className="cursor-pointer w-full md:w-auto bg-[#6C56E5] text-white px-5 py-3 md:py-2.5 rounded-lg md:rounded-md font-semibold text-[14px] md:text-[13px] hover:bg-[#4c3aae] transition-colors"
                 onClick={copyCode}
               >
                 Copy code
