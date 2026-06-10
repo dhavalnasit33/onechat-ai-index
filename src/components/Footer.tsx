@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="bg-white border-t border-[#d7e3f0] py-6 md:py-9 px-4 md:px-8 pb-8 md:pb-9 w-full">
-      <div className="max-w-[1340px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4 font-sans text-[11px] md:text-[12px] text-[#8a8a95]">
+      <div className="max-w-[1340px] px-4 mx-auto flex flex-col md:flex-row justify-between items-center gap-4 font-sans text-[11px] md:text-[12px] text-[#8a8a95]">
         {/* PUBLISHER INFO */}
         <div className="text-[#4a4a55] text-center md:text-left leading-[1.5]">
           Published by{" "}
@@ -35,20 +35,20 @@ export default function Footer() {
           >
             For Journalists
           </Link>
-          <a
-            href="#"
+          <Link
+            href="/privacy-policy"
             className="hover:text-[#15151a] transition-colors no-underline text-inherit"
           >
             Privacy
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            href="/terms-of-service"
             className="hover:text-[#15151a] transition-colors no-underline text-inherit"
           >
             Terms
-          </a>
+          </Link>
           <a
-            href="#"
+            href="mailto:research@aibehaviorindex.org"
             className="hover:text-[#15151a] transition-colors no-underline text-inherit"
           >
             Contact

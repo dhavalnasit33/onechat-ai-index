@@ -8,7 +8,7 @@ interface HeaderProps {
 export default function Header({ activeTab = "none" }: HeaderProps) {
   return (
     <header className="border-b border-[#d7e3f0] bg-white sticky top-0 z-50 w-full">
-      <div className="max-w-[1340px] mx-auto px-4 md:px-8 py-3.5 flex items-center justify-between relative">
+      <div className="max-w-[1340px] mx-auto px-4  py-3.5 flex items-center justify-between relative">
         {/* LOGO */}
         <div className="font-serif text-[12px] md:text-[14px] tracking-[0.06em] md:tracking-[0.08em] uppercase text-[#15151a] font-bold">
           <Link
