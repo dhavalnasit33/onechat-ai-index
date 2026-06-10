@@ -4,6 +4,8 @@ import Category from "@/src/models/Category";
 import Topic from "@/src/models/Topic";
 import Chart from "@/src/models/Chart";
 import InteractiveChart from "@/src/components/InteractiveChart";
+import Header from "@/src/components/Header";
+import Footer from "@/src/components/Footer";
 
 export default async function Home() {
   await dbConnect();
@@ -36,61 +38,7 @@ export default async function Home() {
   return (
     <div className="bg-white text-[#15151a] font-serif leading-relaxed text-[15px] md:text-[16px] min-h-screen overflow-x-hidden w-full max-w-[100vw]">
       {/* TOP NAV */}
-      <header className="border-b border-[#d7e3f0] bg-white sticky top-0 z-20">
-        <div className="max-w-[1340px] mx-auto px-4 md:px-8 py-3.5 flex items-center justify-between relative">
-          <div className="font-serif text-[12px] md:text-[14px] tracking-[0.06em] md:tracking-[0.08em] uppercase text-[#15151a] font-bold">
-            <a
-              href="/ai-behavior-index/"
-              className="flex flex-col md:flex-row md:items-baseline"
-            >
-              AI Behavior Index
-              <span className="text-[#8a8a95] font-normal tracking-[0.04em] text-[10px] md:text-[12px] md:ml-1.5 normal-case mt-[2px] md:mt-0 block md:inline">
-                by OneChat AI
-              </span>
-            </a>
-          </div>
-
-          {/* Desktop Links */}
-          <nav className="hidden md:flex gap-7 font-sans text-[13px] text-[#4a4a55]">
-            <a
-              href="/ai-behavior-index/methodology/"
-              className="hover:text-[#15151a] transition-colors"
-            >
-              Methodology
-            </a>
-            <a
-              href="/ai-behavior-index/for-journalists/"
-              className="hover:text-[#15151a] transition-colors"
-            >
-              For Journalists
-            </a>
-          </nav>
-
-          {/* Mobile Hamburger Menu (Using details/summary for CSS-only dropdown) */}
-          <details className="md:hidden relative group">
-            <summary className="list-none [&::-webkit-details-marker]:hidden text-[#15151a] text-[22px] leading-none px-2 py-1 cursor-pointer outline-none flex items-center justify-center select-none">
-              ☰
-            </summary>
-            {/* Dropdown Menu */}
-            <div className="absolute top-[120%] right-0 mt-1 w-[220px] bg-white border border-[#d7e3f0] rounded-[6px] shadow-[0_8px_24px_rgba(0,0,0,0.12)] z-30 overflow-hidden">
-              <nav className="flex flex-col font-sans text-[14px] text-[#4a4a55]">
-                <a
-                  href="/ai-behavior-index/methodology/"
-                  className="px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors"
-                >
-                  Methodology
-                </a>
-                <a
-                  href="/ai-behavior-index/for-journalists/"
-                  className="px-5 py-4 hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors"
-                >
-                  For Journalists
-                </a>
-              </nav>
-            </div>
-          </details>
-        </div>
-      </header>
+      <Header activeTab="home" />
 
       {/* COMPACT HEADER */}
       <section className="bg-white border-b border-[#d7e3f0] pt-8 md:pt-12 pb-6 md:pb-9 px-5 md:px-8 text-center">
@@ -1207,30 +1155,7 @@ export default async function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-white border-t border-[#d7e3f0] py-[24px] md:py-[36px] px-[16px] md:px-[32px] pb-[32px] md:pb-[36px]">
-        <div className="max-w-[1340px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center font-sans text-[11px] md:text-[12px] text-[#8a8a95]">
-          <div className="text-[#4a4a55] mb-[16px] md:mb-0 leading-[1.5] text-left md:text-left">
-            Published by{" "}
-            <a href="#" className="text-[#15151a] font-semibold no-underline">
-              OneChat AI
-            </a>{" "}
-            <span className="inline">
-              — Your Personalized AI Super App, Curated for You
-            </span>
-          </div>
-          <div className="flex gap-[16px] md:gap-[24px]">
-            <a href="#" className="hover:text-[#4a4a55] text-[#8a8a95]">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-[#4a4a55] text-[#8a8a95]">
-              Terms
-            </a>
-            <a href="#" className="hover:text-[#4a4a55] text-[#8a8a95]">
-              Contact
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

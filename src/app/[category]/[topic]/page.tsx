@@ -5,6 +5,8 @@ import Category from "@/src/models/Category";
 import Topic from "@/src/models/Topic";
 import Chart from "@/src/models/Chart";
 import TopicChartsClient from "./TopicChartsClient";
+import Header from "@/src/components/Header";
+import Footer from "@/src/components/Footer";
 
 interface PageProps {
   params: Promise<{ category: string; topic: string }>;
@@ -100,49 +102,7 @@ export default async function TopicPage({ params }: PageProps) {
   return (
     <div className="bg-[#ffffff] min-h-screen text-[#1a1a1a] font-sans text-[14px] md:text-[15px] leading-[1.55] md:leading-[1.6]">
       {/* SITE HEADER */}
-      <header className="bg-white border-b border-[#e5e5e5] py-3 md:py-4 sticky top-0 z-50">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 flex items-center justify-between">
-          <a
-            href="/ai-behavior-index"
-            className="font-serif text-[14px] md:text-[18px] font-bold text-[#1e3a5f] no-underline tracking-[-0.2px]"
-          >
-            OneChat<span className="text-[#6C56E5]">AI</span> · Behavior Index
-          </a>
-          <nav className="hidden md:flex gap-[28px] items-center">
-            <a
-              href="/"
-              className="text-[#1a1a1a] text-[14px] font-medium hover:text-[#6C56E5]"
-            >
-              Home
-            </a>
-            <a
-              href="/categories"
-              className="text-[#1a1a1a] text-[14px] font-medium hover:text-[#6C56E5]"
-            >
-              Categories
-            </a>
-            <a
-              href="/methodology"
-              className="text-[#1a1a1a] text-[14px] font-medium hover:text-[#6C56E5]"
-            >
-              Methodology
-            </a>
-            <a
-              href="/journalists"
-              className="text-[#1a1a1a] text-[14px] font-medium hover:text-[#6C56E5]"
-            >
-              For Journalists
-            </a>
-            <a
-              href="/app"
-              className="bg-[#6C56E5] text-white px-[18px] py-[8px] rounded-md font-semibold text-[14px]"
-            >
-              Try OneChat AI
-            </a>
-          </nav>
-          <button className="md:hidden text-[#1a1a1a] text-lg p-2">☰</button>
-        </div>
-      </header>
+      <Header activeTab="none" />
 
       {/* BREADCRUMB */}
       <div className="bg-[#eaf2fb] py-2 md:py-3 overflow-x-auto whitespace-nowrap">
@@ -266,28 +226,7 @@ export default async function TopicPage({ params }: PageProps) {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-[#fafafc] border-t border-[#e5e5e5] py-5 md:py-[32px] md:pb-[24px] mt-6 md:mt-[64px] text-center">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8">
-          <p className="font-serif text-[11.5px] md:text-[14px] text-[#555] mb-1.5 md:mb-2 leading-[1.4]">
-            Published by <strong className="text-[#1a1a1a]">OneChat AI</strong>{" "}
-            — Your Personalized AI Super App
-          </p>
-          <p className="text-[10px] md:text-[12px] text-[#888]">
-            <a href="#" className="text-[#555] hover:underline mx-1 md:mx-2">
-              Methodology
-            </a>{" "}
-            ·
-            <a href="#" className="text-[#555] hover:underline mx-1 md:mx-2">
-              For Journalists
-            </a>{" "}
-            ·
-            <a href="#" className="text-[#555] hover:underline mx-1 md:mx-2">
-              Contact
-            </a>{" "}
-            ·<span className="mx-1 md:mx-2">© 2026 OneChat AI</span>
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

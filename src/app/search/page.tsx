@@ -3,6 +3,8 @@ import { Search, Menu, X } from "lucide-react";
 import dbConnect from "@/src/lib/dbConnect";
 import Category from "@/src/models/Category";
 import Topic from "@/src/models/Topic";
+import Header from "@/src/components/Header";
+import Footer from "@/src/components/Footer";
 
 interface PageProps {
   searchParams: Promise<{ q?: string; sort?: string; page?: string }>;
@@ -110,48 +112,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       {/* MOBILE WRAPPER - Full width on desktop, constrained wrapper effect on mobile if needed */}
       <div className="w-full bg-white min-h-screen shadow-[0_4px_24px_rgba(0,0,0,0.12)] md:shadow-none">
         {/* TOP NAV */}
-        <header className="border-b border-[#d7e3f0] bg-white sticky top-0 z-20">
-          <div className="max-w-[1340px] mx-auto px-4 md:px-8 py-[14px] flex items-center justify-between">
-            <div className="font-serif text-[12px] md:text-[14px] tracking-[0.06em] md:tracking-[0.08em] uppercase text-[#15151a] font-bold">
-              <a
-                href="/ai-behavior-index/"
-                className="no-underline text-inherit block"
-              >
-                AI Behavior Index
-                <span className="text-[#8a8a95] font-normal tracking-[0.04em] text-[10px] md:text-[12px] normal-case block mt-[2px] md:inline md:mt-0 md:ml-1.5">
-                  by OneChat AI
-                </span>
-              </a>
-            </div>
-
-            {/* Desktop Links */}
-            <nav className="hidden md:flex gap-[28px] font-sans text-[13px] text-[#4a4a55]">
-              <a
-                href="/ai-behavior-index/"
-                className="hover:text-[#15151a] transition-colors"
-              >
-                Explore
-              </a>
-              <a
-                href="/ai-behavior-index/methodology/"
-                className="hover:text-[#15151a] transition-colors"
-              >
-                Methodology
-              </a>
-              <a
-                href="/ai-behavior-index/for-journalists/"
-                className="hover:text-[#15151a] transition-colors"
-              >
-                For Journalists
-              </a>
-            </nav>
-
-            {/* Mobile Hamburger Menu */}
-            <button className="md:hidden text-[#15151a] p-1 leading-none">
-              <Menu size={22} strokeWidth={2} />
-            </button>
-          </div>
-        </header>
+        <Header activeTab="none" />
 
         {/* BREADCRUMB */}
         <div className="bg-white px-4 md:px-8 pt-3 md:pt-4">
@@ -381,39 +342,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
         </main>
 
         {/* FOOTER */}
-        <footer className="border-t border-[#d7e3f0] bg-white p-[24px_16px_32px] md:p-[36px_32px]">
-          <div className="max-w-[1340px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center font-sans text-[11px] md:text-[12px] text-[#8a8a95]">
-            <div className="text-[#4a4a55] mb-[16px] md:mb-0 leading-[1.5] text-left md:text-left">
-              Published by{" "}
-              <a href="#" className="text-[#15151a] font-semibold no-underline">
-                OneChat AI
-              </a>{" "}
-              <span className="hidden md:inline">
-                — Your Personalized AI Super App, Curated for You
-              </span>
-            </div>
-            <div className="flex gap-[16px] md:gap-[24px]">
-              <a
-                href="#"
-                className="hover:text-[#15151a] transition-colors no-underline text-inherit"
-              >
-                Privacy
-              </a>
-              <a
-                href="#"
-                className="hover:text-[#15151a] transition-colors no-underline text-inherit"
-              >
-                Terms
-              </a>
-              <a
-                href="#"
-                className="hover:text-[#15151a] transition-colors no-underline text-inherit"
-              >
-                Contact
-              </a>
-            </div>
-          </div>
-        </footer>
+        <Footer />
       </div>
 
       {/* Script to trigger sorting submit */}

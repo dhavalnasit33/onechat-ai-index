@@ -1,5 +1,7 @@
 import React from 'react';
 import { Menu, Copy, Download, Share2 } from 'lucide-react';
+import Header from '@/src/components/Header';
+import Footer from '@/src/components/Footer';
 
 export const metadata = {
   title: 'Resources for Journalists | AI Behavior Index | OneChat AI',
@@ -12,21 +14,7 @@ export default function ForJournalistsPage() {
   return (
     <div className="bg-[#f9fbfd] min-h-screen text-[#15151a]">
       {/* SITE HEADER */}
-      <header className="border-b border-[#d7e3f0] bg-white sticky top-0 z-20">
-        <div className="max-w-[1340px] mx-auto px-4 md:px-8 py-3.5 flex items-center justify-between">
-          <div className="font-serif text-xs md:text-sm tracking-widest uppercase text-[#15151a] font-bold">
-            <a href="/ai-behavior-index/">
-              AI Behavior Index
-              <span className="text-[#8a8a95] font-normal tracking-[0.04em] text-[10px] md:text-xs ml-1 md:ml-1.5 normal-case block md:inline mt-0.5 md:mt-0">by OneChat AI</span>
-            </a>
-          </div>
-          <nav className="hidden md:flex gap-7 font-sans text-sm text-[#4a4a55]">
-            <a href="/ai-behavior-index/" className="hover:text-[#15151a] transition-colors">Home</a>
-            <a href="/ai-behavior-index/methodology/" className="hover:text-[#15151a] transition-colors">Methodology</a>
-            <a href="/ai-behavior-index/for-journalists/" className="text-[#15151a] font-semibold transition-colors">For Journalists</a>
-          </nav>
-        </div>
-      </header>
+      <Header activeTab="for-journalists" />
 
       {/* BREADCRUMB */}
       <div className="bg-white px-4 md:px-8 pt-3 md:pt-4">
@@ -134,18 +122,7 @@ export default function ForJournalistsPage() {
       </main>
 
       {/* FOOTER */}
-      <footer className="border-t border-[#d7e3f0] bg-white py-6 md:py-9 px-4 md:px-8 pb-8 md:pb-9">
-        <div className="max-w-[1340px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center font-sans text-[11px] md:text-xs text-[#8a8a95]">
-          <div className="text-[#4a4a55] mb-4 md:mb-0 leading-[1.5] text-left">
-            Published by <a href="#" className="text-[#15151a] font-semibold no-underline">OneChat AI</a> <span className="hidden md:inline">— Your Personalized AI Super App, Curated for You</span>
-          </div>
-          <div className="flex gap-4 md:gap-6">
-            <a href="#" className="hover:text-[#4a4a55]">Privacy</a>
-            <a href="#" className="hover:text-[#4a4a55]">Terms</a>
-            <a href="#" className="hover:text-[#4a4a55]">Contact</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
