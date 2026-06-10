@@ -11,7 +11,7 @@ interface ChartData {
   title: string;
   heading?: string;
   icon?: string;
-  chartType: "vbar" | "hbar" | "line" | "donut" | "hero_stat";
+  chartType: "vbar" | "hbar" | "line" | "donut" | "hero_stat" | "timeline" | "text_block";
   data: any;
   sourceLine?: string;
   sources?: any[];
@@ -95,10 +95,12 @@ export default function TopicChartsClient({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6">
         {regularCharts.map((chart, idx) => {
           // Typically Line charts or position 1, 5 take full width like in the HTML design
-          const isFullWidth =
-            chart.chartType === "line" ||
-            chart.position === 1 ||
-            chart.position === 5;
+         const isFullWidth =
+  chart.chartType === "line" ||
+  chart.chartType === "timeline" ||
+  chart.chartType === "text_block" ||
+  chart.position === 1 ||
+  chart.position === 5;
           return (
             <div
               key={chart._id}
@@ -143,9 +145,14 @@ export default function TopicChartsClient({
               </div>
 
               {/* Chart Container */}
-              <div
-                className={`relative w-full mt-2 md:mt-3 ${chart.chartType === "donut" ? "h-[220px] md:h-[320px]" : chart.chartType === "hbar" ? "h-[280px] md:h-[320px]" : "h-[240px] md:h-[320px]"}`}
-              >
+             <div
+  className={`relative w-full mt-2 md:mt-3 ${
+    chart.chartType === "timeline" ? "h-auto max-h-[400px] py-2" :
+    chart.chartType === "text_block" ? "h-auto py-4" :
+    chart.chartType === "donut" ? "h-[220px] md:h-[320px]" : 
+    chart.chartType === "hbar" ? "h-[280px] md:h-[320px]" : "h-[240px] md:h-[320px]"
+  }`}
+>
                 <InteractiveChart
                   chartId={chart.chartId}
                   chartType={chart.chartType}

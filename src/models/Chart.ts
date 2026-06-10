@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Model, Types } from 'mongoose';
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
 export interface ISource {
   position?: number;
@@ -13,12 +13,12 @@ export interface IChart extends Document {
   chartId: string;
   position: number;
   title: string;
-  chartType: 'vbar' | 'hbar' | 'line' | 'donut' | 'hero_stat';
+  chartType: "vbar" | "hbar" | "line" | "donut" | "hero_stat";
   data: any;
   sourceLine?: string;
   imageUrl?: string;
   imageUpdatedAt?: Date;
-  status: 'active' | 'removed';
+  status: "active" | "removed";
   sources: ISource[];
   heading?: string;
   icon?: string;
@@ -48,14 +48,14 @@ const SourceSchema = new Schema<ISource>(
       type: Date,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const ChartSchema = new Schema<IChart>(
   {
     topicId: {
       type: Schema.Types.ObjectId,
-      ref: 'Topic',
+      ref: "Topic",
       required: true,
     },
     chartId: {
@@ -77,7 +77,15 @@ const ChartSchema = new Schema<IChart>(
     },
     chartType: {
       type: String,
-      enum: ['vbar', 'hbar', 'line', 'donut', 'hero_stat'],
+      enum: [
+        "vbar",
+        "hbar",
+        "line",
+        "donut",
+        "hero_stat",
+        "timeline",
+        "text_block",
+      ],
       required: true,
     },
     data: {
@@ -86,28 +94,28 @@ const ChartSchema = new Schema<IChart>(
     },
     sourceLine: {
       type: String,
-      default: '',
+      default: "",
     },
     imageUrl: {
       type: String,
-      default: '',
+      default: "",
     },
     imageUpdatedAt: {
       type: Date,
     },
     status: {
       type: String,
-      enum: ['active', 'removed'],
-      default: 'active',
+      enum: ["active", "removed"],
+      default: "active",
       required: true,
     },
     heading: {
       type: String,
-      default: '',
+      default: "",
     },
     icon: {
       type: String,
-      default: '',
+      default: "",
     },
     displayHome: {
       type: Boolean,
@@ -117,14 +125,14 @@ const ChartSchema = new Schema<IChart>(
   },
   {
     timestamps: true,
-    collection: 'ai_index_charts',
-  }
+    collection: "ai_index_charts",
+  },
 );
 
 // Index: { topicId: 1, position: 1 }
 ChartSchema.index({ topicId: 1, position: 1 });
 
 const Chart: Model<IChart> =
-  mongoose.models.Chart || mongoose.model<IChart>('Chart', ChartSchema);
+  mongoose.models.Chart || mongoose.model<IChart>("Chart", ChartSchema);
 
 export default Chart;
