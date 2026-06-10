@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-
+import { X } from "lucide-react";
 export default function EmbedModal({
   isOpen,
   onClose,
@@ -60,10 +60,10 @@ export default function EmbedModal({
               Embed this chart
             </h2>
             <button
-              className="text-[24px] text-[#888] hover:text-[#1a1a1a] hover:bg-[#fafafc] rounded px-2 leading-none"
+              className="cursor-pointer text-[#888] hover:text-[#1a1a1a] hover:bg-[#fafafc] rounded p-1 leading-none"
               onClick={onClose}
             >
-              ×
+              <X size={20} strokeWidth={2.5} />
             </button>
           </div>
 
