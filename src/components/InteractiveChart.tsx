@@ -24,7 +24,7 @@ const watermarkPlugin = {
     const height = chart.height;
 
     ctx.save();
-    
+
     const textAI = "AI";
     const textBehaviorIndex = " Behavior Index";
     const textURL = "aibehaviorindex.org";
@@ -36,14 +36,14 @@ const watermarkPlugin = {
     const aiWidth = ctx.measureText(textAI).width;
     const behaviorWidth = ctx.measureText(textBehaviorIndex).width;
     const totalLine1Width = aiWidth + behaviorWidth;
-    
+
     // Line 2 Font
     ctx.font = "normal 9px sans-serif";
     const urlWidth = ctx.measureText(textURL).width;
 
     const marginRight = 16;
     const marginBottom = 8;
-    
+
     // Y positions
     const yLine2 = height - marginBottom;
     const yLine1 = yLine2 - 12;
@@ -58,7 +58,7 @@ const watermarkPlugin = {
     ctx.font = "bold 11px sans-serif";
     ctx.fillStyle = "#6C56E5";
     ctx.fillText(textAI, xLine1Start, yLine1);
-    
+
     ctx.fillStyle = "#1e3a5f";
     ctx.fillText(textBehaviorIndex, xLine1Start + aiWidth, yLine1);
 
@@ -196,23 +196,23 @@ export default function InteractiveChart({
       : data.data?.map((d: any) => d.label) || [];
     const datasets = isGrouped
       ? data.series.map((s: any, i: number) => ({
-          label: s.name,
-          data: s.data.map((dp: any) => dp.y),
-          backgroundColor: s.color || PALETTE[i % PALETTE.length],
-          borderRadius: 4,
-          maxBarThickness: isMobile ? 24 : 40,
-        }))
+        label: s.name,
+        data: s.data.map((dp: any) => dp.y),
+        backgroundColor: s.color || PALETTE[i % PALETTE.length],
+        borderRadius: 4,
+        maxBarThickness: isMobile ? 24 : 40,
+      }))
       : [
-          {
-            data: data.data?.map((d: any) => d.value) || [],
-            backgroundColor:
-              data.data?.map(
-                (d: any, i: number) => d.color || PALETTE[i % PALETTE.length],
-              ) || [],
-            borderRadius: 4,
-            maxBarThickness: isMobile ? 50 : 80,
-          },
-        ];
+        {
+          data: data.data?.map((d: any) => d.value) || [],
+          backgroundColor:
+            data.data?.map(
+              (d: any, i: number) => d.color || PALETTE[i % PALETTE.length],
+            ) || [],
+          borderRadius: 4,
+          maxBarThickness: isMobile ? 50 : 80,
+        },
+      ];
 
     return (
       <Bar
@@ -251,22 +251,22 @@ export default function InteractiveChart({
       : data.data?.map((d: any) => d.label) || [];
     const datasets = isGrouped
       ? data.series.map((s: any, i: number) => ({
-          label: s.name,
-          data: s.data.map((dp: any) => dp.y),
-          backgroundColor: s.color || PALETTE[i % PALETTE.length],
-          borderRadius: 4,
-          maxBarThickness: isMobile ? 14 : 20,
-        }))
+        label: s.name,
+        data: s.data.map((dp: any) => dp.y),
+        backgroundColor: s.color || PALETTE[i % PALETTE.length],
+        borderRadius: 4,
+        maxBarThickness: isMobile ? 14 : 20,
+      }))
       : [
-          {
-            data: data.data?.map((d: any) => d.value) || [],
-            backgroundColor:
-              data.data?.map((d: any, i: number) => d.color || PALETTE[0]) ||
-              [],
-            borderRadius: 4,
-            maxBarThickness: isMobile ? 22 : 28,
-          },
-        ];
+        {
+          data: data.data?.map((d: any) => d.value) || [],
+          backgroundColor:
+            data.data?.map((d: any, i: number) => d.color || PALETTE[0]) ||
+            [],
+          borderRadius: 4,
+          maxBarThickness: isMobile ? 22 : 28,
+        },
+      ];
 
     return (
       <Bar

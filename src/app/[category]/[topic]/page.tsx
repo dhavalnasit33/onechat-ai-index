@@ -96,9 +96,9 @@ export default async function TopicPage({ params }: PageProps) {
     .lean();
   const formattedDate = topic.lastRefreshedAt
     ? new Date(topic.lastRefreshedAt).toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      })
+      month: "long",
+      year: "numeric",
+    })
     : "June 2026";
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
@@ -219,7 +219,7 @@ export default async function TopicPage({ params }: PageProps) {
           </span>
           <span className="flex items-center gap-1.5">
             <BookOpen size={14} className="text-[#888]" />{" "}
-            {topic.sourceCount || 9} sources
+            {topic.sourceCount || 6} sources
           </span>
           <span className="flex items-center gap-1.5">
             <Calendar size={14} className="text-[#888]" /> Last updated{" "}

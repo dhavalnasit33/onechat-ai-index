@@ -160,31 +160,13 @@ export default async function Home() {
                   <div className="px-[20px] md:px-[28px] py-[11px] md:py-[12px] pb-[13px] md:pb-[14px] border-t border-[#eaf2fb] bg-[#eaf2fb] flex justify-between items-center font-sans text-[10px] md:text-[10.5px] text-[#8a8a95]">
                     <div>
                       Source:{" "}
-                      {chart.sources && chart.sources.length > 0 ? (
-                        chart.sources.map((src: any, idx: number) => (
-                          <span key={idx}>
-                            {idx > 0 && ", "}
-                            {src.sourceUrl ? (
-                              <a
-                                href={src.sourceUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[#4a4a55] underline font-semibold"
-                              >
-                                {src.sourceName}
-                              </a>
-                            ) : (
-                              <span className="font-semibold">
-                                {src.sourceName}
-                              </span>
-                            )}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="font-semibold">
-                          {chart.sourceLine || "Multiple"}
-                        </span>
-                      )}
+                      <span className="font-semibold">
+                        {chart.sourceLine
+                          ? chart.sourceLine.toLowerCase().startsWith("source:")
+                            ? chart.sourceLine.substring(7).trim()
+                            : chart.sourceLine
+                          : "Compiled by OneChat AI"}
+                      </span>
                     </div>
                     <div className="hidden md:block font-serif text-[11px] text-[#15151a] tracking-[0.06em] italic uppercase">
                       <strong className="font-bold not-italic">

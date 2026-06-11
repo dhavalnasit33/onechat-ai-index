@@ -87,11 +87,11 @@ function buildChartDataPayload(
       label: rows[0]?.label || "",
       ...(trendDirection || trendAmount
         ? {
-            trend: {
-              direction: trendDirection || undefined,
-              amount: trendAmount || undefined,
-            },
-          }
+          trend: {
+            direction: trendDirection || undefined,
+            amount: trendAmount || undefined,
+          },
+        }
         : {}),
     };
   }
@@ -138,9 +138,9 @@ function buildChartDataPayload(
           chartType === "line"
             ? s.dataPoints.map((dp) => ({ x: dp.x, y: Number(dp.y) || 0 }))
             : labels.map((l) => {
-                const match = s.dataPoints.find((dp) => dp.x === l);
-                return { x: l, y: match ? Number(match.y) || 0 : 0 };
-              }),
+              const match = s.dataPoints.find((dp) => dp.x === l);
+              return { x: l, y: match ? Number(match.y) || 0 : 0 };
+            }),
       })),
     };
   }
@@ -223,13 +223,13 @@ export default function ChartEditorPage({
       try {
         const topicUrl = apiUrl(`/api/admin/topics/${topicId}`);
         const topicRes = await fetch(topicUrl).then((r) => r.json());
-        
+
         let tSlug = "";
         let nextIndex = 0;
         if (topicRes.success) {
           tSlug = topicRes.data.slug;
-          nextIndex = topicRes.data.charts 
-            ? topicRes.data.charts.filter((c: any) => c.status !== "removed").length 
+          nextIndex = topicRes.data.charts
+            ? topicRes.data.charts.filter((c: any) => c.status !== "removed").length
             : 0;
         }
 
@@ -260,8 +260,8 @@ export default function ChartEditorPage({
                 publication: String(s.publication || ""),
                 publicationDate: s.publicationDate
                   ? new Date(String(s.publicationDate))
-                      .toISOString()
-                      .split("T")[0]
+                    .toISOString()
+                    .split("T")[0]
                   : "",
               }),
             ) || [],
@@ -294,9 +294,9 @@ export default function ChartEditorPage({
                     color: String(s.color || ""),
                     dataPoints: Array.isArray(s.data)
                       ? (s.data as Record<string, unknown>[]).map((dp) => ({
-                          x: String(dp.x || ""),
-                          y: String(dp.y ?? ""),
-                        }))
+                        x: String(dp.x || ""),
+                        y: String(dp.y ?? ""),
+                      }))
                       : [{ x: "", y: "" }],
                   })),
                 );
@@ -622,40 +622,40 @@ export default function ChartEditorPage({
             {(chartType === "vbar" ||
               chartType === "hbar" ||
               chartType === "line") && (
-              <div className="admin-form-row" style={{ marginBottom: 20 }}>
-                <div className="admin-form-group">
-                  <label className="admin-form-label">X-Axis Label</label>
-                  <Input
-                    placeholder="e.g. Year or Country"
-                    value={xLabel}
-                    onChange={(e) => setXLabel(e.target.value)}
-                  />
+                <div className="admin-form-row" style={{ marginBottom: 20 }}>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">X-Axis Label</label>
+                    <Input
+                      placeholder="e.g. Year or Country"
+                      value={xLabel}
+                      onChange={(e) => setXLabel(e.target.value)}
+                    />
+                  </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Y-Axis Label</label>
+                    <Input
+                      placeholder="e.g. Percentage"
+                      value={yLabel}
+                      onChange={(e) => setYLabel(e.target.value)}
+                    />
+                  </div>
+                  <div
+                    className="admin-form-group"
+                    style={{ gridColumn: "span 2" }}
+                  >
+                    <label className="admin-form-label">Y-Axis Format</label>
+                    <Select value={yFormat || "raw"} onValueChange={(val: string) => setYFormat(val === "raw" ? "" : val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Number (Raw)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="raw">Number (Raw)</SelectItem>
+                        <SelectItem value="percentage">Percentage (%)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="admin-form-group">
-                  <label className="admin-form-label">Y-Axis Label</label>
-                  <Input
-                    placeholder="e.g. Percentage"
-                    value={yLabel}
-                    onChange={(e) => setYLabel(e.target.value)}
-                  />
-                </div>
-                <div
-                  className="admin-form-group"
-                  style={{ gridColumn: "span 2" }}
-                >
-                  <label className="admin-form-label">Y-Axis Format</label>
-                  <Select value={yFormat || "raw"} onValueChange={(val: string) => setYFormat(val === "raw" ? "" : val)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Number (Raw)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="raw">Number (Raw)</SelectItem>
-                      <SelectItem value="percentage">Percentage (%)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
+              )}
 
             {isHeroStat ? (
               <div>
@@ -1151,15 +1151,15 @@ export default function ChartEditorPage({
                 }}
               >
                 {chartType === "line" &&
-                (() => {
-                  const pd = previewData as { series?: { data?: unknown[] }[] };
-                  return (
-                    !pd.series ||
-                    !pd.series[0] ||
-                    !pd.series[0].data ||
-                    pd.series[0].data.length === 0
-                  );
-                })() ? (
+                  (() => {
+                    const pd = previewData as { series?: { data?: unknown[] }[] };
+                    return (
+                      !pd.series ||
+                      !pd.series[0] ||
+                      !pd.series[0].data ||
+                      pd.series[0].data.length === 0
+                    );
+                  })() ? (
                   <div
                     style={{
                       display: "flex",
@@ -1176,11 +1176,11 @@ export default function ChartEditorPage({
                     chartId="preview-chart"
                     chartType={
                       chartType as
-                        | "vbar"
-                        | "hbar"
-                        | "line"
-                        | "donut"
-                        | "hero_stat"
+                      | "vbar"
+                      | "hbar"
+                      | "line"
+                      | "donut"
+                      | "hero_stat"
                     }
                     data={previewData}
                   />

@@ -164,26 +164,13 @@ export default function TopicChartsClient({
                 <span className="font-semibold text-[#1a1a1a] uppercase tracking-[0.4px] md:tracking-[0.5px] text-[9.5px] md:text-[10.5px]">
                   Source:{" "}
                 </span>
-                {chart.sources && chart.sources.length > 0 ? (
-                  chart.sources.map((src, i) => (
-                    <span key={i}>
-                      {i > 0 && "; "}
-                      {src.sourceUrl ? (
-                        <a
-                          href={src.sourceUrl}
-                          target="_blank"
-                          className="text-[#6C56E5] hover:underline"
-                        >
-                          {src.sourceName}
-                        </a>
-                      ) : (
-                        src.sourceName
-                      )}
-                    </span>
-                  ))
-                ) : (
-                  <span>{chart.sourceLine}</span>
-                )}
+                <span>
+                  {chart.sourceLine
+                    ? chart.sourceLine.toLowerCase().startsWith("source:")
+                      ? chart.sourceLine.substring(7).trim()
+                      : chart.sourceLine
+                    : "Compiled by OneChat AI"}
+                </span>
               </div>
               <button
                 onClick={() => openModal(chart)}
