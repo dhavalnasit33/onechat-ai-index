@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, UploadCloud, X } from "lucide-react";
-import { deleteImage, uploadFileToServer } from "@/src/lib/utils";
 import { topicSchema, type TopicFormValues } from "@/src/types";
+import { Input } from "@/src/components/admin/ui/Input";
+import { Textarea } from "@/src/components/admin/ui/Textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/src/components/admin/ui/Select";
+import IconUploadField from "@/src/components/admin/IconUploadField";
 
 interface TopicFormProps {
   initialData?: TopicFormValues | null;
@@ -22,20 +24,14 @@ export default function TopicForm({
   isSubmitting,
   onCancel,
 }: TopicFormProps) {
-  const [isUploadingIcon, setIsUploadingIcon] = useState(false);
-  const [isUploadingOg, setIsUploadingOg] = useState(false);
-  const [draggingIcon, setDraggingIcon] = useState(false);
-  const [draggingOg, setDraggingOg] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-
-  const iconInputRef = useRef<HTMLInputElement>(null);
-  const ogInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<TopicFormValues>({
     resolver: zodResolver(topicSchema),
@@ -53,45 +49,6 @@ export default function TopicForm({
     },
   });
 
-  const handleImageDrop = async (files: FileList | null, fieldName: "iconUrl" | "ogImageUrl") => {
-    const file = files?.[0];
-    if (!file) return;
-
-    setErrorMsg("");
-    const isIcon = fieldName === "iconUrl";
-    if (isIcon) setIsUploadingIcon(true);
-    else setIsUploadingOg(true);
-
-    try {
-      const currentImage = watch(fieldName);
-      if (currentImage) {
-        try { await deleteImage(currentImage); } catch (e) { console.error(e); }
-      }
-
-      const uploadedUrl = await uploadFileToServer(file, "onechatai-index-topic-icons");
-      setValue(fieldName, uploadedUrl, { shouldDirty: true, shouldValidate: true });
-    } catch (err: any) {
-      setErrorMsg(err.message || "Upload failed");
-    } finally {
-      if (isIcon) {
-        setIsUploadingIcon(false);
-        if (iconInputRef.current) iconInputRef.current.value = "";
-      } else {
-        setIsUploadingOg(false);
-        if (ogInputRef.current) ogInputRef.current.value = "";
-      }
-    }
-  };
-
-  const removeImage = async (e: React.MouseEvent, fieldName: "iconUrl" | "ogImageUrl") => {
-    e.stopPropagation();
-    const currentImage = watch(fieldName);
-    if (currentImage) {
-      try { await deleteImage(currentImage); } catch (err) { console.error(err); }
-    }
-    setValue(fieldName, "", { shouldDirty: true, shouldValidate: true });
-  };
-
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       {errorMsg && <div className="admin-login-error" style={{ marginBottom: 20 }}>{errorMsg}</div>}
@@ -103,8 +60,7 @@ export default function TopicForm({
         <div className="admin-form-row">
           <div className="admin-form-group">
             <label className="admin-form-label">Title *</label>
-            <input 
-              className="admin-form-input" 
+            <Input 
               placeholder="e.g. Global AI Investment Trends" 
               {...register("title")} 
             />
@@ -113,8 +69,7 @@ export default function TopicForm({
           
           <div className="admin-form-group">
             <label className="admin-form-label">Slug</label>
-            <input 
-              className="admin-form-input" 
+            <Input 
               placeholder="auto-generated" 
               style={{ fontFamily: 'var(--font-geist-mono)' }} 
               {...register("slug")} 
@@ -125,29 +80,51 @@ export default function TopicForm({
         <div className="admin-form-row">
           <div className="admin-form-group">
             <label className="admin-form-label">Category *</label>
-            <select className="admin-form-select" {...register("categoryId")}>
-              <option value="">Select a category...</option>
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>{cat.name}</option>
-              ))}
-            </select>
+            <Controller
+              name="categoryId"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat._id} value={cat._id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.categoryId && <p className="admin-form-error">{errors.categoryId.message}</p>}
           </div>
           
           <div className="admin-form-group">
             <label className="admin-form-label">Status</label>
-            <select className="admin-form-select" {...register("status")}>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
+            <Controller
+              name="status"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Draft" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
         </div>
 
         <div className="admin-form-group">
           <label className="admin-form-label">Description *</label>
-          <textarea 
-            className="admin-form-textarea" 
+          <Textarea 
             placeholder="Describe this topic..." 
             {...register("description")} 
           />
@@ -155,66 +132,13 @@ export default function TopicForm({
         </div>
 
         {/* ── Icon Upload ── */}
-        <div className="admin-form-group">
-          <label className="admin-form-label">Topic Icon</label>
-          <div
-            onClick={() => !isUploadingIcon && iconInputRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); setDraggingIcon(true); }}
-            onDragLeave={() => setDraggingIcon(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDraggingIcon(false);
-              handleImageDrop(e.dataTransfer.files, "iconUrl");
-            }}
-            style={{
-              border: `2px dashed ${draggingIcon ? 'var(--admin-primary, #0468BD)' : 'var(--admin-border, #d7e3f0)'}`,
-              borderRadius: 8,
-              padding: watch("iconUrl") ? '12px' : '24px 16px',
-              cursor: isUploadingIcon ? 'not-allowed' : 'pointer',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              background: draggingIcon ? 'rgba(4,104,189,0.04)' : 'var(--admin-surface, #fff)',
-              transition: 'border-color 0.15s, background 0.15s', minHeight: watch("iconUrl") ? 'auto' : 90,
-            }}
-          >
-            <input 
-              ref={iconInputRef} 
-              type="file" 
-              accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp" 
-              style={{ display: 'none' }} 
-              onChange={(e) => handleImageDrop(e.target.files, "iconUrl")} 
-              disabled={isUploadingIcon} 
-            />
-            
-            {isUploadingIcon ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--admin-text-muted, #8a8a95)' }}>
-                <Loader2 size={22} style={{ animation: 'spin 1s linear infinite' }} />
-                <span style={{ fontSize: 12 }}>Uploading…</span>
-              </div>
-            ) : watch("iconUrl") ? (
-              <div style={{ position: 'relative', display: 'inline-flex' }}>
-                <img 
-                  src={watch("iconUrl")} 
-                  alt="Icon preview" 
-                  style={{ height: 64, width: 64, objectFit: 'contain', borderRadius: 6, border: '1px solid var(--admin-border, #d7e3f0)', background: '#f9fbfd' }} 
-                />
-                <button 
-                  type="button" 
-                  onClick={(e) => removeImage(e, "iconUrl")} 
-                  style={{ position: 'absolute', top: -8, right: -8, width: 20, height: 20, borderRadius: '50%', background: 'var(--admin-danger, #e53935)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', padding: 0 }}
-                >
-                  <X size={11} />
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: 'var(--admin-text-muted, #8a8a95)' }}>
-                <UploadCloud size={24} />
-                <span style={{ fontSize: 12, textAlign: 'center', lineHeight: 1.4 }}>
-                  Drag & drop or <strong style={{ color: 'var(--admin-primary, #0468BD)' }}>click to upload</strong><br/>PNG, JPG, SVG, WebP
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+        <IconUploadField
+          value={watch("iconUrl") ?? ""}
+          onChange={(url) => setValue("iconUrl", url, { shouldDirty: true, shouldValidate: true })}
+          folder="onechatai-index-topic-icons"
+          label="Topic Icon"
+          disabled={isSubmitting}
+        />
       </div>
 
       {/* ── Methodology ── */}
@@ -222,8 +146,7 @@ export default function TopicForm({
         <h3 className="admin-form-section-title">Methodology</h3>
         <div className="admin-form-group">
           <label className="admin-form-label">Methodology Note</label>
-          <textarea 
-            className="admin-form-textarea" 
+          <Textarea 
             placeholder="Explain data collection methodology..." 
             {...register("methodologyNote")} 
           />
@@ -235,87 +158,31 @@ export default function TopicForm({
         <h3 className="admin-form-section-title">SEO</h3>
         <div className="admin-form-group">
           <label className="admin-form-label">Meta Title</label>
-          <input 
-            className="admin-form-input" 
+          <Input 
             placeholder="Page title for search engines" 
             {...register("metaTitle")} 
           />
         </div>
         <div className="admin-form-group">
           <label className="admin-form-label">Meta Description</label>
-          <textarea 
-            className="admin-form-textarea" 
+          <Textarea 
             style={{ minHeight: 70 }} 
             placeholder="Description for search engine results..." 
             {...register("metaDescription")} 
           />
         </div>
         
-        {/* ── OG Image Upload ── */}
-        <div className="admin-form-group">
-          <label className="admin-form-label">OG Image Upload</label>
-          <div
-            onClick={() => !isUploadingOg && ogInputRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); setDraggingOg(true); }}
-            onDragLeave={() => setDraggingOg(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDraggingOg(false);
-              handleImageDrop(e.dataTransfer.files, "ogImageUrl");
-            }}
-            style={{
-              border: `2px dashed ${draggingOg ? 'var(--admin-primary, #0468BD)' : 'var(--admin-border, #d7e3f0)'}`,
-              borderRadius: 8,
-              padding: watch("ogImageUrl") ? '12px' : '24px 16px',
-              cursor: isUploadingOg ? 'not-allowed' : 'pointer',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              background: draggingOg ? 'rgba(4,104,189,0.04)' : 'var(--admin-surface, #fff)',
-              transition: 'border-color 0.15s, background 0.15s', minHeight: watch("ogImageUrl") ? 'auto' : 90,
-            }}
-          >
-            <input 
-              ref={ogInputRef} 
-              type="file" 
-              accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp" 
-              style={{ display: 'none' }} 
-              onChange={(e) => handleImageDrop(e.target.files, "ogImageUrl")} 
-              disabled={isUploadingOg} 
-            />
-            
-            {isUploadingOg ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--admin-text-muted, #8a8a95)' }}>
-                <Loader2 size={22} style={{ animation: 'spin 1s linear infinite' }} />
-                <span style={{ fontSize: 12 }}>Uploading…</span>
-              </div>
-            ) : watch("ogImageUrl") ? (
-              <div style={{ position: 'relative', display: 'inline-flex' }}>
-                <img 
-                  src={watch("ogImageUrl")} 
-                  alt="OG preview" 
-                  style={{ height: 82, width: 120, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--admin-border, #d7e3f0)', background: '#f9fbfd' }} 
-                />
-                <button 
-                  type="button" 
-                  onClick={(e) => removeImage(e, "ogImageUrl")} 
-                  style={{ position: 'absolute', top: -8, right: -8, width: 20, height: 20, borderRadius: '50%', background: 'var(--admin-danger, #e53935)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', padding: 0 }}
-                >
-                  <X size={11} />
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: 'var(--admin-text-muted, #8a8a95)' }}>
-                <UploadCloud size={24} />
-                <span style={{ fontSize: 12, textAlign: 'center', lineHeight: 1.4 }}>
-                  Drag & drop or <strong style={{ color: 'var(--admin-primary, #0468BD)' }}>click to upload</strong><br/>PNG, JPG, SVG, WebP
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+        <IconUploadField
+          value={watch("ogImageUrl") ?? ""}
+          onChange={(url) => setValue("ogImageUrl", url, { shouldDirty: true, shouldValidate: true })}
+          folder="onechatai-index-topic-icons"
+          label="OG Image (Social Share)"
+          disabled={isSubmitting}
+        />
       </div>
 
       <div style={{ display: 'flex', gap: 10 }}>
-        <button className="admin-btn admin-btn-primary" type="submit" disabled={isSubmitting || isUploadingIcon || isUploadingOg}>
+        <button className="admin-btn admin-btn-primary" type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Saving..." : (initialData ? "Save Changes" : "Create Topic")}
         </button>
         {onCancel && (

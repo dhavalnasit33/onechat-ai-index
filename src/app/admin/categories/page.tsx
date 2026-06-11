@@ -5,6 +5,10 @@ import Link from "next/link";
 import { Plus, MoreVertical, Pencil, Trash2, BarChart3 } from "lucide-react";
 import { apiUrl } from "@/src/lib/basePath";
 import { CategoryRow } from "@/src/types";
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/src/components/admin/ui/Table";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/src/components/admin/ui/DropdownMenu";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/src/components/admin/ui/AlertDialog";
+import { toast } from "@/src/hooks/use-toast";
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<CategoryRow[]>([]);
@@ -12,12 +16,8 @@ export default function AdminCategoriesPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
-  const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success" | "error" });
-
-  const showToast = (message: string, type: "success" | "error" = "success") => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast((t) => ({ ...t, show: false })), 3000);
-  };
+  const [categoryToDelete, setCategoryToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -31,11 +31,11 @@ export default function AdminCategoriesPage() {
           setCategories(json.data);
           setTotal(json.total || 0);
         } else {
-          showToast(json.message || "Failed to load categories", "error");
+          toast({ title: json.message || "Failed to load categories", variant: "destructive" });
         }
       })
       .catch(() => {
-        if (active) showToast("Failed to load categories", "error");
+        if (active) toast({ title: "Failed to load categories", variant: "destructive" });
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -46,22 +46,26 @@ export default function AdminCategoriesPage() {
     };
   }, [page, limit]);
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete category "${name}"? This cannot be undone.`)) return;
+  const handleDeleteConfirm = async () => {
+    if (!categoryToDelete) return;
+    setIsDeleting(true);
 
     try {
-      const res = await fetch(apiUrl(`/api/admin/categories/${id}`), { method: "DELETE" });
+      const res = await fetch(apiUrl(`/api/admin/categories/${categoryToDelete.id}`), { method: "DELETE" });
       const json = await res.json();
 
       if (json.success) {
-        setCategories((items) => items.filter((item) => item._id !== id));
+        setCategories((items) => items.filter((item) => item._id !== categoryToDelete.id));
         setTotal((count) => Math.max(0, count - 1));
-        showToast("Category deleted");
+        toast({ title: "Category deleted", variant: "default" });
       } else {
-        showToast(json.message || "Failed to delete category", "error");
+        toast({ title: json.message || "Failed to delete category", variant: "destructive" });
       }
     } catch {
-      showToast("Failed to delete category", "error");
+      toast({ title: "Failed to delete category", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+      setCategoryToDelete(null);
     }
   };
 
@@ -82,46 +86,46 @@ export default function AdminCategoriesPage() {
       </div>
 
       <div className="admin-table-wrap">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Pos</th>
-              <th>Name</th>
-              <th>Slug</th>
-              <th>Description</th>
-              <th>Topics</th>
-              <th>Updated</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Pos</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Slug</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Topics</TableHead>
+              <TableHead>Updated</TableHead>
+              <TableHead className="w-[80px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {loading ? (
               Array.from({ length: 5 }).map((_, rowIndex) => (
-                <tr key={rowIndex}>
+                <TableRow key={rowIndex}>
                   {Array.from({ length: 7 }).map((_, colIndex) => (
-                    <td key={colIndex}>
+                    <TableCell key={colIndex}>
                       <span
                         className="admin-skeleton"
                         style={{ display: "inline-block", width: colIndex === 1 ? 180 : 60, height: 16 }}
                       />
-                    </td>
+                    </TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))
             ) : categories.length === 0 ? (
-              <tr>
-                <td colSpan={7}>
+              <TableRow>
+                <TableCell colSpan={7}>
                   <div className="admin-empty">
                     <BarChart3 size={48} />
                     <p>No categories found. Create one to get started.</p>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               categories.map((category) => (
-                <tr key={category._id}>
-                  <td style={{ color: "var(--admin-text-muted)" }}>{category.position}</td>
-                  <td>
+                <TableRow key={category._id}>
+                  <TableCell style={{ color: "var(--admin-text-muted)" }}>{category.position}</TableCell>
+                  <TableCell>
                     <Link
                       href={`/admin/categories/${category._id}`}
                       style={{ color: "var(--admin-text)", fontWeight: 600, textDecoration: "none" }}
@@ -131,11 +135,11 @@ export default function AdminCategoriesPage() {
                     <div style={{ fontSize: 11, color: "var(--admin-text-muted)", fontFamily: "var(--font-geist-mono)" }}>
                       {category.slug}
                     </div>
-                  </td>
-                  <td style={{ color: "var(--admin-text-muted)", fontFamily: "var(--font-geist-mono)" }}>
+                  </TableCell>
+                  <TableCell style={{ color: "var(--admin-text-muted)", fontFamily: "var(--font-geist-mono)" }}>
                     {category.slug}
-                  </td>
-                  <td
+                  </TableCell>
+                  <TableCell
                     style={{
                       color: "var(--admin-text-muted)",
                       maxWidth: 240,
@@ -145,35 +149,38 @@ export default function AdminCategoriesPage() {
                     }}
                   >
                     {category.description || "—"}
-                  </td>
-                  <td>{category.topicCount}</td>
-                  <td style={{ color: "var(--admin-text-muted)", fontSize: 12 }}>
+                  </TableCell>
+                  <TableCell>{category.topicCount}</TableCell>
+                  <TableCell style={{ color: "var(--admin-text-muted)", fontSize: 12 }}>
                     {category.updatedAt ? new Date(category.updatedAt).toLocaleDateString() : "—"}
-                  </td>
-                  <td>
-                    <details className="admin-action-menu">
-                      <summary className="admin-btn-icon" aria-label={`Actions for ${category.name}`}>
-                        <MoreVertical size={16} />
-                      </summary>
-                      <div className="admin-action-menu-list">
-                        <Link href={`/admin/categories/${category._id}`} className="admin-action-menu-item">
-                          <Pencil size={14} /> Edit
-                        </Link>
-                        <button
-                          className="admin-action-menu-item danger"
-                          type="button"
-                          onClick={() => handleDelete(category._id, category.name)}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="admin-btn-icon" aria-label={`Actions for ${category.name}`}>
+                          <MoreVertical size={16} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/categories/${category._id}`}>
+                            <Pencil size={14} /> Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-[var(--admin-danger)] data-[highlighted]:bg-[rgba(239,68,68,0.06)] data-[highlighted]:text-[var(--admin-danger)]"
+                          onClick={() => setCategoryToDelete({ id: category._id, name: category.name })}
                         >
                           <Trash2 size={14} /> Delete
-                        </button>
-                      </div>
-                    </details>
-                  </td>
-                </tr>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {total > limit && (
@@ -203,9 +210,23 @@ export default function AdminCategoriesPage() {
         </div>
       )}
 
-      <div className={`admin-toast ${toast.type} ${toast.show ? "show" : ""}`}>
-        {toast.message}
-      </div>
+      {/* Delete Confirmation Alert Dialog */}
+      <AlertDialog open={!!categoryToDelete} onOpenChange={(open: boolean) => !open && setCategoryToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Category</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the category "{categoryToDelete?.name}"? This will permanently remove it. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e: React.MouseEvent) => { e.preventDefault(); handleDeleteConfirm(); }} disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

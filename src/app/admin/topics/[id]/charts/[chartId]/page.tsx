@@ -3,11 +3,18 @@
 import { useState, useEffect, FormEvent, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, GripVertical, ChevronDown, ChevronUp, PlusCircle } from "lucide-react";
 import { apiUrl } from "@/src/lib/basePath";
 import InteractiveChart from "@/src/components/InteractiveChart";
 import IconUploadField from "@/src/components/admin/IconUploadField";
 import { DataRow, SourceRow, LineSeries } from "@/src/types";
+import { Input } from "@/src/components/admin/ui/Input";
+import { Textarea } from "@/src/components/admin/ui/Textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/src/components/admin/ui/Select";
+import { Switch } from "@/src/components/admin/ui/Switch";
+import { toast } from "@/src/hooks/use-toast";
+import { Card } from "@/src/components/admin/ui/Card";
+import { DatePicker } from "@/src/components/admin/ui/DatePicker";
 
 export const CHART_TYPES = [
   { value: "vbar", label: "Vertical Bar" },
@@ -151,6 +158,7 @@ function buildChartDataPayload(
     })),
   };
 }
+
 export default function ChartEditorPage({
   params,
 }: {
@@ -162,17 +170,12 @@ export default function ChartEditorPage({
 
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState({
-    show: false,
-    message: "",
-    type: "success" as "success" | "error",
-  });
 
   // Form state
   const [title, setTitle] = useState("");
   const [chartIdSlug, setChartIdSlug] = useState("");
   const [chartType, setChartType] = useState<string>("vbar");
-  const [position, setPosition] = useState(0);
+  const [position, setPosition] = useState<number | "">(0);
   const [sourceLine, setSourceLine] = useState("");
   const [dataRows, setDataRows] = useState<DataRow[]>([
     { label: "", value: "", color: "" },
@@ -197,12 +200,21 @@ export default function ChartEditorPage({
   // Preview data state
   const [previewData, setPreviewData] = useState<unknown | null>(null);
 
+  // Collapse states for lists
+  const [collapsedRows, setCollapsedRows] = useState<Record<number, boolean>>({});
+  const [collapsedSeries, setCollapsedSeries] = useState<Record<number, boolean>>({});
+  const [collapsedSources, setCollapsedSources] = useState<Record<number, boolean>>({});
+
+  // Drag states
+  const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
+  const [draggedSeriesIndex, setDraggedSeriesIndex] = useState<number | null>(null);
+  const [draggedSourceIndex, setDraggedSourceIndex] = useState<number | null>(null);
+
   const showToast = (
     message: string,
     type: "success" | "error" = "success",
   ) => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast((t) => ({ ...t, show: false })), 3000);
+    toast({ title: message, variant: type === "error" ? "destructive" : "default" });
   };
 
   // Fetch chart data for editing
@@ -392,7 +404,7 @@ export default function ChartEditorPage({
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-|-$/g, ""),
       chartType,
-      position,
+      position: position === "" ? 0 : Number(position),
       sourceLine,
       heading,
       icon,
@@ -492,8 +504,7 @@ export default function ChartEditorPage({
             <div className="admin-form-row">
               <div className="admin-form-group">
                 <label className="admin-form-label">Title *</label>
-                <input
-                  className="admin-form-input"
+                <Input
                   placeholder="e.g. AI Investment by Sector"
                   value={title}
                   onChange={(e) => {
@@ -511,8 +522,7 @@ export default function ChartEditorPage({
               </div>
               <div className="admin-form-group">
                 <label className="admin-form-label">Chart ID</label>
-                <input
-                  className="admin-form-input"
+                <Input
                   value={chartIdSlug}
                   onChange={(e) => setChartIdSlug(e.target.value)}
                   disabled={!isNew}
@@ -526,79 +536,63 @@ export default function ChartEditorPage({
             <div className="admin-form-row">
               <div className="admin-form-group">
                 <label className="admin-form-label">Chart Type *</label>
-                <select
-                  className="admin-form-select"
-                  value={chartType}
-                  onChange={(e) => setChartType(e.target.value)}
-                >
-                  {CHART_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
+                <Select value={chartType} onValueChange={(val: string) => setChartType(val)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CHART_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="admin-form-group">
                 <label className="admin-form-label">Position</label>
-                <input
-                  className="admin-form-input"
+                <Input
                   type="number"
                   value={position}
-                  onChange={(e) => setPosition(Number(e.target.value))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPosition(val === "" ? "" : Number(val));
+                  }}
                 />
               </div>
             </div>
-            <div className="admin-form-group">
-              <label className="admin-form-label">Source Line</label>
-              <input
-                className="admin-form-input"
-                placeholder="e.g. Source: World Economic Forum, 2024"
-                value={sourceLine}
-                onChange={(e) => setSourceLine(e.target.value)}
-              />
-            </div>
-
             <div className="admin-form-row">
               <div className="admin-form-group">
                 <label className="admin-form-label">
                   Heading / Card Title Override
                 </label>
-                <input
-                  className="admin-form-input"
+                <Input
                   placeholder="e.g. Weekly adoption cohort"
                   value={heading}
                   onChange={(e) => setHeading(e.target.value)}
                 />
               </div>
-              <div
-                className="admin-form-group"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  height: "100%",
-                  marginTop: "auto",
-                  paddingBottom: 12,
-                }}
-              >
-                <label
-                  className="admin-form-label"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    cursor: "pointer",
-                    userSelect: "none",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={displayHome}
-                    onChange={(e) => setDisplayHome(e.target.checked)}
-                    style={{ width: 18, height: 18, cursor: "pointer" }}
-                  />
-                  Display on Home Page Dashboard
-                </label>
+              <div className="admin-form-group">
+                <label className="admin-form-label">Source Line</label>
+                <Input
+                  placeholder="e.g. Source: World Economic Forum, 2024"
+                  value={sourceLine}
+                  onChange={(e) => setSourceLine(e.target.value)}
+                />
               </div>
+            </div>
+
+            <div className="admin-form-group" style={{ marginBottom: 20 }}>
+              <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <div className="text-sm font-semibold text-[var(--admin-text)]">Display on Dashboard</div>
+                  <div className="text-xs text-[var(--admin-text-muted)] font-normal">Show this chart on the home page admin dashboard</div>
+                </div>
+                <Switch
+                  checked={displayHome}
+                  onCheckedChange={(checked: boolean) => setDisplayHome(checked)}
+                />
+              </Card>
             </div>
 
             <IconUploadField
@@ -623,8 +617,7 @@ export default function ChartEditorPage({
               <div className="admin-form-row" style={{ marginBottom: 20 }}>
                 <div className="admin-form-group">
                   <label className="admin-form-label">X-Axis Label</label>
-                  <input
-                    className="admin-form-input"
+                  <Input
                     placeholder="e.g. Year or Country"
                     value={xLabel}
                     onChange={(e) => setXLabel(e.target.value)}
@@ -632,8 +625,7 @@ export default function ChartEditorPage({
                 </div>
                 <div className="admin-form-group">
                   <label className="admin-form-label">Y-Axis Label</label>
-                  <input
-                    className="admin-form-input"
+                  <Input
                     placeholder="e.g. Percentage"
                     value={yLabel}
                     onChange={(e) => setYLabel(e.target.value)}
@@ -644,14 +636,15 @@ export default function ChartEditorPage({
                   style={{ gridColumn: "span 2" }}
                 >
                   <label className="admin-form-label">Y-Axis Format</label>
-                  <select
-                    className="admin-form-select"
-                    value={yFormat}
-                    onChange={(e) => setYFormat(e.target.value)}
-                  >
-                    <option value="">Number (Raw)</option>
-                    <option value="percentage">Percentage (%)</option>
-                  </select>
+                  <Select value={yFormat || "raw"} onValueChange={(val: string) => setYFormat(val === "raw" ? "" : val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Number (Raw)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="raw">Number (Raw)</SelectItem>
+                      <SelectItem value="percentage">Percentage (%)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}
@@ -661,8 +654,7 @@ export default function ChartEditorPage({
                 <div className="admin-form-row">
                   <div className="admin-form-group">
                     <label className="admin-form-label">Label</label>
-                    <input
-                      className="admin-form-input"
+                    <Input
                       placeholder="e.g. Total Investment"
                       value={dataRows[0]?.label || ""}
                       onChange={(e) =>
@@ -672,8 +664,7 @@ export default function ChartEditorPage({
                   </div>
                   <div className="admin-form-group">
                     <label className="admin-form-label">Value</label>
-                    <input
-                      className="admin-form-input"
+                    <Input
                       placeholder="e.g. 73%"
                       value={dataRows[0]?.value || ""}
                       onChange={(e) =>
@@ -685,24 +676,22 @@ export default function ChartEditorPage({
                 <div className="admin-form-row">
                   <div className="admin-form-group">
                     <label className="admin-form-label">Trend Direction</label>
-                    <select
-                      className="admin-form-select"
-                      value={trendDirection}
-                      onChange={(e) =>
-                        setTrendDirection(e.target.value as "up" | "down" | "")
-                      }
-                    >
-                      <option value="">No Trend</option>
-                      <option value="up">Up (↑)</option>
-                      <option value="down">Down (↓)</option>
-                    </select>
+                    <Select value={trendDirection || "none"} onValueChange={(val: string) => setTrendDirection(val === "none" ? "" : (val as "up" | "down"))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="No Trend" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Trend</SelectItem>
+                        <SelectItem value="up">Up (↑)</SelectItem>
+                        <SelectItem value="down">Down (↓)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="admin-form-group">
                     <label className="admin-form-label">
                       Trend Amount / Label
                     </label>
-                    <input
-                      className="admin-form-input"
+                    <Input
                       placeholder="e.g. +32pp since 2022"
                       value={trendAmount}
                       onChange={(e) => setTrendAmount(e.target.value)}
@@ -713,403 +702,431 @@ export default function ChartEditorPage({
             ) : chartType === "line" ? (
               /* Line Series Builder */
               <div>
-                {lineSeries.map((series, seriesIdx) => (
-                  <div
-                    key={seriesIdx}
-                    className="admin-card"
-                    style={{
-                      marginBottom: 20,
-                      padding: 16,
-                      borderLeft: `4px solid ${series.color || "#088DFF"}`,
-                    }}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>Line Series</h4>
+                  <button
+                    type="button"
+                    className="admin-add-row-btn"
+                    onClick={addLineSeries}
+                    style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <span style={{ fontSize: 13, fontWeight: 700 }}>
-                        Series #{seriesIdx + 1}
-                      </span>
-                      {lineSeries.length > 1 && (
-                        <button
-                          type="button"
-                          className="admin-btn-icon"
-                          onClick={() => removeLineSeries(seriesIdx)}
-                          style={{ color: "var(--admin-danger)" }}
-                        >
-                          <Trash2 size={14} /> Remove Series
-                        </button>
-                      )}
-                    </div>
-                    <div
-                      className="admin-form-row"
-                      style={{ marginBottom: 12 }}
-                    >
-                      <div className="admin-form-group">
-                        <label className="admin-form-label">Series Name</label>
-                        <input
-                          className="admin-form-input"
-                          placeholder="e.g. Gen Z (18-25)"
-                          value={series.name}
-                          onChange={(e) =>
-                            updateLineSeriesInfo(
-                              seriesIdx,
-                              "name",
-                              e.target.value,
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="admin-form-group">
-                        <label className="admin-form-label">Series Color</label>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 6,
-                            alignItems: "center",
-                          }}
-                        >
-                          <input
-                            type="color"
-                            value={series.color || "#088DFF"}
-                            onChange={(e) =>
-                              updateLineSeriesInfo(
-                                seriesIdx,
-                                "color",
-                                e.target.value,
-                              )
-                            }
-                            style={{
-                              width: 34,
-                              height: 34,
-                              padding: 0,
-                              border: "none",
-                              borderRadius: 4,
-                              cursor: "pointer",
-                            }}
-                          />
-                          <input
-                            className="admin-form-input"
-                            value={series.color}
-                            onChange={(e) =>
-                              updateLineSeriesInfo(
-                                seriesIdx,
-                                "color",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="#hex"
-                            style={{ flex: 1 }}
-                          />
-                        </div>
-                      </div>
-                    </div>
+                    <PlusCircle size={14} /> Add Series
+                  </button>
+                </div>
 
-                    <label className="admin-form-label">
-                      Data Points (X/Y pairs)
-                    </label>
+                {lineSeries.map((series, seriesIdx) => {
+                  const isCollapsed = !!collapsedSeries[seriesIdx];
+                  return (
                     <div
+                      key={seriesIdx}
+                      className="admin-drag-card"
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedSeriesIndex(seriesIdx);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedSeriesIndex === null || draggedSeriesIndex === seriesIdx) return;
+                        const updated = [...lineSeries];
+                        const [draggedItem] = updated.splice(draggedSeriesIndex, 1);
+                        updated.splice(seriesIdx, 0, draggedItem);
+                        setLineSeries(updated);
+                        setDraggedSeriesIndex(null);
+                      }}
                       style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 6,
-                        marginBottom: 10,
+                        borderLeft: `4px solid ${series.color || "#088DFF"}`,
                       }}
                     >
-                      {series.dataPoints.map((pt, ptIdx) => (
-                        <div
-                          key={ptIdx}
-                          style={{
-                            display: "flex",
-                            gap: 8,
-                            alignItems: "center",
-                          }}
-                        >
-                          <input
-                            className="admin-form-input"
-                            placeholder="X value (e.g. 2022)"
-                            value={pt.x}
-                            onChange={(e) =>
-                              updateDataPoint(
-                                seriesIdx,
-                                ptIdx,
-                                "x",
-                                e.target.value,
-                              )
-                            }
-                            style={{ flex: 1 }}
-                          />
-                          <input
-                            className="admin-form-input"
-                            placeholder="Y value (e.g. 45)"
-                            type="number"
-                            value={pt.y}
-                            onChange={(e) =>
-                              updateDataPoint(
-                                seriesIdx,
-                                ptIdx,
-                                "y",
-                                e.target.value,
-                              )
-                            }
-                            style={{ flex: 1 }}
-                          />
+                      <div className="admin-drag-card-header">
+                        <div className="admin-drag-card-title">
+                          <GripVertical size={16} style={{ cursor: "grab", color: "var(--admin-text-dim)" }} />
+                          <span>{series.name || `Series #${seriesIdx + 1}`}</span>
+                        </div>
+                        <div className="admin-drag-card-actions">
+                          {lineSeries.length > 1 && (
+                            <button
+                              type="button"
+                              className="admin-btn-icon"
+                              onClick={() => removeLineSeries(seriesIdx)}
+                              style={{
+                                color: "var(--admin-danger)",
+                                border: "1px solid rgba(239, 68, 68, 0.2)",
+                                borderRadius: "50%",
+                                padding: 5
+                              }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="admin-btn-icon"
-                            onClick={() => removeDataPoint(seriesIdx, ptIdx)}
-                            style={{ color: "var(--admin-danger)" }}
-                            disabled={series.dataPoints.length <= 1}
+                            onClick={() => setCollapsedSeries(prev => ({ ...prev, [seriesIdx]: !prev[seriesIdx] }))}
                           >
-                            <Trash2 size={14} />
+                            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
                           </button>
                         </div>
-                      ))}
+                      </div>
+
+                      <div className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}>
+                        <div className="admin-form-row" style={{ marginBottom: 12 }}>
+                          <div className="admin-form-group">
+                            <label className="admin-form-label">Series Name</label>
+                            <Input
+                              placeholder="e.g. Gen Z (18-25)"
+                              value={series.name}
+                              onChange={(e) =>
+                                updateLineSeriesInfo(
+                                  seriesIdx,
+                                  "name",
+                                  e.target.value,
+                                )
+                              }
+                            />
+                          </div>
+                          <div className="admin-form-group">
+                            <label className="admin-form-label">Series Color</label>
+                            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                              <input
+                                type="color"
+                                value={series.color || "#088DFF"}
+                                onChange={(e) =>
+                                  updateLineSeriesInfo(
+                                    seriesIdx,
+                                    "color",
+                                    e.target.value,
+                                  )
+                                }
+                                style={{
+                                  width: 34,
+                                  height: 34,
+                                  padding: 0,
+                                  border: "none",
+                                  borderRadius: 4,
+                                  cursor: "pointer",
+                                }}
+                              />
+                              <Input
+                                value={series.color}
+                                onChange={(e) =>
+                                  updateLineSeriesInfo(
+                                    seriesIdx,
+                                    "color",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="#hex"
+                                style={{ flex: 1 }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                          <label className="admin-form-label" style={{ marginBottom: 0 }}>
+                            Data Points (X/Y pairs)
+                          </label>
+                          <button
+                            type="button"
+                            className="admin-add-row-btn"
+                            onClick={() => addDataPoint(seriesIdx)}
+                            style={{ width: "auto", display: "inline-flex", padding: "4px 10px", fontSize: 11 }}
+                          >
+                            <PlusCircle size={12} /> Add Data Point
+                          </button>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {series.dataPoints.map((pt, ptIdx) => (
+                            <div key={ptIdx} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                              <Input
+                                placeholder="X value (e.g. 2022)"
+                                value={pt.x}
+                                onChange={(e) =>
+                                  updateDataPoint(
+                                    seriesIdx,
+                                    ptIdx,
+                                    "x",
+                                    e.target.value,
+                                  )
+                                }
+                                style={{ flex: 1 }}
+                              />
+                              <Input
+                                placeholder="Y value (e.g. 45)"
+                                type="number"
+                                value={pt.y}
+                                onChange={(e) =>
+                                  updateDataPoint(
+                                    seriesIdx,
+                                    ptIdx,
+                                    "y",
+                                    e.target.value,
+                                  )
+                                }
+                                style={{ flex: 1 }}
+                              />
+                              <button
+                                type="button"
+                                className="admin-btn-icon"
+                                onClick={() => removeDataPoint(seriesIdx, ptIdx)}
+                                style={{ color: "var(--admin-danger)" }}
+                                disabled={series.dataPoints.length <= 1}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      className="admin-add-row-btn"
-                      onClick={() => addDataPoint(seriesIdx)}
-                      style={{ padding: "6px 12px" }}
-                    >
-                      <Plus size={12} /> Add Data Point
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className="admin-btn admin-btn-secondary"
-                  onClick={addLineSeries}
-                  style={{
-                    width: "100%",
-                    justifyContent: "center",
-                    borderStyle: "dashed",
-                  }}
-                >
-                  <Plus size={16} /> Add Series
-                </button>
+                  );
+                })}
               </div>
             ) : (
               /* Flat Bar / Donut Table Data Editor */
               <>
-                {/* Header */}
-                <div
-                  className="admin-data-row"
-                  style={{ marginBottom: 4, opacity: 0.5 }}
-                >
-                  <span
-                    style={{
-                      flex: 1,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
-                    }}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>Data Rows</h4>
+                  <button
+                    type="button"
+                    className="admin-add-row-btn"
+                    onClick={addDataRow}
+                    style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}
                   >
-                    Label
-                  </span>
-                  <span
-                    style={{
-                      flex: 1,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
-                    }}
-                  >
-                    Value
-                  </span>
-                  {showColors && (
-                    <span
-                      style={{
-                        width: 90,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      Color
-                    </span>
-                  )}
-                  <span style={{ width: 32 }} />
+                    <PlusCircle size={14} /> Add Data Row
+                  </button>
                 </div>
 
-                {dataRows.map((row, i) => (
-                  <div key={i} className="admin-data-row">
-                    <input
-                      className="admin-form-input"
-                      placeholder="Label"
-                      value={row.label}
-                      onChange={(e) =>
-                        updateDataRow(i, "label", e.target.value)
-                      }
-                    />
-                    <input
-                      className="admin-form-input"
-                      placeholder="Value"
-                      type="number"
-                      value={row.value}
-                      onChange={(e) =>
-                        updateDataRow(i, "value", e.target.value)
-                      }
-                    />
-                    {showColors && (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 4,
-                          width: 90,
-                        }}
-                      >
-                        <input
-                          type="color"
-                          value={row.color || "#088DFF"}
-                          onChange={(e) =>
-                            updateDataRow(i, "color", e.target.value)
-                          }
-                          style={{
-                            width: 28,
-                            height: 28,
-                            padding: 0,
-                            border: "none",
-                            borderRadius: 4,
-                            cursor: "pointer",
-                          }}
-                        />
-                        <input
-                          className="admin-form-input"
-                          value={row.color || ""}
-                          onChange={(e) =>
-                            updateDataRow(i, "color", e.target.value)
-                          }
-                          placeholder="#hex"
-                          style={{ width: 58, fontSize: 11 }}
-                        />
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      className="admin-btn-icon"
-                      onClick={() => removeDataRow(i)}
-                      style={{ color: "var(--admin-danger)" }}
-                      title="Remove row"
+                {dataRows.map((row, i) => {
+                  const isCollapsed = !!collapsedRows[i];
+                  return (
+                    <div
+                      key={i}
+                      className="admin-drag-card"
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedRowIndex(i);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedRowIndex === null || draggedRowIndex === i) return;
+                        const updated = [...dataRows];
+                        const [draggedItem] = updated.splice(draggedRowIndex, 1);
+                        updated.splice(i, 0, draggedItem);
+                        setDataRows(updated);
+                        setDraggedRowIndex(null);
+                      }}
                     >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
+                      <div className="admin-drag-card-header">
+                        <div className="admin-drag-card-title">
+                          <GripVertical size={16} style={{ cursor: "grab", color: "var(--admin-text-dim)" }} />
+                          <span>{row.label || `Row #${i + 1}`}</span>
+                        </div>
+                        <div className="admin-drag-card-actions">
+                          <button
+                            type="button"
+                            className="admin-btn-icon"
+                            onClick={() => removeDataRow(i)}
+                            style={{
+                              color: "var(--admin-danger)",
+                              border: "1px solid rgba(239, 68, 68, 0.2)",
+                              borderRadius: "50%",
+                              padding: 5
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-btn-icon"
+                            onClick={() => setCollapsedRows(prev => ({ ...prev, [i]: !prev[i] }))}
+                          >
+                            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                          </button>
+                        </div>
+                      </div>
 
-                <button
-                  type="button"
-                  className="admin-add-row-btn"
-                  onClick={addDataRow}
-                >
-                  <Plus size={14} /> Add Data Row
-                </button>
+                      <div className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}>
+                        <div className="admin-form-row">
+                          <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                            <label className="admin-form-label">Label</label>
+                            <Input
+                              placeholder="Label"
+                              value={row.label}
+                              onChange={(e) =>
+                                updateDataRow(i, "label", e.target.value)
+                              }
+                            />
+                          </div>
+                          <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                            <label className="admin-form-label">Value</label>
+                            <Input
+                              placeholder="Value"
+                              type="number"
+                              value={row.value}
+                              onChange={(e) =>
+                                updateDataRow(i, "value", e.target.value)
+                              }
+                            />
+                          </div>
+                        </div>
+                        {showColors && (
+                          <div className="admin-form-group" style={{ marginTop: 12, marginBottom: 0 }}>
+                            <label className="admin-form-label">Color</label>
+                            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                              <input
+                                type="color"
+                                value={row.color || "#088DFF"}
+                                onChange={(e) =>
+                                  updateDataRow(i, "color", e.target.value)
+                                }
+                                style={{
+                                  width: 34,
+                                  height: 34,
+                                  padding: 0,
+                                  border: "none",
+                                  borderRadius: 4,
+                                  cursor: "pointer",
+                                }}
+                              />
+                              <Input
+                                value={row.color || ""}
+                                onChange={(e) =>
+                                  updateDataRow(i, "color", e.target.value)
+                                }
+                                placeholder="#hex"
+                                style={{ flex: 1 }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </>
             )}
           </div>
 
           {/* Sources Editor */}
           <div className="admin-form-section">
-            <h3 className="admin-form-section-title">Sources</h3>
-
-            {sources.map((src, i) => (
-              <div
-                key={i}
-                className="admin-card"
-                style={{ marginBottom: 12, padding: 16 }}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 className="admin-form-section-title" style={{ margin: 0, borderBottom: "none" }}>Sources</h3>
+              <button
+                type="button"
+                className="admin-add-row-btn"
+                onClick={addSource}
+                style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}
               >
+                <PlusCircle size={14} /> Add Source
+              </button>
+            </div>
+
+            {sources.map((src, i) => {
+              const isCollapsed = !!collapsedSources[i];
+              return (
                 <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 10,
+                  key={i}
+                  className="admin-drag-card"
+                  draggable
+                  onDragStart={(e) => {
+                    setDraggedSourceIndex(i);
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedSourceIndex === null || draggedSourceIndex === i) return;
+                    const updated = [...sources];
+                    const [draggedItem] = updated.splice(draggedSourceIndex, 1);
+                    updated.splice(i, 0, draggedItem);
+                    // Re-assign position
+                    const final = updated.map((s, idx) => ({ ...s, position: idx }));
+                    setSources(final);
+                    setDraggedSourceIndex(null);
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: "var(--admin-text-muted)",
-                    }}
-                  >
-                    Source #{i + 1}
-                  </span>
-                  <button
-                    type="button"
-                    className="admin-btn-icon"
-                    onClick={() => removeSource(i)}
-                    style={{ color: "var(--admin-danger)" }}
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="admin-drag-card-header">
+                    <div className="admin-drag-card-title">
+                      <GripVertical size={16} style={{ cursor: "grab", color: "var(--admin-text-dim)" }} />
+                      <span>{src.sourceName || `Source #${i + 1}`}</span>
+                    </div>
+                    <div className="admin-drag-card-actions">
+                      <button
+                        type="button"
+                        className="admin-btn-icon"
+                        onClick={() => removeSource(i)}
+                        style={{
+                          color: "var(--admin-danger)",
+                          border: "1px solid rgba(239, 68, 68, 0.2)",
+                          borderRadius: "50%",
+                          padding: 5
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-btn-icon"
+                        onClick={() => setCollapsedSources(prev => ({ ...prev, [i]: !prev[i] }))}
+                      >
+                        {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group" style={{ marginBottom: 8 }}>
+                        <label className="admin-form-label">Name</label>
+                        <Input
+                          value={src.sourceName}
+                          onChange={(e) =>
+                            updateSource(i, "sourceName", e.target.value)
+                          }
+                          placeholder="e.g. Stanford AI Index"
+                        />
+                      </div>
+                      <div className="admin-form-group" style={{ marginBottom: 8 }}>
+                        <label className="admin-form-label">URL</label>
+                        <Input
+                          value={src.sourceUrl}
+                          onChange={(e) =>
+                            updateSource(i, "sourceUrl", e.target.value)
+                          }
+                          placeholder="https://..."
+                        />
+                      </div>
+                    </div>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                        <label className="admin-form-label">Publication</label>
+                        <Input
+                          value={src.publication}
+                          onChange={(e) =>
+                            updateSource(i, "publication", e.target.value)
+                          }
+                          placeholder="e.g. Nature"
+                        />
+                      </div>
+                      <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                        <label className="admin-form-label">Date</label>
+                        <DatePicker
+                          value={src.publicationDate}
+                          onChange={(val) =>
+                            updateSource(i, "publicationDate", val)
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="admin-form-row">
-                  <div className="admin-form-group" style={{ marginBottom: 8 }}>
-                    <label className="admin-form-label">Name</label>
-                    <input
-                      className="admin-form-input"
-                      value={src.sourceName}
-                      onChange={(e) =>
-                        updateSource(i, "sourceName", e.target.value)
-                      }
-                      placeholder="e.g. Stanford AI Index"
-                    />
-                  </div>
-                  <div className="admin-form-group" style={{ marginBottom: 8 }}>
-                    <label className="admin-form-label">URL</label>
-                    <input
-                      className="admin-form-input"
-                      value={src.sourceUrl}
-                      onChange={(e) =>
-                        updateSource(i, "sourceUrl", e.target.value)
-                      }
-                      placeholder="https://..."
-                    />
-                  </div>
-                </div>
-                <div className="admin-form-row">
-                  <div className="admin-form-group" style={{ marginBottom: 0 }}>
-                    <label className="admin-form-label">Publication</label>
-                    <input
-                      className="admin-form-input"
-                      value={src.publication}
-                      onChange={(e) =>
-                        updateSource(i, "publication", e.target.value)
-                      }
-                      placeholder="e.g. Nature"
-                    />
-                  </div>
-                  <div className="admin-form-group" style={{ marginBottom: 0 }}>
-                    <label className="admin-form-label">Date</label>
-                    <input
-                      className="admin-form-input"
-                      type="date"
-                      value={src.publicationDate}
-                      onChange={(e) =>
-                        updateSource(i, "publicationDate", e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <button
-              type="button"
-              className="admin-add-row-btn"
-              onClick={addSource}
-            >
-              <Plus size={14} /> Add Source
-            </button>
+              );
+            })}
           </div>
 
           {/* Dynamic Preview Container */}
@@ -1202,11 +1219,6 @@ export default function ChartEditorPage({
             </Link>
           </div>
         </form>
-      </div>
-
-      {/* Toast */}
-      <div className={`admin-toast ${toast.type} ${toast.show ? "show" : ""}`}>
-        {toast.message}
       </div>
     </>
   );

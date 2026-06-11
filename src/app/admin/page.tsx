@@ -5,6 +5,9 @@ import { Globe, BarChart3, TrendingUp, Clock } from 'lucide-react';
 import { apiUrl } from '@/src/lib/basePath';
 import { DashboardData } from '@/src/types';
 
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/src/components/admin/ui/Table';
+import { Card } from '@/src/components/admin/ui/Card';
+
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,8 +32,8 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="admin-stat-grid">
-        <div className="admin-stat-card">
+      <div className="admin-stat-grid" style={{ marginBottom: 24 }}>
+        <Card className="p-6">
           <p className="admin-stat-label">Total Embeds</p>
           <p className="admin-stat-value">
             {loading ? (
@@ -40,11 +43,11 @@ export default function AdminDashboardPage() {
             )}
           </p>
           <p className="admin-stat-sub">
-            <BarChart3 size={12} style={{ display: 'inline', verticalAlign: -1 }} /> All time
+            <BarChart3 size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} /> All time
           </p>
-        </div>
+        </Card>
 
-        <div className="admin-stat-card">
+        <Card className="p-6">
           <p className="admin-stat-label">Unique Domains</p>
           <p className="admin-stat-value">
             {loading ? (
@@ -54,11 +57,11 @@ export default function AdminDashboardPage() {
             )}
           </p>
           <p className="admin-stat-sub">
-            <Globe size={12} style={{ display: 'inline', verticalAlign: -1 }} /> Referring sites
+            <Globe size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} /> Referring sites
           </p>
-        </div>
+        </Card>
 
-        <div className="admin-stat-card">
+        <Card className="p-6">
           <p className="admin-stat-label">Embeds Today</p>
           <p className="admin-stat-value">
             {loading ? (
@@ -68,63 +71,63 @@ export default function AdminDashboardPage() {
             )}
           </p>
           <p className="admin-stat-sub">
-            <TrendingUp size={12} style={{ display: 'inline', verticalAlign: -1 }} /> Last 24 hours
+            <TrendingUp size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} /> Last 24 hours
           </p>
-        </div>
+        </Card>
       </div>
 
       {/* Top Referring Domains Table */}
-      <div className="admin-table-wrap">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Domain</th>
-              <th>Hits</th>
-              <th>Unique Charts</th>
-              <th>Last Seen</th>
-            </tr>
-          </thead>
-          <tbody>
+      <Card className="p-0 overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Domain</TableHead>
+              <TableHead>Hits</TableHead>
+              <TableHead>Unique Charts</TableHead>
+              <TableHead>Last Seen</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}>
-                  <td><span className="admin-skeleton" style={{ display: 'inline-block', width: 180, height: 16 }} /></td>
-                  <td><span className="admin-skeleton" style={{ display: 'inline-block', width: 40, height: 16 }} /></td>
-                  <td><span className="admin-skeleton" style={{ display: 'inline-block', width: 30, height: 16 }} /></td>
-                  <td><span className="admin-skeleton" style={{ display: 'inline-block', width: 100, height: 16 }} /></td>
-                </tr>
+                <TableRow key={i}>
+                  <TableCell><span className="admin-skeleton" style={{ display: 'inline-block', width: 180, height: 16 }} /></TableCell>
+                  <TableCell><span className="admin-skeleton" style={{ display: 'inline-block', width: 40, height: 16 }} /></TableCell>
+                  <TableCell><span className="admin-skeleton" style={{ display: 'inline-block', width: 30, height: 16 }} /></TableCell>
+                  <TableCell><span className="admin-skeleton" style={{ display: 'inline-block', width: 100, height: 16 }} /></TableCell>
+                </TableRow>
               ))
             ) : error ? (
-              <tr>
-                <td colSpan={4} style={{ textAlign: 'center', color: 'var(--admin-danger)' }}>{error}</td>
-              </tr>
+              <TableRow>
+                <TableCell colSpan={4} style={{ textAlign: 'center', color: 'var(--admin-danger)' }}>{error}</TableCell>
+              </TableRow>
             ) : data?.topDomains.length === 0 ? (
-              <tr>
-                <td colSpan={4}>
+              <TableRow>
+                <TableCell colSpan={4}>
                   <div className="admin-empty">
                     <Globe size={48} />
                     <p>No embed data yet. Charts will appear here once they are embedded on other sites.</p>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               data?.topDomains.map((d) => (
-                <tr key={d.domain}>
-                  <td>
+                <TableRow key={d.domain}>
+                  <TableCell>
                     <span style={{ fontWeight: 600 }}>{d.domain}</span>
-                  </td>
-                  <td>{d.count.toLocaleString()}</td>
-                  <td>{d.uniqueCharts}</td>
-                  <td style={{ color: 'var(--admin-text-muted)' }}>
+                  </TableCell>
+                  <TableCell>{d.count.toLocaleString()}</TableCell>
+                  <TableCell>{d.uniqueCharts}</TableCell>
+                  <TableCell style={{ color: 'var(--admin-text-muted)' }}>
                     <Clock size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} />
                     {new Date(d.lastSeen).toLocaleDateString()}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
     </>
   );
 }

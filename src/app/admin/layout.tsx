@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import "./admin.css";
 import FaviconLoader from "@/src/components/FaviconLoader";
+import ToastRenderer from "@/src/components/admin/ToastRenderer";
 
 const navItems = [
   {
@@ -76,7 +77,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
   // Login page — render without sidebar
   if (isLoginPage) {
-    return <>{children}</>;
+    return <><ToastRenderer />{children}</>;
   }
 
   // Not authenticated — don't render anything (redirect will happen)
@@ -165,6 +166,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className="admin-main">{children}</main>
+      <ToastRenderer />
     </div>
   );
 }

@@ -5,6 +5,9 @@ import { Image as ImageIcon, Clock, CheckCircle, RefreshCw } from 'lucide-react'
 import { apiUrl } from '@/src/lib/basePath';
 import { ImageJob } from '@/src/types';
 
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/src/components/admin/ui/Table';
+import { Card } from '@/src/components/admin/ui/Card';
+
 export default function AdminImagesPage() {
   const [jobs, setJobs] = useState<ImageJob[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,84 +77,84 @@ export default function AdminImagesPage() {
       </div>
 
       {/* Stats Panel */}
-      <div className="admin-stat-grid">
-        <div className="admin-stat-card">
+      <div className="admin-stat-grid" style={{ marginBottom: 24 }}>
+        <Card className="p-6">
           <p className="admin-stat-label">Pending / Missing</p>
           <p className="admin-stat-value" style={{ color: 'var(--admin-warning)' }}>
             {loading ? '...' : failedCount}
           </p>
           <p className="admin-stat-sub">
-            <Clock size={12} style={{ display: 'inline', verticalAlign: -1 }} /> Static file is missing
+            <Clock size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} /> Static file is missing
           </p>
-        </div>
-        <div className="admin-stat-card">
+        </Card>
+        <Card className="p-6">
           <p className="admin-stat-label">Completed</p>
           <p className="admin-stat-value" style={{ color: 'var(--admin-success)' }}>
             {loading ? '...' : completedCount}
           </p>
           <p className="admin-stat-sub">
-            <CheckCircle size={12} style={{ display: 'inline', verticalAlign: -1 }} /> File exists in public folder
+            <CheckCircle size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} /> File exists in public folder
           </p>
-        </div>
-        <div className="admin-stat-card">
+        </Card>
+        <Card className="p-6">
           <p className="admin-stat-label">Total Active Charts</p>
           <p className="admin-stat-value" style={{ color: 'var(--admin-accent)' }}>
             {loading ? '...' : jobs.length}
           </p>
           <p className="admin-stat-sub">
-            <ImageIcon size={12} style={{ display: 'inline', verticalAlign: -1 }} /> Registered in index database
+            <ImageIcon size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} /> Registered in index database
           </p>
-        </div>
+        </Card>
       </div>
 
       {/* Jobs Table */}
-      <div className="admin-table-wrap">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Chart Title</th>
-              <th>Chart ID</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Last Rebuilt</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+      <Card className="p-0 overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Chart Title</TableHead>
+              <TableHead>Chart ID</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Last Rebuilt</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <tr key={i}>
-                  <td colSpan={6}>
+                <TableRow key={i}>
+                  <TableCell colSpan={6}>
                     <div className="admin-skeleton" style={{ width: '100%', height: 20 }} />
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             ) : jobs.length === 0 ? (
-              <tr>
-                <td colSpan={6}>
+              <TableRow>
+                <TableCell colSpan={6}>
                   <div className="admin-empty">
                     <ImageIcon size={48} />
                     <p>No active charts found in database.</p>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               jobs.map((job) => (
-                <tr key={job.chartId}>
-                  <td style={{ fontWeight: 600 }}>{job.title}</td>
-                  <td style={{ fontFamily: 'var(--font-geist-mono)', fontSize: 12 }}>{job.chartId}</td>
-                  <td>
+                <TableRow key={job.chartId}>
+                  <TableCell style={{ fontWeight: 600 }}>{job.title}</TableCell>
+                  <TableCell style={{ fontFamily: 'var(--font-geist-mono)', fontSize: 12 }}>{job.chartId}</TableCell>
+                  <TableCell>
                     <span className="admin-badge active">{job.chartType}</span>
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <span className={`admin-badge ${job.status === 'completed' ? 'published' : 'draft'}`}>
                       {job.status === 'completed' ? 'Completed' : 'Missing'}
                     </span>
-                  </td>
-                  <td style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>
+                  </TableCell>
+                  <TableCell style={{ color: 'var(--admin-text-muted)', fontSize: 12 }}>
                     {job.completedAt ? new Date(job.completedAt).toLocaleString() : 'Never'}
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <button
                       className="admin-btn admin-btn-secondary admin-btn-sm"
                       onClick={() => handleRebuild(job.chartId)}
@@ -159,13 +162,13 @@ export default function AdminImagesPage() {
                     >
                       {rebuilding === job.chartId ? 'Generating...' : 'Rebuild'}
                     </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
 
       {/* Toast */}
       <div className={`admin-toast ${toast.type} ${toast.show ? 'show' : ''}`}>{toast.message}</div>

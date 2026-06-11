@@ -91,22 +91,14 @@ export default function IconUploadField({
           setIsDragging(false);
           if (!disabled) handleFiles(e.dataTransfer.files);
         }}
-        style={{
-          border: `2px dashed ${isDragging ? 'var(--admin-primary, #0468BD)' : 'var(--admin-border, #d7e3f0)'}`,
-          borderRadius: 8,
-          padding: value ? '12px' : '28px 16px',
-          cursor: disabled || uploading ? 'not-allowed' : 'pointer',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: isDragging
-            ? 'rgba(4, 104, 189, 0.04)'
-            : 'var(--admin-surface, #fff)',
-          transition: 'border-color 0.15s, background 0.15s',
-          minHeight: value ? 'auto' : 100,
-          position: 'relative',
-        }}
+        className={`group flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-all duration-200 relative
+          ${disabled || uploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
+          ${isDragging 
+            ? 'border-[var(--admin-accent)] bg-[var(--admin-accent-glow)] scale-[0.99]' 
+            : 'border-[var(--admin-border)] bg-[var(--admin-surface)] hover:border-[var(--admin-accent)] hover:bg-[var(--admin-surface-2)] shadow-sm hover:shadow'
+          }
+        `}
+        style={{ minHeight: value ? 'auto' : 130 }}
       >
         <input
           ref={inputRef}
@@ -119,25 +111,18 @@ export default function IconUploadField({
 
         {uploading ? (
           /* Uploading spinner */
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: 'var(--admin-text-muted, #8a8a95)' }}>
-            <Loader2 size={28} style={{ animation: 'spin 1s linear infinite' }} />
-            <span style={{ fontSize: 12 }}>Uploading…</span>
+          <div className="flex flex-col items-center gap-2 text-[var(--admin-text-muted)]">
+            <Loader2 className="h-7 w-7 animate-spin text-[var(--admin-accent)]" />
+            <span className="text-xs font-medium">Uploading…</span>
           </div>
 
         ) : value ? (
           /* Preview */
-          <div style={{ position: 'relative', display: 'inline-flex' }}>
+          <div className="relative display-inline-flex">
             <img
               src={value}
               alt="Icon preview"
-              style={{
-                height: 72,
-                width: 72,
-                objectFit: 'contain',
-                borderRadius: 6,
-                border: '1px solid var(--admin-border, #d7e3f0)',
-                background: '#f9fbfd',
-              }}
+              className="h-20 w-20 object-contain rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface-2)] p-2 shadow-inner"
             />
             {/* Remove button */}
             <button
@@ -145,22 +130,7 @@ export default function IconUploadField({
               onClick={handleRemove}
               disabled={disabled}
               title="Remove icon"
-              style={{
-                position: 'absolute',
-                top: -8,
-                right: -8,
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                background: 'var(--admin-danger, #e53935)',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                padding: 0,
-              }}
+              className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[var(--admin-danger)] text-white hover:bg-red-600 transition-colors shadow-md flex items-center justify-center cursor-pointer border border-white"
             >
               <X size={12} />
             </button>
@@ -168,12 +138,12 @@ export default function IconUploadField({
 
         ) : (
           /* Empty state */
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: 'var(--admin-text-muted, #8a8a95)' }}>
-            <UploadCloud size={28} />
-            <span style={{ fontSize: 12, textAlign: 'center', lineHeight: 1.4 }}>
-              Drag & drop or <strong style={{ color: 'var(--admin-primary, #0468BD)' }}>click to upload</strong>
+          <div className="flex flex-col items-center gap-2.5 text-[var(--admin-text-muted)] text-center">
+            <UploadCloud className="h-8 w-8 text-[var(--admin-text-dim)] group-hover:text-[var(--admin-accent)] transition-colors duration-200" />
+            <span className="text-xs leading-normal">
+              Drag & drop or <strong className="text-[var(--admin-accent)] font-semibold underline-offset-4 group-hover:underline">click to upload</strong>
               <br />
-              PNG, JPG, SVG, WebP
+              <span className="text-[var(--admin-text-dim)] text-[11px]">PNG, JPG, SVG, WebP</span>
             </span>
           </div>
         )}

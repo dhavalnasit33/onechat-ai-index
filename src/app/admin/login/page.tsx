@@ -3,9 +3,12 @@
 import { useState, FormEvent } from 'react';
 import { useAdminAuth } from '@/src/contexts/AdminAuthContext';
 import { Eye, EyeOff, Lock } from 'lucide-react';
+import toast from '@/src/hooks/use-toast';
+
+import { Input } from '@/src/components/admin/ui/Input';
 
 export default function AdminLoginPage() {
-  const { login, loading, error, isAuthenticated } = useAdminAuth();
+  const { login, loading, isAuthenticated } = useAdminAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,12 +35,20 @@ export default function AdminLoginPage() {
 
     try {
       await login(email, password);
-    } catch {
-      // Error is already set in AuthContext
+    } catch (err: any) {
+      const msg: string = err?.message || 'Login failed';
+      const isAccessDenied =
+        msg.toLowerCase().includes('access denied') ||
+        msg.toLowerCase().includes('permission');
+
+      toast({
+        title: isAccessDenied ? 'Access Denied' : 'Login Failed',
+        description: msg,
+        variant: isAccessDenied ? 'warning' : 'destructive',
+        duration: 5000,
+      });
     }
   };
-
-  const displayError = localError || error;
 
   return (
     <div className="admin-login-page">
@@ -50,8 +61,8 @@ export default function AdminLoginPage() {
           <p>Sign in to manage your dashboard</p>
         </div>
 
-        {displayError && (
-          <div className="admin-login-error">{displayError}</div>
+        {localError && (
+          <div className="admin-login-error">{localError}</div>
         )}
 
         <form onSubmit={handleSubmit}>
@@ -59,10 +70,9 @@ export default function AdminLoginPage() {
             <label className="admin-form-label" htmlFor="admin-email">
               Email Address
             </label>
-            <input
+            <Input
               id="admin-email"
               type="email"
-              className="admin-form-input"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -76,10 +86,9 @@ export default function AdminLoginPage() {
               Password
             </label>
             <div style={{ position: 'relative' }}>
-              <input
+              <Input
                 id="admin-password"
                 type={showPassword ? 'text' : 'password'}
-                className="admin-form-input"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

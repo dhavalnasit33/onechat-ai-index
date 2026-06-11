@@ -7,6 +7,8 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { apiUrl } from "@/src/lib/basePath";
 import CategoryForm from "@/src/components/admin/categories/CategoryForm";
 import { CategoryDetails, CategoryFormValues } from "@/src/types";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/src/components/admin/ui/AlertDialog";
+import { toast } from "@/src/hooks/use-toast";
 
 export default function CategoryEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -14,12 +16,8 @@ export default function CategoryEditorPage({ params }: { params: Promise<{ id: s
   const [category, setCategory] = useState<CategoryDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toast, setToast] = useState({ show: false, message: "", type: "success" as "success" | "error" });
-
-  const showToast = (message: string, type: "success" | "error" = "success") => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast((t) => ({ ...t, show: false })), 3000);
-  };
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -31,12 +29,12 @@ export default function CategoryEditorPage({ params }: { params: Promise<{ id: s
           if (json.success) {
             setCategory(json.data);
           } else {
-            showToast(json.message || "Category not found", "error");
+            toast({ title: json.message || "Category not found", variant: "destructive" });
           }
         }
       })
       .catch(() => {
-        if (active) showToast("Failed to load category", "error");
+        if (active) toast({ title: "Failed to load category", variant: "destructive" });
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -59,33 +57,37 @@ export default function CategoryEditorPage({ params }: { params: Promise<{ id: s
       const json = await res.json();
 
       if (json.success) {
-        showToast("Category saved!");
+        toast({ title: "Category saved!", variant: "default" });
         setCategory((prev) => (prev ? { ...prev, ...values } : prev));
         setTimeout(() => router.push("/admin/categories"), 900);
       } else {
-        showToast(json.message || "Failed to save", "error");
+        toast({ title: json.message || "Failed to save", variant: "destructive" });
       }
     } catch {
-      showToast("Failed to save", "error");
+      toast({ title: "Failed to save", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Delete this category? This cannot be undone.")) return;
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
 
     try {
       const res = await fetch(apiUrl(`/api/admin/categories/${id}`), { method: "DELETE" });
       const json = await res.json();
 
       if (json.success) {
+        toast({ title: "Category deleted successfully", variant: "default" });
         router.push("/admin/categories");
       } else {
-        showToast(json.message || "Failed to delete", "error");
+        toast({ title: json.message || "Failed to delete", variant: "destructive" });
       }
     } catch {
-      showToast("Failed to delete", "error");
+      toast({ title: "Failed to delete", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteAlert(false);
     }
   };
 
@@ -140,7 +142,7 @@ export default function CategoryEditorPage({ params }: { params: Promise<{ id: s
           <Link href="/admin/categories" className="admin-btn admin-btn-secondary">
             <ArrowLeft size={16} /> Back
           </Link>
-          <button className="admin-btn admin-btn-danger" onClick={handleDelete} type="button">
+          <button className="admin-btn admin-btn-danger" onClick={() => setShowDeleteAlert(true)} type="button">
             <Trash2 size={16} /> Delete
           </button>
         </div>
@@ -154,7 +156,23 @@ export default function CategoryEditorPage({ params }: { params: Promise<{ id: s
         />
       </div>
 
-      <div className={`admin-toast ${toast.type} ${toast.show ? "show" : ""}`}>{toast.message}</div>
+      {/* Delete Confirmation Alert Dialog */}
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Category</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the category "{category.name}"? This will permanently remove it. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e: React.MouseEvent) => { e.preventDefault(); handleDeleteConfirm(); }} disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

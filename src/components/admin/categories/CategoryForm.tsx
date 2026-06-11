@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Save } from "lucide-react";
 import IconUploadField from "@/src/components/admin/IconUploadField";
 import { categorySchema, type CategoryFormValues } from "@/src/types";
+import { Input } from "@/src/components/admin/ui/Input";
+import { Textarea } from "@/src/components/admin/ui/Textarea";
 
 interface CategoryFormProps {
   initialData?: CategoryFormValues | null;
@@ -69,8 +71,7 @@ export default function CategoryForm({
         <div className="admin-form-row">
           <div className="admin-form-group">
             <label className="admin-form-label">Name *</label>
-            <input
-              className="admin-form-input"
+            <Input
               placeholder="e.g. Economy"
               {...register("name")}
             />
@@ -81,8 +82,7 @@ export default function CategoryForm({
 
           <div className="admin-form-group">
             <label className="admin-form-label">Slug</label>
-            <input
-              className="admin-form-input"
+            <Input
               placeholder="economy"
               style={{ fontFamily: "var(--font-geist-mono)" }}
               {...register("slug", {
@@ -104,8 +104,7 @@ export default function CategoryForm({
         <div className="admin-form-row">
           <div className="admin-form-group">
             <label className="admin-form-label">Description</label>
-            <textarea
-              className="admin-form-textarea"
+            <Textarea
               placeholder="Brief category description..."
               {...register("description")}
             />
@@ -113,8 +112,7 @@ export default function CategoryForm({
 
           <div className="admin-form-group" style={{ maxWidth: 200 }}>
             <label className="admin-form-label">Position</label>
-            <input
-              className="admin-form-input"
+            <Input
               type="number"
               {...register("position", { valueAsNumber: true })}
             />
@@ -138,8 +136,7 @@ export default function CategoryForm({
         
         <div className="admin-form-group">
           <label className="admin-form-label">Focus Keyphrase</label>
-          <input
-            className="admin-form-input"
+          <Input
             placeholder="e.g. economy statistics, generative AI"
             {...register("keyphrase")}
           />
@@ -148,16 +145,14 @@ export default function CategoryForm({
         <div className="admin-form-row">
           <div className="admin-form-group">
             <label className="admin-form-label">Meta Title</label>
-            <input
-              className="admin-form-input"
+            <Input
               placeholder="e.g. Economy Statistics | AI Behavior Index"
               {...register("metaTitle")}
             />
           </div>
           <div className="admin-form-group">
             <label className="admin-form-label">Meta Description</label>
-            <textarea
-              className="admin-form-textarea"
+            <Textarea
               placeholder="e.g. Search and explore in-depth AI statistics regarding the economy..."
               {...register("metaDescription")}
             />

@@ -107,6 +107,15 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
             ...response.user,
             id: response.user._id || response.user.id,
           };
+          console.log("effective user", effectiveUser)
+
+          // ── Admin role gate ──
+          const isAdmin = Array.isArray(effectiveUser.roles) &&
+            effectiveUser.roles.some((r) => r.toLowerCase() === 'admin');
+          if (!isAdmin) {
+            throw new Error('Access denied. You do not have permission to access the admin panel.');
+          }
+
           setToken(response.token);
           setStoredUser(effectiveUser);
           setAuthToken(response.token);
