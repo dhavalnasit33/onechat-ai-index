@@ -42,6 +42,24 @@ function parseDataRows(chartType: string, data: unknown): DataRow[] {
     ];
   }
 
+  if (chartType === "text_block") {
+    return [
+      {
+        label: String(typedData.author || ""),
+        value: String(typedData.text || ""),
+        color: "",
+      },
+    ];
+  }
+
+  if (chartType === "timeline" && typedData.events && Array.isArray(typedData.events)) {
+    return (typedData.events as Record<string, unknown>[]).map((e) => ({
+      label: String(e.date || ""),
+      value: String(e.title || ""),
+      color: String(e.description || ""),
+    }));
+  }
+
   // Fallback check for standard data array
   if (typedData.data && Array.isArray(typedData.data)) {
     return (typedData.data as Record<string, unknown>[]).map((d) => ({
@@ -79,6 +97,10 @@ function buildChartDataPayload(
   yFormat: string,
   trendDirection: string,
   trendAmount: string,
+  yMax: string,
+  ySuffix: string,
+  yPrefix: string,
+  isGrouped: boolean,
 ): unknown {
   if (chartType === "hero_stat") {
     return {
@@ -120,7 +142,7 @@ function buildChartDataPayload(
   // Grouped Series handler for Multi-Bar and Trend Lines automatically
   if (
     chartType === "line" ||
-    ((chartType === "vbar" || chartType === "hbar") && lineSeries.length > 1)
+    ((chartType === "vbar" || chartType === "hbar") && isGrouped)
   ) {
     const labels = Array.from(
       new Set(lineSeries.flatMap((s) => s.dataPoints.map((dp) => dp.x))),
@@ -130,6 +152,9 @@ function buildChartDataPayload(
       xLabel: xLabel || undefined,
       yLabel: yLabel || undefined,
       yFormat: yFormat || undefined,
+      yMax: yMax !== "" ? (yMax === "auto" ? "auto" : Number(yMax)) : undefined,
+      ySuffix: ySuffix || undefined,
+      yPrefix: yPrefix || undefined,
       labels: labels.length > 0 ? labels : undefined,
       series: lineSeries.map((s) => ({
         name: s.name,
@@ -151,6 +176,9 @@ function buildChartDataPayload(
     xLabel: xLabel || undefined,
     yLabel: yLabel || undefined,
     yFormat: yFormat || undefined,
+    yMax: yMax !== "" ? (yMax === "auto" ? "auto" : Number(yMax)) : undefined,
+    ySuffix: ySuffix || undefined,
+    yPrefix: yPrefix || undefined,
     data: rows.map((r) => ({
       label: r.label,
       value: Number(r.value) || 0,
@@ -189,6 +217,10 @@ export default function ChartEditorPage({
   const [xLabel, setXLabel] = useState("");
   const [yLabel, setYLabel] = useState("");
   const [yFormat, setYFormat] = useState("");
+  const [yMax, setYMax] = useState("");
+  const [ySuffix, setYSuffix] = useState("");
+  const [yPrefix, setYPrefix] = useState("");
+  const [isGrouped, setIsGrouped] = useState(false);
   const [trendDirection, setTrendDirection] = useState<"up" | "down" | "">("");
   const [trendAmount, setTrendAmount] = useState("");
 
@@ -271,6 +303,10 @@ export default function ChartEditorPage({
             setXLabel(c.data.xLabel || "");
             setYLabel(c.data.yLabel || "");
             setYFormat(c.data.yFormat || "");
+            setYMax(c.data.yMax !== undefined ? String(c.data.yMax) : "");
+            setYSuffix(c.data.ySuffix || "");
+            setYPrefix(c.data.yPrefix || "");
+            setIsGrouped(!!c.data.series);
 
             if (c.chartType === "hero_stat") {
               setDataRows([
@@ -286,7 +322,7 @@ export default function ChartEditorPage({
                 );
                 setTrendAmount(c.data.trend.amount || "");
               }
-            } else if (c.chartType === "line") {
+            } else if (c.chartType === "line" || ((c.chartType === "vbar" || c.chartType === "hbar") && c.data.series)) {
               if (c.data.series && Array.isArray(c.data.series)) {
                 setLineSeries(
                   (c.data.series as Record<string, unknown>[]).map((s) => ({
@@ -294,9 +330,9 @@ export default function ChartEditorPage({
                     color: String(s.color || ""),
                     dataPoints: Array.isArray(s.data)
                       ? (s.data as Record<string, unknown>[]).map((dp) => ({
-                        x: String(dp.x || ""),
-                        y: String(dp.y ?? ""),
-                      }))
+                          x: String(dp.x || ""),
+                          y: String(dp.y ?? ""),
+                        }))
                       : [{ x: "", y: "" }],
                   })),
                 );
@@ -436,6 +472,10 @@ export default function ChartEditorPage({
         yFormat,
         trendDirection,
         trendAmount,
+        yMax,
+        ySuffix,
+        yPrefix,
+        isGrouped,
       ),
       sources: sources.map((s) => ({
         ...s,
@@ -617,44 +657,84 @@ export default function ChartEditorPage({
             <h3 className="admin-form-section-title">
               {isHeroStat ? "Hero Stat Value" : "Chart Data"}
             </h3>
-
             {/* Axis Configuration (Only for Bar and Line charts) */}
             {(chartType === "vbar" ||
               chartType === "hbar" ||
               chartType === "line") && (
-                <div className="admin-form-row" style={{ marginBottom: 20 }}>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">X-Axis Label</label>
-                    <Input
-                      placeholder="e.g. Year or Country"
-                      value={xLabel}
-                      onChange={(e) => setXLabel(e.target.value)}
-                    />
+                <>
+                  <div className="admin-form-row" style={{ marginBottom: 20 }}>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">X-Axis Label</label>
+                      <Input
+                        placeholder="e.g. Year or Country"
+                        value={xLabel}
+                        onChange={(e) => setXLabel(e.target.value)}
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Y-Axis Label</label>
+                      <Input
+                        placeholder="e.g. Percentage"
+                        value={yLabel}
+                        onChange={(e) => setYLabel(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">Y-Axis Label</label>
-                    <Input
-                      placeholder="e.g. Percentage"
-                      value={yLabel}
-                      onChange={(e) => setYLabel(e.target.value)}
-                    />
+
+                  <div className="admin-form-row" style={{ marginBottom: 20 }}>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Y-Axis Format</label>
+                      <Select value={yFormat || "raw"} onValueChange={(val: string) => setYFormat(val === "raw" ? "" : val)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Number (Raw)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="raw">Number (Raw)</SelectItem>
+                          <SelectItem value="percentage">Percentage (%)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Custom Max Value</label>
+                      <Input
+                        placeholder="e.g. 100, 120, 5.0 (blank for auto)"
+                        value={yMax}
+                        onChange={(e) => setYMax(e.target.value)}
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Custom Prefix</label>
+                      <Input
+                        placeholder="e.g. $"
+                        value={yPrefix}
+                        onChange={(e) => setYPrefix(e.target.value)}
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Custom Suffix</label>
+                      <Input
+                        placeholder="e.g. %, M, B, months"
+                        value={ySuffix}
+                        onChange={(e) => setYSuffix(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div
-                    className="admin-form-group"
-                    style={{ gridColumn: "span 2" }}
-                  >
-                    <label className="admin-form-label">Y-Axis Format</label>
-                    <Select value={yFormat || "raw"} onValueChange={(val: string) => setYFormat(val === "raw" ? "" : val)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Number (Raw)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="raw">Number (Raw)</SelectItem>
-                        <SelectItem value="percentage">Percentage (%)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+
+                  {(chartType === "vbar" || chartType === "hbar") && (
+                    <div className="admin-form-group" style={{ marginBottom: 20 }}>
+                      <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
+                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                          <div className="text-sm font-semibold text-[var(--admin-text)]">Grouped Chart (Multi-Series)</div>
+                          <div className="text-xs text-[var(--admin-text-muted)] font-normal font-sans">Enable side-by-side bar comparisons using multiple series (e.g. 2023 vs 2025)</div>
+                        </div>
+                        <Switch
+                          checked={isGrouped}
+                          onCheckedChange={(checked: boolean) => setIsGrouped(checked)}
+                        />
+                      </Card>
+                    </div>
+                  )}
+                </>
               )}
 
             {isHeroStat ? (
@@ -707,7 +787,141 @@ export default function ChartEditorPage({
                   </div>
                 </div>
               </div>
-            ) : chartType === "line" ? (
+            ) : chartType === "timeline" ? (
+              /* Timeline Events Editor */
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>Timeline Events</h4>
+                  <button
+                    type="button"
+                    className="admin-add-row-btn"
+                    onClick={addDataRow}
+                    style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}
+                  >
+                    <PlusCircle size={14} /> Add Event
+                  </button>
+                </div>
+
+                {dataRows.map((row, i) => {
+                  const isCollapsed = !!collapsedRows[i];
+                  return (
+                    <div
+                      key={i}
+                      className="admin-drag-card"
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedRowIndex(i);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedRowIndex === null || draggedRowIndex === i) return;
+                        const updated = [...dataRows];
+                        const [draggedItem] = updated.splice(draggedRowIndex, 1);
+                        updated.splice(i, 0, draggedItem);
+                        setDataRows(updated);
+                        setDraggedRowIndex(null);
+                      }}
+                    >
+                      <div className="admin-drag-card-header">
+                        <div className="admin-drag-card-title">
+                          <GripVertical size={16} style={{ cursor: "grab", color: "var(--admin-text-dim)" }} />
+                          <span>{row.label || row.value || `Event #${i + 1}`}</span>
+                        </div>
+                        <div className="admin-drag-card-actions">
+                          <button
+                            type="button"
+                            className="admin-btn-icon"
+                            onClick={() => removeDataRow(i)}
+                            style={{
+                              color: "var(--admin-danger)",
+                              border: "1px solid rgba(239, 68, 68, 0.2)",
+                              borderRadius: "50%",
+                              padding: 5
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-btn-icon"
+                            onClick={() => setCollapsedRows(prev => ({ ...prev, [i]: !prev[i] }))}
+                          >
+                            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}>
+                        <div className="admin-form-row" style={{ marginBottom: 12 }}>
+                          <div className="admin-form-group">
+                            <label className="admin-form-label">Date (e.g. JAN 2025)</label>
+                            <Input
+                              placeholder="Date"
+                              value={row.label}
+                              onChange={(e) =>
+                                updateDataRow(i, "label", e.target.value)
+                              }
+                            />
+                          </div>
+                          <div className="admin-form-group">
+                            <label className="admin-form-label">Event Title</label>
+                            <Input
+                              placeholder="Event Title"
+                              value={row.value}
+                              onChange={(e) =>
+                                updateDataRow(i, "value", e.target.value)
+                              }
+                            />
+                          </div>
+                        </div>
+                        <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                          <label className="admin-form-label">Event Description</label>
+                          <Textarea
+                            placeholder="Describe what happened..."
+                            value={row.color}
+                            onChange={(e) =>
+                              updateDataRow(i, "color", e.target.value)
+                            }
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : chartType === "text_block" ? (
+              /* Text Block Editor */
+              <div>
+                <div className="admin-form-row">
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Author / Citation</label>
+                    <Input
+                      placeholder="e.g. Goldman Sachs research note (July 2024)"
+                      value={dataRows[0]?.label || ""}
+                      onChange={(e) =>
+                        updateDataRow(0, "label", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="admin-form-row" style={{ marginTop: 12 }}>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Quote / Callout Text</label>
+                    <Textarea
+                      placeholder="Enter the quote..."
+                      value={dataRows[0]?.value || ""}
+                      onChange={(e) =>
+                        updateDataRow(0, "value", e.target.value)
+                      }
+                      rows={5}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (chartType === "line" || ((chartType === "vbar" || chartType === "hbar") && isGrouped)) ? (
               /* Line Series Builder */
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -1213,6 +1427,10 @@ export default function ChartEditorPage({
                     yFormat,
                     trendDirection,
                     trendAmount,
+                    yMax,
+                    ySuffix,
+                    yPrefix,
+                    isGrouped,
                   ),
                 );
               }}

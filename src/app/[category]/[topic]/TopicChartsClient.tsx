@@ -94,7 +94,7 @@ export default function TopicChartsClient({
             >
               {/* Header */}
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4 mb-1.5 md:mb-2">
-                <div className="flex-1">
+                <div className="flex-1 md:pr-[120px]">
                   <div className="text-[10px] md:text-[11px] text-[#888] uppercase tracking-[0.6px] md:tracking-[0.8px] font-semibold mb-1">
                     {chart.heading ? (
                       chart.heading
@@ -142,7 +142,7 @@ export default function TopicChartsClient({
               <div
                 className={`relative w-full mt-2 md:mt-3 ${
                   chart.chartType === "timeline"
-                    ? "h-auto max-h-[400px] py-2"
+                    ? "h-auto py-2"
                     : chart.chartType === "text_block"
                       ? "h-auto py-4"
                       : chart.chartType === "donut"
@@ -172,17 +172,6 @@ export default function TopicChartsClient({
                     : "Compiled by OneChat AI"}
                 </span>
               </div>
-              <button
-                onClick={() => openModal(chart)}
-                className=" cursor-pointer inline-flex items-center gap-1.5 bg-white border border-[#d4d4d8] rounded-lg px-3.5 py-2 text-[13px] font-semibold text-[#111827] shadow-sm transition-all duration-200 hover:border-[#c4b5fd] hover:bg-[#faf8ff] md:absolute md:top-5 md:right-6 "
-              >
-                <Code2
-                  size={14}
-                  className="text-[#6C56E5]"
-                  strokeWidth={2.25}
-                />
-                <span>Embed this chart</span>
-              </button>
             </div>
           );
         })}

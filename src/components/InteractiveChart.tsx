@@ -95,6 +95,83 @@ export default function InteractiveChart({
 }) {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
+  const getValueAxisOptions = (axisLabel?: string) => {
+    const prefix = data?.yPrefix || "";
+    let suffix = "%";
+    if (data?.ySuffix !== undefined) {
+      suffix = data.ySuffix;
+    } else {
+      const hasLargeValues = (() => {
+        if (data?.data && Array.isArray(data.data)) {
+          return data.data.some((d: any) => (d.value ?? 0) > 100);
+        }
+        if (data?.series && Array.isArray(data.series)) {
+          return data.series.some((s: any) =>
+            s.data && Array.isArray(s.data) && s.data.some((dp: any) => (dp.y ?? dp.value ?? 0) > 100)
+          );
+        }
+        return false;
+      })();
+      if (hasLargeValues) {
+        suffix = "";
+      }
+    }
+
+    let maxVal: number | undefined = undefined;
+    if (data?.yMax !== undefined) {
+      if (data.yMax === "auto" || data.yMax === "") {
+        maxVal = undefined;
+      } else {
+        const num = Number(data.yMax);
+        maxVal = isNaN(num) ? undefined : num;
+      }
+    } else {
+      const maxInDataset = (() => {
+        let currentMax = 0;
+        if (data?.data && Array.isArray(data.data)) {
+          data.data.forEach((d: any) => {
+            const v = Number(d.value);
+            if (!isNaN(v) && v > currentMax) currentMax = v;
+          });
+        }
+        if (data?.series && Array.isArray(data.series)) {
+          data.series.forEach((s: any) => {
+            if (s.data && Array.isArray(s.data)) {
+              s.data.forEach((dp: any) => {
+                const v = Number(dp.y ?? dp.value);
+                if (!isNaN(v) && v > currentMax) currentMax = v;
+              });
+            }
+          });
+        }
+        return currentMax;
+      })();
+
+      if (maxInDataset <= 100 && suffix === "%") {
+        maxVal = 100;
+      } else {
+        maxVal = undefined;
+      }
+    }
+
+    return {
+      beginAtZero: true,
+      max: maxVal,
+      ticks: {
+        callback: (value: any) => {
+          return `${prefix}${value}${suffix}`;
+        },
+        font: { size: isMobile ? 10 : 12 },
+      },
+      grid: { color: "#f0f0f0" },
+      title: {
+        display: !!axisLabel,
+        text: axisLabel || "",
+        font: { size: isMobile ? 10 : 11, weight: "bold" },
+      },
+    };
+  };
+
   // 1. HERO STAT UI
   if (chartType === "hero_stat") {
     return (
@@ -116,27 +193,57 @@ export default function InteractiveChart({
 
   // 2. TIMELINE MILESTONES UI (Image 2 & 3)
   if (chartType === "timeline") {
+    const colors = ["#E5483F", "#F39323", "#088DFF", "#0468BD", "#10B981"];
     return (
-      <div className="relative w-full h-full pb-[45px] flex flex-col justify-between">
-        <div className="flex flex-col gap-5 overflow-y-auto h-[calc(100%-45px)] pr-2 text-left custom-scrollbar">
-          {data.events?.map((event: any, idx: number) => (
-            <div key={idx} className="flex gap-4 items-start relative pb-1">
-              <div className="min-w-[75px] text-[11px] font-bold uppercase tracking-wider text-[#088DFF] pt-0.5">
-                {event.date}
+      <div className="relative w-full text-left pb-12">
+        <div className="flex flex-col gap-6 pr-2">
+          {data.events?.map((event: any, idx: number) => {
+            const eventColor = colors[idx % colors.length];
+            return (
+              <div key={idx} className="flex gap-4 items-start relative">
+                <div 
+                  className="min-w-[75px] text-[11px] font-bold uppercase tracking-wider pt-0.5"
+                  style={{ color: eventColor }}
+                >
+                  {event.date}
+                </div>
+                <div className="relative border-l border-[#e5e5e5] pl-5 flex-1 pb-1">
+                  <div 
+                    className="absolute w-4 h-4 rounded-full bg-white -left-[8.5px] top-[4px]"
+                    style={{ border: `3px solid ${eventColor}` }}
+                  />
+                  <h4 className="font-sans text-[13.5px] md:text-[14.5px] font-bold text-[#1a1a1a] mb-1">
+                    {event.title}
+                  </h4>
+                  {(() => {
+                    const desc = event.description || "";
+                    const sourceIndex = desc.toLowerCase().indexOf("source:");
+                    if (sourceIndex !== -1) {
+                      const text = desc.substring(0, sourceIndex).trim();
+                      const src = desc.substring(sourceIndex).trim();
+                      return (
+                        <>
+                          <p className="text-[11.5px] md:text-[12.5px] text-[#555] leading-relaxed">
+                            {text}
+                          </p>
+                          <span className="text-[10px] text-gray-400 mt-1.5 block italic font-sans">
+                            {src}
+                          </span>
+                        </>
+                      );
+                    }
+                    return (
+                      <p className="text-[11.5px] md:text-[12.5px] text-[#555] leading-relaxed">
+                        {desc}
+                      </p>
+                    );
+                  })()}
+                </div>
               </div>
-              <div className="relative border-l border-[#e5e5e5] pl-4 flex-1">
-                <div className="absolute w-2 h-2 rounded-full bg-[#088DFF] -left-[4.5px] top-[7px]" />
-                <h4 className="font-sans text-[13.5px] md:text-[14.5px] font-bold text-[#1a1a1a] mb-1">
-                  {event.title}
-                </h4>
-                <p className="text-[11.5px] md:text-[12.5px] text-[#555] leading-relaxed">
-                  {event.description}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-        <div className="absolute bottom-2 right-4 text-right select-none pointer-events-none">
+        <div className="absolute bottom-0 right-4 text-right select-none pointer-events-none">
           <div className="text-[11px] font-bold leading-tight">
             <span className="text-[#6C56E5]">AI</span>
             <span className="text-[#1e3a5f]"> Behavior Index</span>
@@ -224,15 +331,7 @@ export default function InteractiveChart({
             legend: { display: isGrouped, position: "bottom" },
           },
           scales: {
-            y: {
-              beginAtZero: true,
-              max: 100,
-              ticks: {
-                callback: (v) => v + "%",
-                font: { size: isMobile ? 10 : 12 },
-              },
-              grid: { color: "#f0f0f0" },
-            },
+            y: getValueAxisOptions(data?.yLabel),
             x: {
               grid: { display: false },
               ticks: { font: { size: isMobile ? 10 : 12 } },
@@ -279,15 +378,7 @@ export default function InteractiveChart({
             legend: { display: isGrouped, position: "bottom" },
           },
           scales: {
-            x: {
-              beginAtZero: true,
-              max: 100,
-              ticks: {
-                callback: (v) => v + "%",
-                font: { size: isMobile ? 10 : 12 },
-              },
-              grid: { color: "#f0f0f0" },
-            },
+            x: getValueAxisOptions(data?.yLabel),
             y: {
               grid: { display: false },
               ticks: { font: { size: isMobile ? 10.5 : 12 } },
@@ -350,6 +441,10 @@ export default function InteractiveChart({
               backgroundColor: `${s.color || PALETTE[i % PALETTE.length]}14`,
               borderWidth: 3,
               pointBackgroundColor: s.color || PALETTE[i % PALETTE.length],
+              pointBorderColor: "#fff",
+              pointBorderWidth: 2,
+              pointRadius: 5,
+              pointHoverRadius: 7,
               tension: 0.3,
               fill: true,
             })) || [],
@@ -369,18 +464,15 @@ export default function InteractiveChart({
             },
           },
           scales: {
-            y: {
-              beginAtZero: true,
-              max: 100,
-              ticks: {
-                callback: (v) => v + "%",
-                font: { size: isMobile ? 10 : 12 },
-              },
-              grid: { color: "#f0f0f0" },
-            },
+            y: getValueAxisOptions(data?.yLabel),
             x: {
               grid: { display: false },
               ticks: { font: { size: isMobile ? 10 : 12 } },
+              title: {
+                display: !!data.xLabel,
+                text: data.xLabel,
+                font: { size: isMobile ? 10 : 11, weight: "bold" },
+              },
             },
           },
         }}
