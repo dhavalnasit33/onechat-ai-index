@@ -3,15 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Image as ImageIcon, Clock, CheckCircle, RefreshCw } from 'lucide-react';
 import { apiUrl } from '@/src/lib/basePath';
-
-interface ImageJob {
-  chartId: string;
-  title: string;
-  chartType: string;
-  status: 'completed' | 'failed';
-  queuedAt: string;
-  completedAt: string | null;
-}
+import { ImageJob } from '@/src/types';
 
 export default function AdminImagesPage() {
   const [jobs, setJobs] = useState<ImageJob[]>([]);

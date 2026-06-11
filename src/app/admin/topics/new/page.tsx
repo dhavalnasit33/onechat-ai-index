@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { apiUrl } from "@/src/lib/basePath";
 import TopicForm from "@/src/components/admin/topics/TopicForm";
-import { TopicFormValues } from "@/src/components/admin/topics/TopicForm";
+import { TopicFormValues } from "@/src/types";
 
 export default function NewTopicPage() {
   const router = useRouter();

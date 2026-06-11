@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { apiUrl } from "@/src/lib/basePath";
-import CategoryForm, { CategoryFormValues } from "@/src/components/admin/categories/CategoryForm";
+import CategoryForm from "@/src/components/admin/categories/CategoryForm";
+import { CategoryFormValues } from "@/src/types";
 
 export default function NewCategoryPage() {
   const router = useRouter();

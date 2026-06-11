@@ -3,25 +3,9 @@
 import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Loader2, UploadCloud, X } from "lucide-react";
 import { deleteImage, uploadFileToServer } from "@/src/lib/utils";
-
-// 1. Zod Validation Schema
-export const topicSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  slug: z.string().optional(),
-  categoryId: z.string().min(1, "Category is required"),
-  description: z.string().min(1, "Description is required"),
-  methodologyNote: z.string().optional(),
-  metaTitle: z.string().optional(),
-  metaDescription: z.string().optional(),
-  ogImageUrl: z.string().optional(),
-  iconUrl: z.string().optional(),
-status: z.enum(["draft", "published", "archived"]),
-});
-
-export type TopicFormValues = z.infer<typeof topicSchema>;
+import { topicSchema, type TopicFormValues } from "@/src/types";
 
 interface TopicFormProps {
   initialData?: TopicFormValues | null;

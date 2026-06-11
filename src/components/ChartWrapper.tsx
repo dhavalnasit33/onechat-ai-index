@@ -84,9 +84,11 @@ ChartJS.register(
 
 const PALETTE = ['#088DFF', '#E5483F', '#F39323', '#0468BD', '#A8A8B0'];
 
+import { ChartData } from '@/src/types';
+
 interface ChartWrapperProps {
   chartId: string;
-  chartType: 'vbar' | 'hbar' | 'line' | 'donut' | 'hero_stat';
+  chartType: ChartData['chartType'];
   data: any;
 }
 

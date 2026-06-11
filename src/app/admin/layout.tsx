@@ -176,8 +176,7 @@ export default function AdminLayout({
 }) {
   return (
     <AdminAuthProvider>
-         <FaviconLoader />
-
+      <FaviconLoader />
       <AdminShell>{children}</AdminShell>
     </AdminAuthProvider>
   );

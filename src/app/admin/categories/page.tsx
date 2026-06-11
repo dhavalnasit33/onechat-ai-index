@@ -4,16 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, MoreVertical, Pencil, Trash2, BarChart3 } from "lucide-react";
 import { apiUrl } from "@/src/lib/basePath";
-
-interface CategoryRow {
-  _id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  position: number;
-  topicCount: number;
-  updatedAt?: string;
-}
+import { CategoryRow } from "@/src/types";
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<CategoryRow[]>([]);

@@ -83,19 +83,14 @@ ChartJS.register(
 // Statista Style Palette
 const PALETTE = ["#088DFF", "#E5483F", "#F39323", "#0468BD", "#A8A8B0"];
 
+import { ChartData } from "@/src/types";
+
 export default function InteractiveChart({
   chartType,
   data,
 }: {
   chartId: string;
-  chartType:
-    | "vbar"
-    | "hbar"
-    | "line"
-    | "donut"
-    | "hero_stat"
-    | "timeline"
-    | "text_block";
+  chartType: ChartData["chartType"];
   data: any;
 }) {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;

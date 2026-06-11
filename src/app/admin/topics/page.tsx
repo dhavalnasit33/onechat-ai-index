@@ -4,17 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Search, BarChart3, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { apiUrl } from '@/src/lib/basePath';
-
-interface TopicRow {
-  _id: string;
-  title: string;
-  slug: string;
-  status: 'draft' | 'published' | 'archived';
-  dataPointsCount: number;
-  sourceCount: number;
-  categoryId: { _id: string; name: string; slug: string } | null;
-  updatedAt: string;
-}
+import { TopicRow } from '@/src/types';
 
 export default function AdminTopicsPage() {
   const [topics, setTopics] = useState<TopicRow[]>([]);

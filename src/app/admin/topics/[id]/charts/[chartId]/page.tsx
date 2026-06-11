@@ -7,26 +7,7 @@ import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import { apiUrl } from "@/src/lib/basePath";
 import InteractiveChart from "@/src/components/InteractiveChart";
 import IconUploadField from "@/src/components/admin/IconUploadField";
-
-interface DataRow {
-  label: string;
-  value: string;
-  color?: string;
-}
-
-interface SourceRow {
-  position: number;
-  sourceName: string;
-  sourceUrl: string;
-  publication: string;
-  publicationDate: string;
-}
-
-interface LineSeries {
-  name: string;
-  color: string;
-  dataPoints: { x: string; y: string }[];
-}
+import { DataRow, SourceRow, LineSeries } from "@/src/types";
 
 export const CHART_TYPES = [
   { value: "vbar", label: "Vertical Bar" },

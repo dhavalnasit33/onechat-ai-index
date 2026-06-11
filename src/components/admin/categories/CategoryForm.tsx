@@ -3,23 +3,9 @@
 import { useEffect, useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Save } from "lucide-react";
 import IconUploadField from "@/src/components/admin/IconUploadField";
-
-export const categorySchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  slug: z.string().optional(),
-  description: z.string().optional(),
-  position: z.number().min(0, "Position must be 0 or greater"),
-  iconUrl: z.string().optional(),
-  keyphrase: z.string().optional(),
-  metaTitle: z.string().optional(),
-  metaDescription: z.string().optional(),
-  featuredImage: z.string().optional(),
-});
-
-export type CategoryFormValues = z.infer<typeof categorySchema>;
+import { categorySchema, type CategoryFormValues } from "@/src/types";
 
 interface CategoryFormProps {
   initialData?: CategoryFormValues | null;

@@ -4,26 +4,8 @@ import React, { useState } from "react";
 import InteractiveChart from "@/src/components/InteractiveChart";
 import EmbedModal from "@/src/components/EmbedModal";
 import { Code2 } from "lucide-react";
+import { ChartData } from "@/src/types";
 
-interface ChartData {
-  _id: string;
-  chartId: string;
-  position: number;
-  title: string;
-  heading?: string;
-  icon?: string;
-  chartType:
-    | "vbar"
-    | "hbar"
-    | "line"
-    | "donut"
-    | "hero_stat"
-    | "timeline"
-    | "text_block";
-  data: any;
-  sourceLine?: string;
-  sources?: any[];
-}
 
 export default function TopicChartsClient({
   charts,

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Trash2, Plus, Pencil, BarChart3, MoreVertical } from "lucide-react";
 import { apiUrl } from "@/src/lib/basePath";
-import TopicForm, { TopicFormValues } from "@/src/components/admin/topics/TopicForm";
+import TopicForm from "@/src/components/admin/topics/TopicForm";
+import { TopicFormValues } from "@/src/types";
 
 export default function TopicEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

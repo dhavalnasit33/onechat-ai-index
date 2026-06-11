@@ -5,13 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { apiUrl } from "@/src/lib/basePath";
-import CategoryForm, { CategoryFormValues } from "@/src/components/admin/categories/CategoryForm";
-
-interface CategoryDetails extends CategoryFormValues {
-  _id: string;
-  topicCount: number;
-  updatedAt: string;
-}
+import CategoryForm from "@/src/components/admin/categories/CategoryForm";
+import { CategoryDetails, CategoryFormValues } from "@/src/types";
 
 export default function CategoryEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

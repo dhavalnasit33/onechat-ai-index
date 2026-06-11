@@ -3,20 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Globe, BarChart3, TrendingUp, Clock } from 'lucide-react';
 import { apiUrl } from '@/src/lib/basePath';
-
-interface DomainStat {
-  domain: string;
-  count: number;
-  lastSeen: string;
-  uniqueCharts: number;
-}
-
-interface DashboardData {
-  topDomains: DomainStat[];
-  totalEmbeds: number;
-  uniqueDomains: number;
-  embedsToday: number;
-}
+import { DashboardData } from '@/src/types';
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
