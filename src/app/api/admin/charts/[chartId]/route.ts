@@ -65,7 +65,7 @@ export async function PUT(
       runValidators: true,
     });
 
-    if (updated) {
+    if (updated && updated.chartType !== 'hero_stat') {
       // Automatically generate/regenerate the static chart image in the background
       generateChartImage(updated.chartId).catch((err: any) => {
         console.error('Failed to automatically regenerate chart image on update:', err);

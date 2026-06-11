@@ -58,9 +58,11 @@ export async function POST(
     });
 
     // Automatically generate the static chart image in the background
-    generateChartImage(chart.chartId).catch((err: any) => {
-      console.error('Failed to automatically generate chart image on create:', err);
-    });
+    if (chart.chartType !== 'hero_stat') {
+      generateChartImage(chart.chartId).catch((err: any) => {
+        console.error('Failed to automatically generate chart image on create:', err);
+      });
+    }
 
     return NextResponse.json({ success: true, data: chart }, { status: 201 });
   } catch (error: any) {

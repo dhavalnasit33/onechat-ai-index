@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+export const CHART_TYPES = [
+  "vbar",
+  "hbar",
+  "line",
+  "donut",
+  "hero_stat",
+  "timeline",
+  "text_block",
+] as const;
+
+// 2. Extract the TypeScript literal type from the array
+export type ChartType = (typeof CHART_TYPES)[number];
+
 // ============================================================================
 // ─── FRONTEND & COMMON USER-FACING TYPES ────────────────────────────────────
 // ============================================================================
@@ -27,21 +40,13 @@ export interface ChartData {
   title: string;
   heading?: string;
   icon?: string;
-  chartType:
-    | "vbar"
-    | "hbar"
-    | "line"
-    | "donut"
-    | "hero_stat"
-    | "timeline"
-    | "text_block";
+  chartType: ChartType;
   data: any;
   sourceLine?: string;
   sources?: ChartSource[];
   imageUrl?: string;
   status?: string;
 }
-
 
 // ============================================================================
 // ─── ADMIN PANEL & DATA MANAGEMENT TYPES ────────────────────────────────────

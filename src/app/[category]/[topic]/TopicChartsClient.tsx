@@ -19,17 +19,17 @@ export default function TopicChartsClient({
   topicTitle: string;
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeChart, setActiveChart] = useState({ name: "", id: "" });
+  const [activeChart, setActiveChart] = useState<ChartData | null>(null);
 
-  const openModal = (name: string, id: string) => {
-    setActiveChart({ name, id });
+  const openModal = (chart: ChartData) => {
+    setActiveChart(chart);
     setIsModalOpen(true);
     document.body.style.overflow = "hidden";
   };
 
-  // Add this new function here:
   const closeModal = () => {
     setIsModalOpen(false);
+    setActiveChart(null);
     document.body.style.overflow = "";
   };
 
@@ -68,12 +68,7 @@ export default function TopicChartsClient({
                 : "Compiled by OneChat AI"}
             </div>
             <button
-              onClick={() =>
-                openModal(
-                  heroStatChart.heading || heroStatChart.title,
-                  heroStatChart.chartId,
-                )
-              }
+              onClick={() => openModal(heroStatChart)}
               className=" cursor-pointer inline-flex items-center gap-1.5 bg-white border border-[#d4d4d8] rounded-lg px-3.5 py-2 text-[13px] font-semibold text-[#111827] shadow-sm transition-all duration-200 hover:border-[#c4b5fd] hover:bg-[#faf8ff] md:absolute md:top-5 md:right-6 "
             >
               <Code2 size={14} className="text-[#6C56E5]" strokeWidth={2.25} />
@@ -132,9 +127,7 @@ export default function TopicChartsClient({
                   </div>
                 </div>
                 <button
-                  onClick={() =>
-                    openModal(chart.heading || chart.title, chart.chartId)
-                  }
+                  onClick={() => openModal(chart)}
                   className=" cursor-pointer inline-flex items-center gap-1.5 bg-white border border-[#d4d4d8] rounded-lg px-3.5 py-2 text-[13px] font-semibold text-[#111827] shadow-sm transition-all duration-200 hover:border-[#c4b5fd] hover:bg-[#faf8ff] md:absolute md:top-5 md:right-6 "
                 >
                   <Code2
@@ -194,9 +187,7 @@ export default function TopicChartsClient({
                 )}
               </div>
               <button
-                onClick={() =>
-                  openModal(chart.heading || chart.title, chart.chartId)
-                }
+                onClick={() => openModal(chart)}
                 className=" cursor-pointer inline-flex items-center gap-1.5 bg-white border border-[#d4d4d8] rounded-lg px-3.5 py-2 text-[13px] font-semibold text-[#111827] shadow-sm transition-all duration-200 hover:border-[#c4b5fd] hover:bg-[#faf8ff] md:absolute md:top-5 md:right-6 "
               >
                 <Code2
@@ -213,8 +204,7 @@ export default function TopicChartsClient({
       <EmbedModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        chartName={activeChart.name}
-        chartId={activeChart.id}
+        chart={activeChart}
         categorySlug={categorySlug}
         topicSlug={topicSlug}
         topicTitle={topicTitle}

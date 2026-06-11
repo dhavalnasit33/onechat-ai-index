@@ -1,15 +1,23 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { ChartData } from "@/src/types";
+
 export default function EmbedModal({
   isOpen,
   onClose,
-  chartName,
-  chartId,
+  chart,
   categorySlug,
   topicSlug,
   topicTitle,
-}: any) {
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  chart: ChartData | null;
+  categorySlug: string;
+  topicSlug: string;
+  topicTitle: string;
+}) {
   const [activeTab, setActiveTab] = useState<"html" | "markdown" | "citation">(
     "html",
   );
@@ -23,14 +31,36 @@ export default function EmbedModal({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !chart) return null;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
+  const chartName = chart.heading || chart.title;
+  const chartId = chart.chartId;
 
-  const getHtmlCode = () =>
-    `<a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank">\n  <img src="${baseUrl}/chart-images/${chartId}.png" alt="${chartName} — OneChat AI Behavior Index" width="600" height="400" style="max-width: 100%; height: auto; border: 1px solid #e5e5e5;" />\n</a>\n<p style="font-size: 11px; color: #666; margin-top: 4px;">\n  Source: <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/" target="_blank">OneChat AI Behavior Index</a>\n</p>`;
-  const getMarkdownCode = () =>
-    `[![${chartName}](${baseUrl}/chart-images/${chartId}.png)](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})\n\n*Source: [OneChat AI Behavior Index](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/)*`;
+  const getCleanSourceLine = () => {
+    const src = chart.sourceLine || "";
+    if (!src) return "Compiled by OneChat AI";
+    return src.toLowerCase().startsWith("source:") ? src : `Source: ${src}`;
+  };
+
+  const getHtmlCode = () => {
+    if (chart.chartType === "hero_stat") {
+      const trendHtml = chart.data?.trend
+        ? `\n  <div style="display: inline-flex; align-items: center; gap: 4px; background-color: #ffffff; color: #1d5436; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 9999px; border: 1px solid #c7e7d4; margin-bottom: 12px;">\n    <span>↑</span> ${chart.data.trend.amount}\n  </div>`
+        : "";
+      return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; border: 1px solid #e5e5e5; border-radius: 12px; padding: 20px; max-width: 400px; background: linear-gradient(135deg, #eaf2fb 0%, #d8e6f5 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center;">\n  <div style="font-family: Georgia, Cambria, 'Times New Roman', Times, serif; font-size: 44px; font-weight: bold; line-height: 1; color: #1e3a5f; margin: 0 0 6px;">\n    ${chart.data?.value}\n  </div>\n  <div style="font-size: 13px; color: #1a1a1a; font-weight: 500; line-height: 1.4; margin: 0 0 12px;">\n    ${chart.data?.label}\n  </div>${trendHtml}\n  <div style="border-top: 1px solid rgba(30, 58, 95, 0.15); padding-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #666;">\n    <span>${getCleanSourceLine()}</span>\n    <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank" style="color: #6C56E5; font-weight: 600; text-decoration: none;">\n      View index\n    </a>\n  </div>\n</div>`;
+    }
+    return `<a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank">\n  <img src="${baseUrl}/chart-images/${chartId}.png" alt="${chartName} — OneChat AI Behavior Index" width="600" height="400" style="max-width: 100%; height: auto; border: 1px solid #e5e5e5;" />\n</a>\n<p style="font-size: 11px; color: #666; margin-top: 4px;">\n  Source: <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/" target="_blank">OneChat AI Behavior Index</a>\n</p>`;
+  };
+
+  const getMarkdownCode = () => {
+    if (chart.chartType === "hero_stat") {
+      const trendText = chart.data?.trend ? `\n> **↑ ${chart.data.trend.amount}**\n>` : "";
+      return `> ### **${chart.data?.value}**\n> **${chart.data?.label}**\n>${trendText}\n> *[${getCleanSourceLine()}](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})*`;
+    }
+    return `[![${chartName}](${baseUrl}/chart-images/${chartId}.png)](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})\n\n*Source: [OneChat AI Behavior Index](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/)*`;
+  };
+
   const getCitationCode = () =>
     `OneChat AI. (2026). "${topicTitle}." AI Behavior Index.\nRetrieved from ${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/`;
 
@@ -73,16 +103,40 @@ export default function EmbedModal({
               <div className="text-[10px] uppercase tracking-[0.6px] font-bold text-[#888] mb-2">
                 Preview
               </div>
-              <div className="flex items-center justify-center bg-white border border-[#e5e5e5] rounded p-2 min-h-[120px]">
-                <img
-                  src={`${baseUrl}/chart-images/${chartId}.png`}
-                  alt={`${chartName} Preview`}
-                  className="max-h-[160px] w-auto object-contain"
-                  onError={(e) => {
-                    // fallback if not yet generated or error
-                    e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%23888'>Preview Loading...</text></svg>";
-                  }}
-                />
+              <div className="flex items-center justify-center bg-white border border-[#e5e5e5] rounded p-2 min-h-[120px] w-full">
+                {chart.chartType === "hero_stat" ? (
+                  <div className="bg-gradient-to-br from-[#eaf2fb] to-[#d8e6f5] rounded-xl p-5 text-center relative overflow-hidden w-full max-w-sm border border-[#e5e5e5]">
+                    <div className="font-serif text-[36px] font-bold leading-none text-[#1e3a5f] mb-1.5">
+                      {chart.data?.value}
+                    </div>
+                    <div className="text-[12px] text-[#1a1a1a] font-medium leading-[1.3] mb-3">
+                      {chart.data?.label}
+                    </div>
+                    {chart.data?.trend && (
+                      <div className="inline-flex items-center gap-1 bg-white text-[#1d5436] text-[10.5px] font-semibold px-2 py-0.5 rounded-full border border-[#c7e7d4] mb-3">
+                        <span>↑</span> {chart.data.trend.amount}
+                      </div>
+                    )}
+                    <div className="border-t border-[#1e3a5f]/15 pt-2.5 flex justify-between items-center text-[10px] text-[#666]">
+                      <span className="text-left max-w-[70%] leading-[1.3]">
+                        {getCleanSourceLine()}
+                      </span>
+                      <span className="text-[#6C56E5] font-semibold hover:underline">
+                        View index
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={`${baseUrl}/chart-images/${chartId}.png`}
+                    alt={`${chartName} Preview`}
+                    className="max-h-[160px] w-auto object-contain"
+                    onError={(e) => {
+                      // fallback if not yet generated or error
+                      e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%23888'>Preview Loading...</text></svg>";
+                    }}
+                  />
+                )}
               </div>
             </div>
 

@@ -9,7 +9,7 @@ import { generateChartImage } from "@/src/lib/chartGenerator";
 export async function GET() {
   try {
     await dbConnect();
-    const charts = await Chart.find({ status: "active" })
+    const charts = await Chart.find({ status: "active", chartType: { $ne: "hero_stat" } })
       .select("chartId title chartType")
       .lean();
 
@@ -55,6 +55,14 @@ export async function POST(request: NextRequest) {
     if (!chartId) {
       return NextResponse.json(
         { success: false, message: "chartId is required" },
+        { status: 400 },
+      );
+    }
+
+    const chart = await Chart.findOne({ chartId }).select("chartType");
+    if (chart?.chartType === "hero_stat") {
+      return NextResponse.json(
+        { success: false, message: "Hero stat charts do not support image generation" },
         { status: 400 },
       );
     }

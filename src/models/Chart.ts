@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
+import { ChartType, CHART_TYPES } from "../types";
 
 export interface ISource {
   position?: number;
@@ -13,7 +14,7 @@ export interface IChart extends Document {
   chartId: string;
   position: number;
   title: string;
-  chartType: "vbar" | "hbar" | "line" | "donut" | "hero_stat";
+  chartType: ChartType;
   data: any;
   sourceLine?: string;
   imageUrl?: string;
@@ -77,15 +78,7 @@ const ChartSchema = new Schema<IChart>(
     },
     chartType: {
       type: String,
-      enum: [
-        "vbar",
-        "hbar",
-        "line",
-        "donut",
-        "hero_stat",
-        "timeline",
-        "text_block",
-      ],
+      enum: CHART_TYPES,
       required: true,
     },
     data: {
