@@ -12,8 +12,33 @@ const PURPLE_LIGHT = '#EAE7FD';
 const PURPLE_MID = '#9585EC';
 
 export default function MethodologyPage() {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": `${baseUrl}/ai-behavior-index/`
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Methodology",
+        "item": `${baseUrl}/ai-behavior-index/methodology/`
+      }
+    ]
+  };
+
   return (
     <div className="bg-[#f7f8fc] min-h-screen text-[#15151a]">
+      {/* SEO Schema Markups */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <Header activeTab="methodology" />
 
       {/* BREADCRUMB */}

@@ -101,8 +101,85 @@ export default async function TopicPage({ params }: PageProps) {
       })
     : "June 2026";
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": `${baseUrl}/ai-behavior-index/`
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": category.name,
+        "item": `${baseUrl}/ai-behavior-index/${category.slug}/`
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": topic.title,
+        "item": `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`
+      }
+    ]
+  };
+
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": topic.title,
+    "description": topic.description,
+    "datePublished": (topic as any).publishedAt || (topic as any).createdAt || new Date().toISOString(),
+    "dateModified": (topic as any).lastRefreshedAt || (topic as any).updatedAt || (topic as any).publishedAt || new Date().toISOString(),
+    "author": {
+      "@type": "Organization",
+      "name": "OneChat AI",
+      "url": baseUrl
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "OneChat AI",
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${baseUrl}/favicon.ico`
+      }
+    },
+    "mainEntityOfPage": `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`
+  };
+
+  const datasetSchema = {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": `${topic.title} Dataset`,
+    "description": topic.description,
+    "url": `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
+    "creator": {
+      "@type": "Organization",
+      "name": "OneChat AI"
+    },
+    "citation": topic.methodologyNote || 'Aggregated studies from OneChat AI Behavior Index'
+  };
+
   return (
     <div className="bg-[#ffffff] min-h-screen text-[#1a1a1a] font-sans text-[14px] md:text-[15px] leading-[1.55] md:leading-[1.6]">
+      {/* SEO Schema Markups */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(datasetSchema) }}
+      />
+
       {/* SITE HEADER */}
       <Header activeTab="none" />
 
@@ -196,7 +273,7 @@ export default async function TopicPage({ params }: PageProps) {
             </p>
           </div>
           <a
-            href="#"
+            href="/ai-behavior-index/for-journalists/"
             className="block md:inline-block w-full md:w-auto text-center bg-white text-[#1e3a5f] px-4.5 py-2.5 md:px-[24px] md:py-[12px] rounded-md font-semibold text-[13px] md:text-[14px] whitespace-nowrap"
           >
             Press resources →

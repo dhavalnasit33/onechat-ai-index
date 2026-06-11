@@ -68,6 +68,24 @@ export default function EmbedModal({
           </div>
 
           <div className="p-[16px_18px_24px] md:p-[24px_28px]">
+            {/* Chart Image Preview */}
+            <div className="mb-4 border border-[#e5e5e5] rounded-md overflow-hidden bg-[#fafafc] flex flex-col p-3">
+              <div className="text-[10px] uppercase tracking-[0.6px] font-bold text-[#888] mb-2">
+                Preview
+              </div>
+              <div className="flex items-center justify-center bg-white border border-[#e5e5e5] rounded p-2 min-h-[120px]">
+                <img
+                  src={`${baseUrl}/chart-images/${chartId}.png`}
+                  alt={`${chartName} Preview`}
+                  className="max-h-[160px] w-auto object-contain"
+                  onError={(e) => {
+                    // fallback if not yet generated or error
+                    e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%23888'>Preview Loading...</text></svg>";
+                  }}
+                />
+              </div>
+            </div>
+
             <div className="bg-[#fafafc] rounded-md p-[12px_14px] md:p-4 mb-3.5 md:mb-5 text-[12px] md:text-[13px]">
               <div className="text-[10px] md:text-[11px] uppercase tracking-[0.6px] font-bold text-[#888] mb-1">
                 Embedding

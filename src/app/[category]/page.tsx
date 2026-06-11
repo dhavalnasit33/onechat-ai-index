@@ -115,8 +115,34 @@ export default async function CategoryPage({
   // Emojis mapping for topics
   // const icons = ['📱', '📚', '🛡️', '💼', '👨‍👩‍👧', '📈', '🕰️', '🏥', '🎓', '📖', '💻', '👥'];
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": `${baseUrl}/ai-behavior-index/`
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": category.name,
+        "item": `${baseUrl}/ai-behavior-index/${category.slug}/`
+      }
+    ]
+  };
+
   return (
     <div className="bg-[#f0f0f0] md:bg-white text-[#15151a] font-serif min-h-screen flex justify-center md:block">
+      {/* SEO Schema Markups */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
       {/* MOBILE WRAPPER (Restricts width on mobile to simulate app, expands on desktop) */}
       <div className="w-full max-w-[380px] md:max-w-full bg-white min-h-screen shadow-[0_4px_24px_rgba(0,0,0,0.12)] md:shadow-none">
         {/* TOP NAV */}

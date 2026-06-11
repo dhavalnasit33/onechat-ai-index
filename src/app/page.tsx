@@ -45,8 +45,28 @@ export default async function Home() {
     })
     .lean();
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": `${baseUrl}/ai-behavior-index/`
+      }
+    ]
+  };
+
   return (
     <div className="bg-white text-[#15151a] font-serif leading-relaxed text-[15px] md:text-[16px] min-h-screen w-full">
+      {/* SEO Schema Markups */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
       {/* TOP NAV */}
       <Header activeTab="home" />
 

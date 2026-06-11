@@ -146,8 +146,34 @@ export default async function SearchPage({ searchParams }: PageProps) {
   // Icons updated to match the static HTML examples
   const icons = ["📱", "📚", "🛡️", "🏆", "⚡", "🔀", "🤖", "💵", "🎨", "📈"];
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": `${baseUrl}/ai-behavior-index/`
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Search Results",
+        "item": `${baseUrl}/ai-behavior-index/search/?q=${encodeURIComponent(q)}`
+      }
+    ]
+  };
+
   return (
     <div className="bg-[#f0f0f0] md:bg-white text-[#15151a] font-serif min-h-screen flex justify-center md:block">
+      {/* SEO Schema Markups */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
       {/* MOBILE WRAPPER - Full width on desktop, constrained wrapper effect on mobile if needed */}
       <div className="w-full bg-white min-h-screen shadow-[0_4px_24px_rgba(0,0,0,0.12)] md:shadow-none">
         {/* TOP NAV */}

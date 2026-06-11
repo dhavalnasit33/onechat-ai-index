@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/src/lib/dbConnect';
 import Chart from '@/src/models/Chart';
 import ChartHistory from '@/src/models/ChartHistory';
+import { generateChartImage } from '@/src/lib/chartGenerator';
 
 // GET /api/admin/charts/[chartId] — Get single chart by _id
 export async function GET(
@@ -63,6 +64,13 @@ export async function PUT(
       new: true,
       runValidators: true,
     });
+
+    if (updated) {
+      // Automatically generate/regenerate the static chart image in the background
+      generateChartImage(updated.chartId).catch((err: any) => {
+        console.error('Failed to automatically regenerate chart image on update:', err);
+      });
+    }
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {

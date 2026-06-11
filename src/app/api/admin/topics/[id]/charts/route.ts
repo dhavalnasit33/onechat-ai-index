@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/src/lib/dbConnect';
 import Chart from '@/src/models/Chart';
+import { generateChartImage } from '@/src/lib/chartGenerator';
 
 // GET /api/admin/topics/[id]/charts — List charts for a topic
 export async function GET(
@@ -56,6 +57,11 @@ export async function POST(
       displayHome: displayHome ?? false,
     });
 
+    // Automatically generate the static chart image in the background
+    generateChartImage(chart.chartId).catch((err: any) => {
+      console.error('Failed to automatically generate chart image on create:', err);
+    });
+
     return NextResponse.json({ success: true, data: chart }, { status: 201 });
   } catch (error: any) {
     if (error.code === 11000) {
@@ -70,3 +76,4 @@ export async function POST(
     );
   }
 }
+

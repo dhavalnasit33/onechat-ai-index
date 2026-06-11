@@ -36,20 +36,19 @@ export default function Footer() {
             For Journalists
           </Link>
           <Link
-            href="/privacy-policy"
+            href="/privacy-policy/"
             className="hover:text-[#15151a] transition-colors no-underline text-inherit"
           >
             Privacy
           </Link>
           <Link
-            href="/terms-of-service"
+            href="/terms-of-service/"
             className="hover:text-[#15151a] transition-colors no-underline text-inherit"
           >
             Terms
           </Link>
           <a
-            // href="mailto:research@aibehaviorindex.org"
-            href="#"
+            href="mailto:press@onechatai.ai"
             className="hover:text-[#15151a] transition-colors no-underline text-inherit"
           >
             Contact

@@ -54,9 +54,7 @@ export async function GET(
   }
 
   // --- 2. Serve the static chart image ---
-  const actualFileName = chartId.startsWith("chart-")
-    ? `${chartId}.png`
-    : `chart-${chartId}.png`;
+  const actualFileName = `${chartId}.png`;
 
   const filePath = path.join(
     process.cwd(),

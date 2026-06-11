@@ -13,6 +13,7 @@ import {
   Quote,
   ArrowRight,
   AlertCircle,
+  Download,
 } from 'lucide-react';
 import Header from '@/src/components/Header';
 import Footer from '@/src/components/Footer';
@@ -67,7 +68,7 @@ const quickStartItems = [
   {
     icon: <BarChart2 size={20} />,
     label: 'Every chart is embeddable',
-    desc: 'Click "Embed" on any chart for ready-to-paste HTML, Markdown, or formal citation.',
+    desc: 'Click "Embed" on any chart for ready-to-paste HTML (using an optimized static image for SEO and maximum CMS compatibility), Markdown, or formal citation.',
   },
   {
     icon: <Image size={20} />,
@@ -87,8 +88,33 @@ const quickStartItems = [
 ];
 
 export default function ForJournalistsPage() {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": `${baseUrl}/ai-behavior-index/`
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "For Journalists",
+        "item": `${baseUrl}/ai-behavior-index/for-journalists/`
+      }
+    ]
+  };
+
   return (
     <div className="bg-[#f7f8fc] min-h-screen text-[#15151a]">
+      {/* SEO Schema Markups */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <Header activeTab="for-journalists" />
 
       {/* BREADCRUMB */}
@@ -120,14 +146,23 @@ export default function ForJournalistsPage() {
           </p>
 
           {/* Quick start pill strip */}
-          <a
-            href="mailto:research@aibehaviorindex.org"
-            className="inline-flex items-center gap-2 font-sans text-sm font-semibold px-5 py-2.5 rounded-full text-white transition-opacity hover:opacity-90"
-            style={{ background: PURPLE }}
-          >
-            <Mail size={15} />
-            Contact the research team
-          </a>
+          <div className="flex flex-wrap gap-4 mt-6">
+            <a
+              href="mailto:press@onechatai.ai"
+              className="inline-flex items-center gap-2 font-sans text-sm font-semibold px-5 py-2.5 rounded-full text-white transition-opacity hover:opacity-90 cursor-pointer"
+              style={{ background: PURPLE }}
+            >
+              <Mail size={15} />
+              Contact Habib (Press Officer)
+            </a>
+            <a
+              href="/ai-behavior-index/downloads/press-kit.pdf"
+              className="inline-flex items-center gap-2 font-sans text-sm font-semibold px-5 py-2.5 rounded-full bg-white text-[#15151a] border border-[#e2e2ef] transition-colors hover:bg-gray-50 cursor-pointer"
+            >
+              <Download size={15} />
+              Download Press Kit (PDF)
+            </a>
+          </div>
         </div>
       </div>
 
@@ -342,12 +377,15 @@ export default function ForJournalistsPage() {
               <p className="font-sans text-[13px] text-[#6a6a7a] leading-relaxed mb-4">
                 For custom data requests, background interviews, or to request high-resolution chart assets — contact us with your deadline.
               </p>
+              <p className="font-sans text-[13px] text-[#2a2a3a] mb-2">
+                <strong>Press Officer:</strong> Habib
+              </p>
               <a
-                href="mailto:research@aibehaviorindex.org"
+                href="mailto:press@onechatai.ai"
                 className="inline-flex items-center gap-1.5 font-sans text-[13px] font-semibold underline transition-colors"
                 style={{ color: PURPLE }}
               >
-                research@aibehaviorindex.org
+                press@onechatai.ai
                 <ArrowRight size={13} />
               </a>
             </div>
