@@ -49,6 +49,18 @@ export default function TopicForm({
     },
   });
 
+  const titleVal = watch("title");
+
+  React.useEffect(() => {
+    if (!initialData) {
+      const generatedSlug = titleVal
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      setValue("slug", generatedSlug, { shouldDirty: true, shouldValidate: true });
+    }
+  }, [titleVal, initialData, setValue]);
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       {errorMsg && <div className="admin-login-error" style={{ marginBottom: 20 }}>{errorMsg}</div>}
@@ -71,8 +83,13 @@ export default function TopicForm({
             <label className="admin-form-label">Slug</label>
             <Input 
               placeholder="auto-generated" 
-              style={{ fontFamily: 'var(--font-geist-mono)' }} 
+              style={{
+                fontFamily: 'var(--font-geist-mono)',
+                opacity: 0.6,
+                cursor: 'not-allowed',
+              }} 
               {...register("slug")} 
+              readOnly
             />
           </div>
         </div>

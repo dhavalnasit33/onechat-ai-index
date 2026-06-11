@@ -6,7 +6,6 @@ import EmbedModal from "@/src/components/EmbedModal";
 import { Code2 } from "lucide-react";
 import { ChartData } from "@/src/types";
 
-
 export default function TopicChartsClient({
   charts,
   categorySlug,
@@ -123,7 +122,7 @@ export default function TopicChartsClient({
                         )}
                       </span>
                     )}
-                    <span>{chart.heading || chart.title}</span>
+                    <span>{chart.title}</span>
                   </div>
                 </div>
                 <button

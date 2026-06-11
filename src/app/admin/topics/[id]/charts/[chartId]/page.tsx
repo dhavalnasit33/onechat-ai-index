@@ -217,15 +217,32 @@ export default function ChartEditorPage({
     toast({ title: message, variant: type === "error" ? "destructive" : "default" });
   };
 
-  // Fetch chart data for editing
+  // Fetch topic (to get slug and chart count for new chart ID) and chart data
   useEffect(() => {
-    if (isNew) return;
+    const loadData = async () => {
+      try {
+        const topicUrl = apiUrl(`/api/admin/topics/${topicId}`);
+        const topicRes = await fetch(topicUrl).then((r) => r.json());
+        
+        let tSlug = "";
+        let nextIndex = 0;
+        if (topicRes.success) {
+          tSlug = topicRes.data.slug;
+          nextIndex = topicRes.data.charts 
+            ? topicRes.data.charts.filter((c: any) => c.status !== "removed").length 
+            : 0;
+        }
 
-    fetch(apiUrl(`/api/admin/charts/${chartId}`))
-      .then((r) => r.json())
-      .then((res) => {
-        if (res.success) {
-          const c = res.data;
+        if (isNew) {
+          setChartIdSlug(`${tSlug}-c${nextIndex}`);
+          setLoading(false);
+          return;
+        }
+
+        const chartUrl = apiUrl(`/api/admin/charts/${chartId}`);
+        const chartRes = await fetch(chartUrl).then((r) => r.json());
+        if (chartRes.success) {
+          const c = chartRes.data;
           setTitle(c.title);
           setChartIdSlug(c.chartId);
           setChartType(c.chartType);
@@ -300,9 +317,15 @@ export default function ChartEditorPage({
             }
           }
         }
-      })
-      .finally(() => setLoading(false));
-  }, [chartId, isNew]);
+      } catch (err) {
+        console.error("Failed to load chart editor data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [chartId, topicId, isNew]);
 
   // Data row management
   const addDataRow = () =>
@@ -397,12 +420,7 @@ export default function ChartEditorPage({
     setSaving(true);
     const payload = {
       title,
-      chartId:
-        chartIdSlug ||
-        title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, ""),
+      chartId: chartIdSlug,
       chartType,
       position: position === "" ? 0 : Number(position),
       sourceLine,
@@ -507,28 +525,18 @@ export default function ChartEditorPage({
                 <Input
                   placeholder="e.g. AI Investment by Sector"
                   value={title}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                    if (isNew) {
-                      setChartIdSlug(
-                        e.target.value
-                          .toLowerCase()
-                          .replace(/[^a-z0-9]+/g, "-")
-                          .replace(/^-|-$/g, ""),
-                      );
-                    }
-                  }}
+                  onChange={(e) => setTitle(e.target.value)}
                 />
               </div>
               <div className="admin-form-group">
                 <label className="admin-form-label">Chart ID</label>
                 <Input
                   value={chartIdSlug}
-                  onChange={(e) => setChartIdSlug(e.target.value)}
-                  disabled={!isNew}
+                  readOnly
                   style={{
                     fontFamily: "var(--font-geist-mono)",
-                    opacity: isNew ? 1 : 0.6,
+                    opacity: 0.6,
+                    cursor: "not-allowed",
                   }}
                 />
               </div>
