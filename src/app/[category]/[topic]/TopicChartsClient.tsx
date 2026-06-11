@@ -120,8 +120,16 @@ export default function TopicChartsClient({
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4 mb-1.5 md:mb-2">
                 <div className="flex-1">
                   <div className="text-[10px] md:text-[11px] text-[#888] uppercase tracking-[0.6px] md:tracking-[0.8px] font-semibold mb-1">
-                    Chart {chart.position} ·{" "}
-                    {chart.chartType === "donut" ? "Preference" : "Comparison"}
+                    {chart.heading ? (
+                      chart.heading
+                    ) : (
+                      <>
+                        Chart {chart.position} ·{" "}
+                        {chart.chartType === "donut"
+                          ? "Preference"
+                          : "Comparison"}
+                      </>
+                    )}
                   </div>
                   <div className="font-serif text-[15.5px] md:text-[20px] font-bold text-[#1a1a1a] leading-[1.25] flex items-center gap-2">
                     {chart.icon && (
