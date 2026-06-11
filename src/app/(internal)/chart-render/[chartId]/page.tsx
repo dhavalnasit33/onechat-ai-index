@@ -66,17 +66,7 @@ export default async function ChartRenderPage({
         <p style={{ fontSize: "11px", color: "#666", marginTop: "8px" }}>
           {chart.sourceLine}
         </p>
-        <div
-          style={{
-            position: "absolute",
-            bottom: "8px",
-            right: "8px",
-            fontSize: "11px",
-            color: "#aaa",
-          }}
-        >
-          OneChat AI
-        </div>
+
       </div>
     </div>
   );

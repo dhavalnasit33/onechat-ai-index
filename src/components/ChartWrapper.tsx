@@ -17,6 +17,56 @@ import {
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 
+const watermarkPlugin = {
+  id: 'watermark',
+  afterDraw: (chart: any) => {
+    const ctx = chart.ctx;
+    const width = chart.width;
+    const height = chart.height;
+
+    ctx.save();
+    
+    const textAI = 'AI';
+    const textBehaviorIndex = ' Behavior Index';
+    const textURL = 'aibehaviorindex.org';
+
+    ctx.textBaseline = 'bottom';
+
+    // Line 1 Font
+    ctx.font = 'bold 11px sans-serif';
+    const aiWidth = ctx.measureText(textAI).width;
+    const behaviorWidth = ctx.measureText(textBehaviorIndex).width;
+    const totalLine1Width = aiWidth + behaviorWidth;
+    
+    // Line 2 Font
+    ctx.font = 'normal 9px sans-serif';
+    const urlWidth = ctx.measureText(textURL).width;
+
+    const marginRight = 16;
+    const marginBottom = 8;
+    
+    // Y positions
+    const yLine2 = height - marginBottom;
+    const yLine1 = yLine2 - 12;
+
+    // Line 2 (URL)
+    const xLine2Start = width - marginRight - urlWidth;
+    ctx.fillStyle = '#888888';
+    ctx.fillText(textURL, xLine2Start, yLine2);
+
+    // Line 1 (AI Behavior Index)
+    const xLine1Start = width - marginRight - totalLine1Width;
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillStyle = '#6C56E5';
+    ctx.fillText(textAI, xLine1Start, yLine1);
+    
+    ctx.fillStyle = '#1e3a5f';
+    ctx.fillText(textBehaviorIndex, xLine1Start + aiWidth, yLine1);
+
+    ctx.restore();
+  }
+};
+
 // Register ChartJS components
 ChartJS.register(
   CategoryScale,
@@ -28,7 +78,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  watermarkPlugin
 );
 
 const PALETTE = ['#088DFF', '#E5483F', '#F39323', '#0468BD', '#A8A8B0'];
@@ -80,6 +131,11 @@ export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperP
     const options: ChartOptions<'bar'> = {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          bottom: 45
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -123,6 +179,11 @@ export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperP
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          bottom: 45
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -170,6 +231,11 @@ export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperP
         mode: 'index',
         intersect: false,
       },
+      layout: {
+        padding: {
+          bottom: 45
+        }
+      },
       plugins: {
         legend: { position: 'bottom' },
         tooltip: {
@@ -212,6 +278,11 @@ export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperP
       responsive: true,
       maintainAspectRatio: false,
       cutout: '62%',
+      layout: {
+        padding: {
+          bottom: 45
+        }
+      },
       plugins: {
         legend: { position: 'right' },
         tooltip: {

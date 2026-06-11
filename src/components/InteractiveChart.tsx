@@ -16,6 +16,56 @@ import {
 } from "chart.js";
 import { Bar, Line, Doughnut } from "react-chartjs-2";
 
+const watermarkPlugin = {
+  id: "watermark",
+  afterDraw: (chart: any) => {
+    const ctx = chart.ctx;
+    const width = chart.width;
+    const height = chart.height;
+
+    ctx.save();
+    
+    const textAI = "AI";
+    const textBehaviorIndex = " Behavior Index";
+    const textURL = "aibehaviorindex.org";
+
+    ctx.textBaseline = "bottom";
+
+    // Line 1 Font
+    ctx.font = "bold 11px sans-serif";
+    const aiWidth = ctx.measureText(textAI).width;
+    const behaviorWidth = ctx.measureText(textBehaviorIndex).width;
+    const totalLine1Width = aiWidth + behaviorWidth;
+    
+    // Line 2 Font
+    ctx.font = "normal 9px sans-serif";
+    const urlWidth = ctx.measureText(textURL).width;
+
+    const marginRight = 16;
+    const marginBottom = 8;
+    
+    // Y positions
+    const yLine2 = height - marginBottom;
+    const yLine1 = yLine2 - 12;
+
+    // Line 2 (URL)
+    const xLine2Start = width - marginRight - urlWidth;
+    ctx.fillStyle = "#888888";
+    ctx.fillText(textURL, xLine2Start, yLine2);
+
+    // Line 1 (AI Behavior Index)
+    const xLine1Start = width - marginRight - totalLine1Width;
+    ctx.font = "bold 11px sans-serif";
+    ctx.fillStyle = "#6C56E5";
+    ctx.fillText(textAI, xLine1Start, yLine1);
+    
+    ctx.fillStyle = "#1e3a5f";
+    ctx.fillText(textBehaviorIndex, xLine1Start + aiWidth, yLine1);
+
+    ctx.restore();
+  }
+};
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -27,6 +77,7 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
+  watermarkPlugin
 );
 
 // Statista Style Palette
@@ -71,23 +122,34 @@ export default function InteractiveChart({
   // 2. TIMELINE MILESTONES UI (Image 2 & 3)
   if (chartType === "timeline") {
     return (
-      <div className="flex flex-col gap-5 overflow-y-auto h-full pr-2 text-left custom-scrollbar">
-        {data.events?.map((event: any, idx: number) => (
-          <div key={idx} className="flex gap-4 items-start relative pb-1">
-            <div className="min-w-[75px] text-[11px] font-bold uppercase tracking-wider text-[#088DFF] pt-0.5">
-              {event.date}
+      <div className="relative w-full h-full pb-[45px] flex flex-col justify-between">
+        <div className="flex flex-col gap-5 overflow-y-auto h-[calc(100%-45px)] pr-2 text-left custom-scrollbar">
+          {data.events?.map((event: any, idx: number) => (
+            <div key={idx} className="flex gap-4 items-start relative pb-1">
+              <div className="min-w-[75px] text-[11px] font-bold uppercase tracking-wider text-[#088DFF] pt-0.5">
+                {event.date}
+              </div>
+              <div className="relative border-l border-[#e5e5e5] pl-4 flex-1">
+                <div className="absolute w-2 h-2 rounded-full bg-[#088DFF] -left-[4.5px] top-[7px]" />
+                <h4 className="font-sans text-[13.5px] md:text-[14.5px] font-bold text-[#1a1a1a] mb-1">
+                  {event.title}
+                </h4>
+                <p className="text-[11.5px] md:text-[12.5px] text-[#555] leading-relaxed">
+                  {event.description}
+                </p>
+              </div>
             </div>
-            <div className="relative border-l border-[#e5e5e5] pl-4 flex-1">
-              <div className="absolute w-2 h-2 rounded-full bg-[#088DFF] -left-[4.5px] top-[7px]" />
-              <h4 className="font-sans text-[13.5px] md:text-[14.5px] font-bold text-[#1a1a1a] mb-1">
-                {event.title}
-              </h4>
-              <p className="text-[11.5px] md:text-[12.5px] text-[#555] leading-relaxed">
-                {event.description}
-              </p>
-            </div>
+          ))}
+        </div>
+        <div className="absolute bottom-2 right-4 text-right select-none pointer-events-none">
+          <div className="text-[11px] font-bold leading-tight">
+            <span className="text-[#6C56E5]">AI</span>
+            <span className="text-[#1e3a5f]"> Behavior Index</span>
           </div>
-        ))}
+          <div className="text-[9px] text-[#888] leading-tight">
+            aibehaviorindex.org
+          </div>
+        </div>
       </div>
     );
   }
@@ -113,6 +175,11 @@ export default function InteractiveChart({
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 700, easing: "easeOutQuart" },
+    layout: {
+      padding: {
+        bottom: 45,
+      },
+    },
     plugins: {
       tooltip: {
         padding: isMobile ? 8 : 10,
