@@ -60,7 +60,7 @@ export const SelectItem = React.forwardRef<
 >(({ className = "", children, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
-    className={`relative flex w-full select-none items-center rounded-[4px] py-2.5 pl-9 pr-3 text-sm font-semibold outline-none focus:bg-[var(--admin-surface-2)] focus:text-[var(--admin-accent)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 cursor-pointer ${className}`}
+    className={`relative flex w-full select-none items-center rounded-[4px] py-2.5 pl-9 pr-3 text-sm font-medium outline-none focus:bg-[var(--admin-surface-2)] focus:text-[var(--admin-accent)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 cursor-pointer ${className}`}
     {...props}
   >
     <span className="absolute left-2.5 flex h-3.5 w-3.5 items-center justify-center">
