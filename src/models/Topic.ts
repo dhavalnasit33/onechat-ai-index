@@ -7,6 +7,7 @@ export interface ITopic extends Document {
   description: string;
   methodologyNote?: string;
   metaTitle?: string;
+  keyphrase?: string;
   metaDescription?: string;
   ogImageUrl?: string;
   iconUrl?: string;        // ← NEW: uploaded icon image URL
@@ -46,6 +47,10 @@ const TopicSchema = new Schema<ITopic>(
       default: '',
     },
     metaTitle: {
+      type: String,
+      default: '',
+    },
+    keyphrase: {
       type: String,
       default: '',
     },

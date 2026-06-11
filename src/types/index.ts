@@ -124,6 +124,7 @@ export const topicSchema = z.object({
   description: z.string().min(1, "Description is required"),
   methodologyNote: z.string().optional(),
   metaTitle: z.string().optional(),
+  keyphrase: z.string().optional(),
   metaDescription: z.string().optional(),
   ogImageUrl: z.string().optional(),
   iconUrl: z.string().optional(),

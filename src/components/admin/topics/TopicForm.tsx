@@ -42,6 +42,7 @@ export default function TopicForm({
       description: initialData?.description || "",
       methodologyNote: initialData?.methodologyNote || "",
       metaTitle: initialData?.metaTitle || "",
+      keyphrase: (initialData as any)?.keyphrase || "",
       metaDescription: initialData?.metaDescription || "",
       ogImageUrl: initialData?.ogImageUrl || "",
       iconUrl: initialData?.iconUrl || "",
@@ -178,6 +179,13 @@ export default function TopicForm({
           <Input 
             placeholder="Page title for search engines" 
             {...register("metaTitle")} 
+          />
+        </div>
+        <div className="admin-form-group">
+          <label className="admin-form-label">Focus Keyphrase</label>
+          <Input 
+            placeholder="e.g. ai investment, global hardware market" 
+            {...register("keyphrase")} 
           />
         </div>
         <div className="admin-form-group">
