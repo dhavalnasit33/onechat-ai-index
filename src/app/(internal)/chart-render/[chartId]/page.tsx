@@ -18,7 +18,15 @@ export default async function ChartRenderPage({
     return <div>Chart not found</div>;
   }
 
-  // 3. Use a fixed full-screen overlay to hide your main site's Navbar/Footer from the bot
+  const cleanSource = (chart.sourceLine || "")
+    .replace(/OneChat AI/g, "AI Behavior Index");
+  const displaySource = cleanSource
+    ? cleanSource.toLowerCase().startsWith("source:")
+      ? cleanSource
+      : `Source: ${cleanSource}`
+    : "Compiled by AI Behavior Index";
+
+  // 3. Use a fixed full-screen overlay with explicit text color to avoid dark-mode color inheritance bugs
   return (
     <div
       style={{
@@ -32,6 +40,7 @@ export default async function ChartRenderPage({
         padding: "40px",
         fontFamily: "-apple-system, sans-serif",
         boxSizing: "border-box",
+        color: "#1a1a1a",
       }}
     >
       <div
@@ -47,6 +56,7 @@ export default async function ChartRenderPage({
             fontFamily: "Georgia, serif",
             fontSize: "24px",
             margin: "0 0 16px",
+            color: "#1a1a1a",
           }}
         >
           {chart.title}
@@ -63,8 +73,8 @@ export default async function ChartRenderPage({
           />
         </div>
 
-        <p style={{ fontSize: "11px", color: "#666", marginTop: "8px" }}>
-          {chart.sourceLine}
+        <p style={{ fontSize: "12px", color: "#555555", marginTop: "8px" }}>
+          {displaySource}
         </p>
 
       </div>

@@ -50,7 +50,7 @@ export default function EmbedModal({
         : "";
       return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; border: 1px solid #e5e5e5; border-radius: 12px; padding: 20px; max-width: 400px; background: linear-gradient(135deg, #eaf2fb 0%, #d8e6f5 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center;">\n  <div style="font-family: Georgia, Cambria, 'Times New Roman', Times, serif; font-size: 44px; font-weight: bold; line-height: 1; color: #1e3a5f; margin: 0 0 6px;">\n    ${chart.data?.value}\n  </div>\n  <div style="font-size: 13px; color: #1a1a1a; font-weight: 500; line-height: 1.4; margin: 0 0 12px;">\n    ${chart.data?.label}\n  </div>${trendHtml}\n  <div style="border-top: 1px solid rgba(30, 58, 95, 0.15); padding-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #666;">\n    <span>${getCleanSourceLine()}</span>\n    <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank" style="color: #6C56E5; font-weight: 600; text-decoration: none;">\n      View index\n    </a>\n  </div>\n</div>`;
     }
-    return `<a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank">\n  <img src="${baseUrl}/chart-images/${chartId}.png" alt="${chartName} — OneChat AI Behavior Index" width="600" height="400" style="max-width: 100%; height: auto; border: 1px solid #e5e5e5;" />\n</a>\n<p style="font-size: 11px; color: #666; margin-top: 4px;">\n  Source: <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/" target="_blank">OneChat AI Behavior Index</a>\n</p>`;
+    return `<a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank">\n  <img src="${baseUrl}/chart-images/${chartId}.png" alt="${chartName}. — AI Behavior Index" width="600" height="400" loading="lazy" style="max-width: 100%; height: auto; border: 1px solid #e5e5e5;" />\n</a>\n<p style="font-size: 12px; color: #666; margin-top: 4px;">\n  Source: <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank">AI Behavior Index</a>\n</p>`;
   };
 
   const getMarkdownCode = () => {
@@ -58,11 +58,11 @@ export default function EmbedModal({
       const trendText = chart.data?.trend ? `\n> **↑ ${chart.data.trend.amount}**\n>` : "";
       return `> ### **${chart.data?.value}**\n> **${chart.data?.label}**\n>${trendText}\n> *[${getCleanSourceLine()}](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})*`;
     }
-    return `[![${chartName}](${baseUrl}/chart-images/${chartId}.png)](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})\n\n*Source: [OneChat AI Behavior Index](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/)*`;
+    return `[![${chartName}. — AI Behavior Index](${baseUrl}/chart-images/${chartId}.png)](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})\n\n*Source: [AI Behavior Index](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})*`;
   };
 
   const getCitationCode = () =>
-    `OneChat AI. (2026). "${topicTitle}." AI Behavior Index.\nRetrieved from ${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/`;
+    `AI Behavior Index. (2026). "${topicTitle}." Retrieved from ${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/`;
 
   const copyCode = async () => {
     const codeToCopy =

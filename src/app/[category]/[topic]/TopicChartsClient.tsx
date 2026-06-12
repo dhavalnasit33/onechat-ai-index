@@ -32,6 +32,13 @@ export default function TopicChartsClient({
     document.body.style.overflow = "";
   };
 
+  const getDisplaySource = (srcLine?: string) => {
+    let src = srcLine || "";
+    if (!src) return "Compiled by AI Behavior Index";
+    src = src.replace(/OneChat AI/g, "AI Behavior Index");
+    return src.toLowerCase().startsWith("source:") ? src : `Source: ${src}`;
+  };
+
   const heroStatChart = charts.find((c) => c.chartType === "hero_stat");
   const regularCharts = charts
     .filter((c) => c.chartType !== "hero_stat")
@@ -41,7 +48,10 @@ export default function TopicChartsClient({
     <>
       {/* HERO STAT CARD */}
       {heroStatChart && (
-        <div className="bg-gradient-to-br from-[#eaf2fb] to-[#d8e6f5] rounded-xl p-[24px_20px] md:p-[48px_56px] mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-10 relative overflow-hidden">
+        <div
+          id={`chart-${heroStatChart.chartId}`}
+          className="bg-gradient-to-br from-[#eaf2fb] to-[#d8e6f5] rounded-xl p-[24px_20px] md:p-[48px_56px] mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-10 relative overflow-hidden"
+        >
           <div
             className="absolute top-0 right-0 w-[140px] md:w-[240px] h-[140px] md:h-[240px] rounded-full pointer-events-none"
             style={{
@@ -60,11 +70,7 @@ export default function TopicChartsClient({
           {/* Mobile Actions / Desktop Absolute positioning logic combined dynamically */}
           <div className="relative z-10 mt-3 pt-3 border-t border-[#1e3a5f]/15 md:border-none md:mt-0 md:pt-0 flex items-center justify-between gap-2 md:block md:static">
             <div className="text-[10px] md:text-[11px] text-[#888] leading-[1.4] flex-1 md:absolute md:bottom-[20px] md:right-[24px] md:text-right md:max-w-[50%]">
-              {heroStatChart.sourceLine
-                ? heroStatChart.sourceLine.toLowerCase().startsWith("source:")
-                  ? heroStatChart.sourceLine
-                  : `Source: ${heroStatChart.sourceLine}`
-                : "Compiled by OneChat AI"}
+              {getDisplaySource(heroStatChart.sourceLine)}
             </div>
             <button
               onClick={() => openModal(heroStatChart)}
@@ -90,6 +96,7 @@ export default function TopicChartsClient({
           return (
             <div
               key={chart._id}
+              id={`chart-${chart.chartId}`}
               className={`bg-white border border-[#e5e5e5] rounded-[10px] p-[16px_16px_14px] md:p-[24px_28px] relative transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] flex flex-col ${isFullWidth ? "md:col-span-2" : ""}`}
             >
               {/* Header */}
@@ -165,11 +172,7 @@ export default function TopicChartsClient({
                   Source:{" "}
                 </span>
                 <span>
-                  {chart.sourceLine
-                    ? chart.sourceLine.toLowerCase().startsWith("source:")
-                      ? chart.sourceLine.substring(7).trim()
-                      : chart.sourceLine
-                    : "Compiled by OneChat AI"}
+                  {getDisplaySource(chart.sourceLine).replace(/^source:\s*/i, "")}
                 </span>
               </div>
             </div>

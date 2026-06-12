@@ -31,8 +31,8 @@ export async function generateChartImage(chartId: string): Promise<{ success: bo
   const page = await browser.newPage();
 
   try {
-    // 3. Set the 1200x800 Retina size
-    await page.setViewport({ width: 1200, height: 800, deviceScaleFactor: 2 });
+    // 3. Set the 1200x800 page size
+    await page.setViewport({ width: 1200, height: 800, deviceScaleFactor: 1 });
 
     // 4. Visit the hidden page
     await page.goto(targetUrl, { waitUntil: "networkidle0" });
@@ -41,11 +41,8 @@ export async function generateChartImage(chartId: string): Promise<{ success: bo
     await page.waitForSelector(".chart-render-container");
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // 5. Take the screenshot
-    const element = await page.$(".chart-render-container");
-    if (!element) throw new Error("Chart container not found on render page");
-
-    const buffer = await element.screenshot({
+    // 5. Take the screenshot of the entire page layout
+    const buffer = await page.screenshot({
       type: "png",
       omitBackground: false,
     });

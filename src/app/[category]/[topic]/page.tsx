@@ -92,7 +92,7 @@ export default async function TopicPage({ params }: PageProps) {
     slug: { $ne: topic.slug },
     status: "published",
   })
-    .limit(3)
+    .limit(6)
     .lean();
   const formattedDate = topic.lastRefreshedAt
     ? new Date(topic.lastRefreshedAt).toLocaleDateString("en-US", {
@@ -252,10 +252,10 @@ export default async function TopicPage({ params }: PageProps) {
           <p className="text-[12px] md:text-[14px] text-[#555]">
             Data is refreshed quarterly. Have a study to suggest? Contact{" "}
             <a
-              href="mailto:support@onechatai.ai"
+              href="mailto:research@aibehaviorindex.org"
               className="text-[#6C56E5] font-semibold hover:underline"
             >
-              support@onechatai.ai
+              research@aibehaviorindex.org
             </a>
             .
           </p>

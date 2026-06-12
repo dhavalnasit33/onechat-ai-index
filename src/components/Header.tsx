@@ -10,15 +10,13 @@ export default function Header({ activeTab = "none" }: HeaderProps) {
     <header className="border-b border-[#d7e3f0] bg-white sticky top-0 z-50 w-full">
       <div className="max-w-[1340px] mx-auto px-4  py-3.5 flex items-center justify-between relative">
         {/* LOGO */}
-        <div className="font-serif text-[12px] md:text-[14px] tracking-[0.06em] md:tracking-[0.08em] uppercase text-[#15151a] font-bold">
+        <div className="font-serif text-[13px] md:text-[15px] tracking-[0.06em] md:tracking-[0.08em] uppercase font-bold">
           <Link
             href="/"
-            className="flex flex-col md:flex-row md:items-baseline no-underline text-inherit"
+            className="no-underline text-inherit"
           >
-            AI Behavior Index
-            <span className="text-[#8a8a95] font-normal tracking-[0.04em] text-[10px] md:text-[12px] md:ml-1.5 normal-case mt-[2px] md:mt-0 block md:inline">
-              by OneChat AI
-            </span>
+            <span className="text-[#6C56E5]">AI</span>{" "}
+            <span className="text-[#1e3a5f]">Behavior Index</span>
           </Link>
         </div>
 
@@ -30,7 +28,13 @@ export default function Header({ activeTab = "none" }: HeaderProps) {
               activeTab === "home" ? "text-[#15151a] font-semibold" : ""
             }`}
           >
-            Explore
+            Home
+          </Link>
+          <Link
+            href="/#categories"
+            className="hover:text-[#15151a] transition-colors"
+          >
+            Categories
           </Link>
           <Link
             href="/methodology/"
@@ -74,7 +78,13 @@ export default function Header({ activeTab = "none" }: HeaderProps) {
                     : ""
                 }`}
               >
-                Explore
+                Home
+              </Link>
+              <Link
+                href="/#categories"
+                className="px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline"
+              >
+                Categories
               </Link>
               <Link
                 href="/methodology/"

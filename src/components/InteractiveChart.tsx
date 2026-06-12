@@ -25,6 +25,11 @@ const watermarkPlugin = {
 
     ctx.save();
 
+    const isRenderMode = typeof window !== "undefined" && window.location.pathname.includes("/chart-render/");
+    const font1 = isRenderMode ? "bold 14px sans-serif" : "bold 11px sans-serif";
+    const font2 = isRenderMode ? "normal 11px sans-serif" : "normal 9px sans-serif";
+    const spacing = isRenderMode ? 15 : 12;
+
     const textAI = "AI";
     const textBehaviorIndex = " Behavior Index";
     const textURL = "aibehaviorindex.org";
@@ -32,13 +37,13 @@ const watermarkPlugin = {
     ctx.textBaseline = "bottom";
 
     // Line 1 Font
-    ctx.font = "bold 11px sans-serif";
+    ctx.font = font1;
     const aiWidth = ctx.measureText(textAI).width;
     const behaviorWidth = ctx.measureText(textBehaviorIndex).width;
     const totalLine1Width = aiWidth + behaviorWidth;
 
     // Line 2 Font
-    ctx.font = "normal 9px sans-serif";
+    ctx.font = font2;
     const urlWidth = ctx.measureText(textURL).width;
 
     const marginRight = 16;
@@ -46,7 +51,7 @@ const watermarkPlugin = {
 
     // Y positions
     const yLine2 = height - marginBottom;
-    const yLine1 = yLine2 - 12;
+    const yLine1 = yLine2 - spacing;
 
     // Line 2 (URL)
     const xLine2Start = width - marginRight - urlWidth;
@@ -55,7 +60,7 @@ const watermarkPlugin = {
 
     // Line 1 (AI Behavior Index)
     const xLine1Start = width - marginRight - totalLine1Width;
-    ctx.font = "bold 11px sans-serif";
+    ctx.font = font1;
     ctx.fillStyle = "#6C56E5";
     ctx.fillText(textAI, xLine1Start, yLine1);
 
@@ -94,6 +99,7 @@ export default function InteractiveChart({
   data: any;
 }) {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const isRenderMode = typeof window !== "undefined" && window.location.pathname.includes("/chart-render/");
 
   const getValueAxisOptions = (axisLabel?: string) => {
     const prefix = data?.yPrefix || "";
@@ -161,13 +167,13 @@ export default function InteractiveChart({
         callback: (value: any) => {
           return `${prefix}${value}${suffix}`;
         },
-        font: { size: isMobile ? 10 : 12 },
+        font: { size: isRenderMode ? 14 : (isMobile ? 10 : 12) },
       },
       grid: { color: "#f0f0f0" },
       title: {
         display: !!axisLabel,
         text: axisLabel || "",
-        font: { size: isMobile ? 10 : 11, weight: "bold" },
+        font: { size: isRenderMode ? 14 : (isMobile ? 10 : 11), weight: "bold" },
       },
     };
   };
@@ -328,13 +334,19 @@ export default function InteractiveChart({
           ...commonOptions,
           plugins: {
             ...commonOptions.plugins,
-            legend: { display: isGrouped, position: "bottom" },
+            legend: {
+              display: isGrouped,
+              position: "bottom",
+              labels: {
+                font: { size: isRenderMode ? 13 : 12, weight: "600" }
+              }
+            },
           },
           scales: {
             y: getValueAxisOptions(data?.yLabel),
             x: {
               grid: { display: false },
-              ticks: { font: { size: isMobile ? 10 : 12 } },
+              ticks: { font: { size: isRenderMode ? 14 : (isMobile ? 10 : 12) } },
             },
           },
         }}
@@ -375,13 +387,19 @@ export default function InteractiveChart({
           indexAxis: "y",
           plugins: {
             ...commonOptions.plugins,
-            legend: { display: isGrouped, position: "bottom" },
+            legend: {
+              display: isGrouped,
+              position: "bottom",
+              labels: {
+                font: { size: isRenderMode ? 13 : 12, weight: "600" }
+              }
+            },
           },
           scales: {
             x: getValueAxisOptions(data?.yLabel),
             y: {
               grid: { display: false },
-              ticks: { font: { size: isMobile ? 10.5 : 12 } },
+              ticks: { font: { size: isRenderMode ? 14 : (isMobile ? 10.5 : 12) } },
             },
           },
         }}
@@ -417,7 +435,7 @@ export default function InteractiveChart({
               position: isMobile ? "bottom" : "right",
               labels: {
                 padding: isMobile ? 8 : 14,
-                font: { size: isMobile ? 10 : 12, weight: "500" },
+                font: { size: isRenderMode ? 13 : (isMobile ? 10 : 12), weight: "500" },
                 boxWidth: 12,
               },
             },
@@ -459,7 +477,7 @@ export default function InteractiveChart({
               position: "bottom",
               labels: {
                 padding: 12,
-                font: { size: isMobile ? 11 : 12, weight: "600" },
+                font: { size: isRenderMode ? 13 : (isMobile ? 11 : 12), weight: "600" },
               },
             },
           },
@@ -467,11 +485,11 @@ export default function InteractiveChart({
             y: getValueAxisOptions(data?.yLabel),
             x: {
               grid: { display: false },
-              ticks: { font: { size: isMobile ? 10 : 12 } },
+              ticks: { font: { size: isRenderMode ? 14 : (isMobile ? 10 : 12) } },
               title: {
                 display: !!data.xLabel,
                 text: data.xLabel,
-                font: { size: isMobile ? 10 : 11, weight: "bold" },
+                font: { size: isRenderMode ? 14 : (isMobile ? 10 : 11), weight: "bold" },
               },
             },
           },

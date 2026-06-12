@@ -147,7 +147,7 @@ export default async function Home() {
                       </div>
                     </a>
                     <div className="font-sans text-[11.5px] md:text-[12px] text-[#4a4a55] leading-[1.5] max-w-[92%]">
-                      {chart.sourceLine || "Compiled by OneChat AI"}
+                      {(chart.sourceLine || "Compiled by AI Behavior Index").replace(/OneChat AI/g, "AI Behavior Index")}
                     </div>
                   </div>
                   <div className="px-[20px] md:px-[28px] py-[8px] pb-[16px] md:pb-[18px] flex-1 flex flex-col justify-center min-h-[220px]">
@@ -163,15 +163,16 @@ export default async function Home() {
                       <span className="font-semibold">
                         {chart.sourceLine
                           ? chart.sourceLine.toLowerCase().startsWith("source:")
-                            ? chart.sourceLine.substring(7).trim()
-                            : chart.sourceLine
-                          : "Compiled by OneChat AI"}
+                            ? chart.sourceLine.substring(7).replace(/OneChat AI/g, "AI Behavior Index").trim()
+                            : chart.sourceLine.replace(/OneChat AI/g, "AI Behavior Index")
+                          : "Compiled by AI Behavior Index"}
                       </span>
                     </div>
-                    <div className="hidden md:block font-serif text-[11px] text-[#15151a] tracking-[0.06em] italic uppercase">
-                      <strong className="font-bold not-italic">
-                        OneChat AI
+                    <div className="hidden md:block font-serif text-[11px] tracking-[0.06em] uppercase">
+                      <strong className="font-bold not-italic text-[#6C56E5]">
+                        AI
                       </strong>
+                      <span className="text-[#1e3a5f] font-bold"> Behavior Index</span>
                     </div>
                   </div>
                 </div>
@@ -342,7 +343,7 @@ export default async function Home() {
       </section>
 
       {/* CATEGORIES */}
-      <section className="bg-white py-[32px] md:py-[72px] px-[16px] md:px-[32px]">
+      <section id="categories" className="bg-white py-[32px] md:py-[72px] px-[16px] md:px-[32px]">
         <div className="max-w-[1340px] px-4 mx-auto">
           <div className="mb-[22px] md:mb-[36px] pb-[14px] md:pb-[16px] border-b border-[#d7e3f0] md:border-none md:pb-0">
             <div className="font-sans text-[10px] md:text-[11px] tracking-[0.18em] uppercase text-[#0468BD] font-bold mb-[6px] md:mb-0">
@@ -427,10 +428,10 @@ export default async function Home() {
                 — we typically respond within one business day.
               </div>
               <a
-                href="mailto:support@onechatai.ai"
+                href="mailto:research@aibehaviorindex.org"
                 className="font-sans text-[11.5px] md:text-[12px] text-[#0468BD] font-bold no-underline break-all"
               >
-                support@onechatai.ai →
+                research@aibehaviorindex.org →
               </a>
             </div>
           </div>
@@ -453,10 +454,10 @@ export default async function Home() {
               it becomes available. If you run into any issues or have a study
               to suggest, contact us at{" "}
               <a
-                href="mailto:support@onechatai.ai"
+                href="mailto:research@aibehaviorindex.org"
                 className="text-[#4a4a55] underline"
               >
-                support@onechatai.ai
+                research@aibehaviorindex.org
               </a>
               .
             </p>

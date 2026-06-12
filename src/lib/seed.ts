@@ -14,7 +14,7 @@ const categoriesData = [
   { slug: 'age-group', name: 'By Age Group', description: 'Adoption, preferred tools, frequency, and use cases across Gen Z, Millennials, Gen X, Boomers.', position: 1 },
   { slug: 'country', name: 'By Country', description: 'AI usage across 30+ countries — leading tools, adoption rates, trust levels.', position: 2 },
   { slug: 'industry', name: 'By Industry', description: 'How marketing, software, design, sales, finance, and healthcare professionals use AI.', position: 3 },
-  { slug: 'use-case', name: 'By Use Case', description: 'What people use AI for — writing, coding, image generation, research, schoolwork.', position: 4 },
+  { slug: 'use-cases', name: 'By Use Case', description: 'What people use AI for — writing, coding, image generation, research, schoolwork.', position: 4 },
   { slug: 'market-share', name: 'Market Share', description: 'How ChatGPT, Claude, Gemini, and other AI tools compare in adoption and preference.', position: 5 },
   { slug: 'adoption-trends', name: 'Adoption Trends', description: 'How AI usage has changed over time — quarter-by-quarter and year-by-year growth.', position: 6 }
 ];
@@ -149,7 +149,7 @@ const chartsForGenZDailyLife = [
       label: 'of Gen Z (18-25) use AI tools weekly',
       trend: { direction: 'up', amount: '+32pp since 2022' }
     },
-    sourceLine: 'Source: Pew Research Center (2026); Gallup (2025); compiled by OneChat AI',
+    sourceLine: 'Source: Pew Research Center (2026); Gallup (2025); compiled by AI Behavior Index',
     status: 'active',
     sources: [
       { position: 1, sourceName: 'Pew Research Center', publication: 'Generational AI Adoption Study', publicationDate: new Date('2026-02-01') },
@@ -173,7 +173,7 @@ const chartsForGenZDailyLife = [
         { label: 'Boomers (58+)', value: 19, color: '#A8A8B0' }
       ]
     },
-    sourceLine: 'Source: Pew Research Center (2026); compiled by OneChat AI',
+    sourceLine: 'Source: Pew Research Center (2026); compiled by AI Behavior Index',
     status: 'active',
     sources: [
       { position: 1, sourceName: 'Pew Research Center', publication: 'Generational AI Adoption Study', publicationDate: new Date('2026-02-01') }

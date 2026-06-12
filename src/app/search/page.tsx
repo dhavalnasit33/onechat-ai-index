@@ -468,10 +468,10 @@ export default async function SearchPage({ searchParams }: PageProps) {
                 incorporate new research as it becomes available. If you run
                 into any issues or have a study to suggest, contact us at{" "}
                 <a
-                  href="mailto:support@onechatai.ai"
+                  href="mailto:research@aibehaviorindex.org"
                   className="text-[#4a4a55] underline"
                 >
-                  support@onechatai.ai
+                  research@aibehaviorindex.org
                 </a>
                 .
               </p>
