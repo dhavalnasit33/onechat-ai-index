@@ -185,7 +185,7 @@ export default function InteractiveChart({
         <div className="font-serif text-[56px] md:text-[96px] font-bold leading-none text-[#1e3a5f] tracking-[-1px] md:tracking-[-2px]">
           {data.value}
         </div>
-        <div className="text-[14px] md:text-[19px] text-[#1a1a1a] mt-2 md:mt-3 font-medium leading-[1.4]">
+        <div className="text-[14px] md:text-[19px] text-[#1a1a1a] mt-2 md:mt-3 font-medium leading-[1.4] max-w-[680px]">
           {data.label}
         </div>
         {data.trend && (

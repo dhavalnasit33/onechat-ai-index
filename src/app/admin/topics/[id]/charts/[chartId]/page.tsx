@@ -7,6 +7,7 @@ import { ArrowLeft, Save, Plus, Trash2, GripVertical, ChevronDown, ChevronUp, Pl
 import { apiUrl } from "@/src/lib/basePath";
 import InteractiveChart from "@/src/components/InteractiveChart";
 import IconUploadField from "@/src/components/admin/IconUploadField";
+import RichTextEditor from "@/src/components/admin/RichTextEditor";
 import { DataRow, SourceRow, LineSeries } from "@/src/types";
 import { Input } from "@/src/components/admin/ui/Input";
 import { Textarea } from "@/src/components/admin/ui/Textarea";
@@ -622,10 +623,10 @@ export default function ChartEditorPage({
               </div>
               <div className="admin-form-group">
                 <label className="admin-form-label">Source Line</label>
-                <Input
-                  placeholder="e.g. Source: World Economic Forum, 2024"
+                <RichTextEditor
                   value={sourceLine}
-                  onChange={(e) => setSourceLine(e.target.value)}
+                  onChange={setSourceLine}
+                  placeholder="e.g. Source: World Economic Forum, 2024"
                 />
               </div>
             </div>

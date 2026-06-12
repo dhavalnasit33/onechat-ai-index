@@ -37,6 +37,11 @@ export default function EmbedModal({
   const chartName = chart.heading || chart.title;
   const chartId = chart.chartId;
 
+  const stripHtml = (html: string) => {
+    if (!html) return "";
+    return html.replace(/<[^>]*>/g, "");
+  };
+
   const getCleanSourceLine = () => {
     let src = chart.sourceLine || "";
     if (!src) return "Compiled by AI Behavior Index";
@@ -57,7 +62,7 @@ export default function EmbedModal({
   const getMarkdownCode = () => {
     if (chart.chartType === "hero_stat") {
       const trendText = chart.data?.trend ? `\n> **↑ ${chart.data.trend.amount}**\n>` : "";
-      return `> ### **${chart.data?.value}**\n> **${chart.data?.label}**\n>${trendText}\n> *[${getCleanSourceLine()}](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})*`;
+      return `> ### **${chart.data?.value}**\n> **${chart.data?.label}**\n>${trendText}\n> *[${stripHtml(getCleanSourceLine())}](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})*`;
     }
     return `[![${chartName}. — AI Behavior Index](${baseUrl}/chart-images/${chartId}.png)](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})\n\n*Source: [AI Behavior Index](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})*`;
   };
@@ -119,9 +124,10 @@ export default function EmbedModal({
                       </div>
                     )}
                     <div className="border-t border-[#1e3a5f]/15 pt-2.5 flex justify-between items-center text-[10px] text-[#666]">
-                      <span className="text-left max-w-[70%] leading-[1.3]">
-                        {getCleanSourceLine()}
-                      </span>
+                      <span 
+                        className="text-left max-w-[70%] leading-[1.3] source-line-link"
+                        dangerouslySetInnerHTML={{ __html: getCleanSourceLine() }}
+                      />
                       <span className="text-[#6C56E5] font-semibold hover:underline">
                         View index
                       </span>

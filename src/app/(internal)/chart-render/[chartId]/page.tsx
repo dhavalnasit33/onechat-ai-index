@@ -73,9 +73,11 @@ export default async function ChartRenderPage({
           />
         </div>
 
-        <p style={{ fontSize: "12px", color: "#555555", marginTop: "8px" }}>
-          {displaySource}
-        </p>
+        <p 
+          style={{ fontSize: "12px", color: "#555555", marginTop: "8px" }}
+          className="source-line-link"
+          dangerouslySetInnerHTML={{ __html: displaySource }}
+        />
 
       </div>
     </div>

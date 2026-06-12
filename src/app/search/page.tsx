@@ -387,9 +387,10 @@ export default async function SearchPage({ searchParams }: PageProps) {
                           {chart.heading || chart.title}
                         </h4>
                         {chart.sourceLine && (
-                          <p className="font-sans text-[11px] text-[#8a8a95] mt-auto">
-                            {chart.sourceLine}
-                          </p>
+                          <p 
+                            className="font-sans text-[11px] text-[#888] mt-auto source-line-link"
+                            dangerouslySetInnerHTML={{ __html: chart.sourceLine }}
+                          />
                         )}
                       </a>
                     );

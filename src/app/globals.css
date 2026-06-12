@@ -263,3 +263,14 @@ a:focus-visible {
   outline: 2px solid #088DFF;
   outline-offset: 2px;
 }
+
+/* Source Line links styling */
+.source-line-link a {
+  color: #6C56E5;
+  text-decoration: underline;
+  font-weight: 600;
+  transition: color 0.15s ease-in-out;
+}
+.source-line-link a:hover {
+  color: #4c3aae;
+}

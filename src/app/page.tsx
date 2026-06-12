@@ -146,9 +146,12 @@ export default async function Home() {
                         {chart.heading || chart.title}
                       </div>
                     </a>
-                    <div className="font-sans text-[11.5px] md:text-[12px] text-[#4a4a55] leading-[1.5] max-w-[92%]">
-                      {(chart.sourceLine || "Compiled by AI Behavior Index").replace(/OneChat AI/g, "AI Behavior Index")}
-                    </div>
+                    <div 
+                      className="font-sans text-[11.5px] md:text-[12px] text-[#4a4a55] leading-[1.5] max-w-[92%] source-line-link"
+                      dangerouslySetInnerHTML={{
+                        __html: (chart.sourceLine || "Compiled by AI Behavior Index").replace(/OneChat AI/g, "AI Behavior Index")
+                      }}
+                    />
                   </div>
                   <div className="px-[20px] md:px-[28px] py-[8px] pb-[16px] md:pb-[18px] flex-1 flex flex-col justify-center min-h-[220px]">
                     <InteractiveChart
@@ -160,13 +163,16 @@ export default async function Home() {
                   <div className="px-[20px] md:px-[28px] py-[11px] md:py-[12px] pb-[13px] md:pb-[14px] border-t border-[#eaf2fb] bg-[#eaf2fb] flex justify-between items-center font-sans text-[10px] md:text-[10.5px] text-[#8a8a95]">
                     <div>
                       Source:{" "}
-                      <span className="font-semibold">
-                        {chart.sourceLine
-                          ? chart.sourceLine.toLowerCase().startsWith("source:")
-                            ? chart.sourceLine.substring(7).replace(/OneChat AI/g, "AI Behavior Index").trim()
-                            : chart.sourceLine.replace(/OneChat AI/g, "AI Behavior Index")
-                          : "Compiled by AI Behavior Index"}
-                      </span>
+                      <span 
+                        className="font-semibold source-line-link"
+                        dangerouslySetInnerHTML={{
+                          __html: chart.sourceLine
+                            ? chart.sourceLine.toLowerCase().startsWith("source:")
+                              ? chart.sourceLine.substring(7).replace(/OneChat AI/g, "AI Behavior Index").trim()
+                              : chart.sourceLine.replace(/OneChat AI/g, "AI Behavior Index")
+                            : "Compiled by AI Behavior Index"
+                        }}
+                      />
                     </div>
                     <div className="hidden md:block font-serif text-[11px] tracking-[0.06em] uppercase">
                       <strong className="font-bold not-italic text-[#6C56E5]">

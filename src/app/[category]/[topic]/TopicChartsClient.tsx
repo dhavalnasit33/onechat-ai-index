@@ -44,6 +44,11 @@ export default function TopicChartsClient({
     .filter((c) => c.chartType !== "hero_stat")
     .sort((a, b) => a.position - b.position);
 
+  const positionCounts = regularCharts.reduce((acc, c) => {
+    acc[c.position] = (acc[c.position] || 0) + 1;
+    return acc;
+  }, {} as Record<number, number>);
+
   return (
     <>
       {/* HERO STAT CARD */}
@@ -69,9 +74,10 @@ export default function TopicChartsClient({
 
           {/* Mobile Actions / Desktop Absolute positioning logic combined dynamically */}
           <div className="relative z-10 mt-3 pt-3 border-t border-[#1e3a5f]/15 md:border-none md:mt-0 md:pt-0 flex items-center justify-between gap-2 md:block md:static">
-            <div className="text-[10px] md:text-[11px] text-[#888] leading-[1.4] flex-1 md:absolute md:bottom-[20px] md:right-[24px] md:text-right md:max-w-[50%]">
-              {getDisplaySource(heroStatChart.sourceLine)}
-            </div>
+            <div
+              className="text-[10px] md:text-[11px] text-[#888] leading-[1.4] flex-1 md:absolute md:bottom-[20px] md:right-[24px] md:text-right md:max-w-[420px] source-line-link"
+              dangerouslySetInnerHTML={{ __html: getDisplaySource(heroStatChart.sourceLine) }}
+            />
             <button
               onClick={() => openModal(heroStatChart)}
               className=" cursor-pointer inline-flex items-center gap-1.5 bg-white border border-[#d4d4d8] rounded-lg px-3.5 py-2 text-[13px] font-semibold text-[#111827] shadow-sm transition-all duration-200 hover:border-[#c4b5fd] hover:bg-[#faf8ff] md:absolute md:top-5 md:right-6 "
@@ -86,13 +92,9 @@ export default function TopicChartsClient({
       {/* CHART GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6">
         {regularCharts.map((chart, idx) => {
-          // Typically Line charts or position 1, 5 take full width like in the HTML design
-          const isFullWidth =
-            chart.chartType === "line" ||
-            chart.chartType === "timeline" ||
-            chart.chartType === "text_block" ||
-            chart.position === 1 ||
-            chart.position === 5;
+          // If multiple charts share the same position, display them side-by-side (not full width). Otherwise, display them full width.
+          const isSharedPosition = positionCounts[chart.position] > 1;
+          const isFullWidth = !isSharedPosition;
           return (
             <div
               key={chart._id}
@@ -118,7 +120,7 @@ export default function TopicChartsClient({
                     {chart.icon && (
                       <span className="text-lg md:text-xl flex items-center justify-center w-5 h-5 md:w-6 md:h-6 shrink-0">
                         {chart.icon.startsWith("http") ||
-                        chart.icon.startsWith("/") ? (
+                          chart.icon.startsWith("/") ? (
                           <img
                             src={chart.icon}
                             alt=""
@@ -147,8 +149,7 @@ export default function TopicChartsClient({
 
               {/* Chart Container */}
               <div
-                className={`relative w-full mt-2 md:mt-3 ${
-                  chart.chartType === "timeline"
+                className={`relative w-full mt-2 md:mt-3 ${chart.chartType === "timeline"
                     ? "h-auto py-2"
                     : chart.chartType === "text_block"
                       ? "h-auto py-4"
@@ -157,7 +158,7 @@ export default function TopicChartsClient({
                         : chart.chartType === "hbar"
                           ? "h-[280px] md:h-[320px]"
                           : "h-[240px] md:h-[320px]"
-                }`}
+                  }`}
               >
                 <InteractiveChart
                   chartId={chart.chartId}
@@ -171,9 +172,12 @@ export default function TopicChartsClient({
                 <span className="font-semibold text-[#1a1a1a] uppercase tracking-[0.4px] md:tracking-[0.5px] text-[9.5px] md:text-[10.5px]">
                   Source:{" "}
                 </span>
-                <span>
-                  {getDisplaySource(chart.sourceLine).replace(/^source:\s*/i, "")}
-                </span>
+                <span
+                  className="source-line-link"
+                  dangerouslySetInnerHTML={{
+                    __html: getDisplaySource(chart.sourceLine).replace(/^source:\s*/i, "")
+                  }}
+                />
               </div>
             </div>
           );
