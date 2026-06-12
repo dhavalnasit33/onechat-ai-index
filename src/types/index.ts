@@ -173,6 +173,8 @@ export interface DataRow {
   label: string;
   value: string;
   color?: string;
+  eventColor?: string;
+  source?: string;
 }
 
 export interface SourceRow {

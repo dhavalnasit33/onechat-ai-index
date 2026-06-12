@@ -196,6 +196,20 @@ export default function InteractiveChart({
       </>
     );
   }
+  // Helper to parse hex colors into rgba
+  const getRgbaColor = (hex: string, alpha: number) => {
+    if (!hex) return `rgba(229, 72, 63, ${alpha})`; // default #E5483F
+    let cleanHex = hex.replace("#", "");
+    if (cleanHex.length === 3) {
+      cleanHex = cleanHex.split("").map((c) => c + c).join("");
+    }
+    const num = parseInt(cleanHex, 16);
+    if (isNaN(num)) return `rgba(229, 72, 63, ${alpha})`;
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
 
   // 2. TIMELINE MILESTONES UI (Image 2 & 3)
   if (chartType === "timeline") {
@@ -204,7 +218,7 @@ export default function InteractiveChart({
       <div className="relative w-full text-left pb-12">
         <div className="flex flex-col gap-6 pr-2">
           {data.events?.map((event: any, idx: number) => {
-            const eventColor = colors[idx % colors.length];
+            const eventColor = event.color || colors[idx % colors.length];
             return (
               <div key={idx} className="flex gap-4 items-start relative">
                 <div 
@@ -224,24 +238,23 @@ export default function InteractiveChart({
                   {(() => {
                     const desc = event.description || "";
                     const sourceIndex = desc.toLowerCase().indexOf("source:");
-                    if (sourceIndex !== -1) {
-                      const text = desc.substring(0, sourceIndex).trim();
-                      const src = desc.substring(sourceIndex).trim();
-                      return (
-                        <>
-                          <p className="text-[11.5px] md:text-[12.5px] text-[#555] leading-relaxed">
-                            {text}
-                          </p>
-                          <span className="text-[10px] text-gray-400 mt-1.5 block italic font-sans">
-                            {src}
-                          </span>
-                        </>
-                      );
+                    let text = desc;
+                    let src = event.source || "";
+                    if (!src && sourceIndex !== -1) {
+                      text = desc.substring(0, sourceIndex).trim();
+                      src = desc.substring(sourceIndex).trim();
                     }
                     return (
-                      <p className="text-[11.5px] md:text-[12.5px] text-[#555] leading-relaxed">
-                        {desc}
-                      </p>
+                      <>
+                        <p className="text-[11.5px] md:text-[12.5px] text-[#555] leading-relaxed">
+                          {text}
+                        </p>
+                        {src && (
+                          <span className="text-[10px] text-gray-400 mt-1.5 block italic font-sans">
+                            {src.toLowerCase().startsWith("source:") ? src : `Source: ${src}`}
+                          </span>
+                        )}
+                      </>
                     );
                   })()}
                 </div>
@@ -264,11 +277,37 @@ export default function InteractiveChart({
 
   // 3. TEXT BLOCK / HYPE CALLOUT UI (Image 3)
   if (chartType === "text_block") {
+    const themeColor = data.color || "#E5483F";
+    const bgCol = getRgbaColor(themeColor, 0.05);
+    const borderCol = getRgbaColor(themeColor, 0.2);
+
+    const isHTML = data.text && (
+      data.text.includes("<p>") || 
+      data.text.includes("<br>") || 
+      data.text.includes("<strong>") || 
+      data.text.includes("<em>") || 
+      data.text.includes("href=")
+    );
+
     return (
-      <div className="border border-[#E5483F]/20 bg-[#E5483F]/5 rounded-lg p-5 text-left border-l-[3px] border-l-[#E5483F] h-full flex flex-col justify-center">
-        <p className="italic font-serif text-[13.5px] md:text-[15px] text-[#333] leading-relaxed">
-          "{data.text || data.value}"
-        </p>
+      <div 
+        style={{
+          border: `1px solid ${borderCol}`,
+          borderLeft: `3px solid ${themeColor}`,
+          backgroundColor: bgCol,
+        }}
+        className="rounded-lg p-5 text-left h-full flex flex-col justify-center"
+      >
+        {isHTML ? (
+          <div 
+            className="font-serif text-[13.5px] md:text-[15px] text-[#333] leading-relaxed [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_a]:text-[#6C56E5] [&_a]:underline [&_a]:font-medium [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_li]:mb-1 [&_blockquote]:pl-4 [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:italic"
+            dangerouslySetInnerHTML={{ __html: data.text }}
+          />
+        ) : (
+          <p className="italic font-serif text-[13.5px] md:text-[15px] text-[#333] leading-relaxed">
+            {data.text || data.value ? `"${data.text || data.value}"` : ""}
+          </p>
+        )}
         {data.author && (
           <span className="text-[11px] text-gray-500 mt-2.5 block font-sans font-medium">
             — {data.author}

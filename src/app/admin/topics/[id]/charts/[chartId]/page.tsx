@@ -48,7 +48,7 @@ function parseDataRows(chartType: string, data: unknown): DataRow[] {
       {
         label: String(typedData.author || ""),
         value: String(typedData.text || ""),
-        color: "",
+        color: String(typedData.color || ""),
       },
     ];
   }
@@ -58,6 +58,8 @@ function parseDataRows(chartType: string, data: unknown): DataRow[] {
       label: String(e.date || ""),
       value: String(e.title || ""),
       color: String(e.description || ""),
+      eventColor: String(e.color || ""),
+      source: String(e.source || ""),
     }));
   }
 
@@ -126,7 +128,9 @@ function buildChartDataPayload(
       events: rows.map((r) => ({
         date: r.label,
         title: r.value,
-        description: r.color, // re-uses third input row block safely for description strings
+        description: r.color,
+        color: r.eventColor || "",
+        source: r.source || "",
       })),
     };
   }
@@ -137,6 +141,7 @@ function buildChartDataPayload(
       type: "text_block",
       text: rows[0]?.value || "",
       author: rows[0]?.label || "",
+      color: rows[0]?.color || "",
     };
   }
 
@@ -877,7 +882,7 @@ export default function ChartEditorPage({
                             />
                           </div>
                         </div>
-                        <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                        <div className="admin-form-group" style={{ marginBottom: 12 }}>
                           <label className="admin-form-label">Event Description</label>
                           <Textarea
                             placeholder="Describe what happened..."
@@ -885,8 +890,48 @@ export default function ChartEditorPage({
                             onChange={(e) =>
                               updateDataRow(i, "color", e.target.value)
                             }
-                            rows={3}
+                            rows={2}
                           />
+                        </div>
+                        <div className="admin-form-row" style={{ marginBottom: 0 }}>
+                          <div className="admin-form-group">
+                            <label className="admin-form-label">Event Source (Optional)</label>
+                            <Input
+                              placeholder="e.g. OpenAI announcement (February 2026)"
+                              value={row.source || ""}
+                              onChange={(e) =>
+                                updateDataRow(i, "source", e.target.value)
+                              }
+                            />
+                          </div>
+                          <div className="admin-form-group">
+                            <label className="admin-form-label">Event Circle Color (Optional)</label>
+                            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                              <input
+                                type="color"
+                                value={row.eventColor || "#088DFF"}
+                                onChange={(e) =>
+                                  updateDataRow(i, "eventColor", e.target.value)
+                                }
+                                style={{
+                                  width: 34,
+                                  height: 34,
+                                  padding: 0,
+                                  border: "none",
+                                  borderRadius: 4,
+                                  cursor: "pointer",
+                                }}
+                              />
+                              <Input
+                                value={row.eventColor || ""}
+                                onChange={(e) =>
+                                  updateDataRow(i, "eventColor", e.target.value)
+                                }
+                                placeholder="#hex (blank for default)"
+                                style={{ flex: 1 }}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -898,7 +943,7 @@ export default function ChartEditorPage({
               <div>
                 <div className="admin-form-row">
                   <div className="admin-form-group">
-                    <label className="admin-form-label">Author / Citation</label>
+                    <label className="admin-form-label">Author / Citation (Optional)</label>
                     <Input
                       placeholder="e.g. Goldman Sachs research note (July 2024)"
                       value={dataRows[0]?.label || ""}
@@ -907,17 +952,42 @@ export default function ChartEditorPage({
                       }
                     />
                   </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Block Theme Color</label>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <input
+                        type="color"
+                        value={dataRows[0]?.color || "#E5483F"}
+                        onChange={(e) =>
+                          updateDataRow(0, "color", e.target.value)
+                        }
+                        style={{
+                          width: 34,
+                          height: 34,
+                          padding: 0,
+                          border: "none",
+                          borderRadius: 4,
+                          cursor: "pointer",
+                        }}
+                      />
+                      <Input
+                        value={dataRows[0]?.color || ""}
+                        onChange={(e) =>
+                          updateDataRow(0, "color", e.target.value)
+                        }
+                        placeholder="e.g. #E5483F"
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className="admin-form-row" style={{ marginTop: 12 }}>
                   <div className="admin-form-group">
-                    <label className="admin-form-label">Quote / Callout Text</label>
-                    <Textarea
-                      placeholder="Enter the quote..."
+                    <label className="admin-form-label">Quote / Callout Content (Rich Text)</label>
+                    <RichTextEditor
                       value={dataRows[0]?.value || ""}
-                      onChange={(e) =>
-                        updateDataRow(0, "value", e.target.value)
-                      }
-                      rows={5}
+                      onChange={(val) => updateDataRow(0, "value", val)}
+                      placeholder="Enter the quote or text block content..."
                     />
                   </div>
                 </div>
