@@ -38,8 +38,9 @@ export default function EmbedModal({
   const chartId = chart.chartId;
 
   const getCleanSourceLine = () => {
-    const src = chart.sourceLine || "";
-    if (!src) return "Compiled by OneChat AI";
+    let src = chart.sourceLine || "";
+    if (!src) return "Compiled by AI Behavior Index";
+    src = src.replace(/OneChat AI/g, "AI Behavior Index");
     return src.toLowerCase().startsWith("source:") ? src : `Source: ${src}`;
   };
 
