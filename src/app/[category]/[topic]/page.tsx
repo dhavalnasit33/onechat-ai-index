@@ -96,9 +96,9 @@ export default async function TopicPage({ params }: PageProps) {
     .lean();
   const formattedDate = topic.lastRefreshedAt
     ? new Date(topic.lastRefreshedAt).toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-    })
+        month: "long",
+        year: "numeric",
+      })
     : "June 2026";
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
@@ -106,62 +106,70 @@ export default async function TopicPage({ params }: PageProps) {
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": [
+    itemListElement: [
       {
         "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": `${baseUrl}/ai-behavior-index/`
+        position: 1,
+        name: "Home",
+        item: `${baseUrl}/ai-behavior-index/`,
       },
       {
         "@type": "ListItem",
-        "position": 2,
-        "name": category.name,
-        "item": `${baseUrl}/ai-behavior-index/${category.slug}/`
+        position: 2,
+        name: category.name,
+        item: `${baseUrl}/ai-behavior-index/${category.slug}/`,
       },
       {
         "@type": "ListItem",
-        "position": 3,
-        "name": topic.title,
-        "item": `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`
-      }
-    ]
+        position: 3,
+        name: topic.title,
+        item: `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
+      },
+    ],
   };
 
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": topic.title,
-    "description": topic.description,
-    "datePublished": (topic as any).publishedAt || (topic as any).createdAt || new Date().toISOString(),
-    "dateModified": (topic as any).lastRefreshedAt || (topic as any).updatedAt || (topic as any).publishedAt || new Date().toISOString(),
-    "author": {
+    headline: topic.title,
+    description: topic.description,
+    datePublished:
+      (topic as any).publishedAt ||
+      (topic as any).createdAt ||
+      new Date().toISOString(),
+    dateModified:
+      (topic as any).lastRefreshedAt ||
+      (topic as any).updatedAt ||
+      (topic as any).publishedAt ||
+      new Date().toISOString(),
+    author: {
       "@type": "Organization",
-      "name": "OneChat AI",
-      "url": baseUrl
+      name: "OneChat AI",
+      url: baseUrl,
     },
-    "publisher": {
+    publisher: {
       "@type": "Organization",
-      "name": "OneChat AI",
-      "logo": {
+      name: "OneChat AI",
+      logo: {
         "@type": "ImageObject",
-        "url": `${baseUrl}/favicon.ico`
-      }
+        url: `${baseUrl}/favicon.ico`,
+      },
     },
-    "mainEntityOfPage": `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`
+    mainEntityOfPage: `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
   };
 
   const datasetSchema = {
     "@context": "https://schema.org",
     "@type": "Dataset",
-    "name": `${topic.title} Dataset`,
-    "description": topic.description,
-    "url": `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
-    "creator": {
+    name: `${topic.title} Dataset`,
+    description: topic.description,
+    url: `${baseUrl}/ai-behavior-index/${category.slug}/${topic.slug}/`,
+    creator: {
       "@type": "Organization",
-      "name": "OneChat AI"
+      name: "OneChat AI",
     },
-    "citation": topic.methodologyNote || 'Aggregated studies from OneChat AI Behavior Index'
+    citation:
+      topic.methodologyNote || "Aggregated studies from AI Behavior Index",
   };
 
   return (
@@ -186,7 +194,10 @@ export default async function TopicPage({ params }: PageProps) {
       {/* BREADCRUMB */}
       <div className="bg-[#eaf2fb] py-2 md:py-3 overflow-x-auto whitespace-nowrap">
         <div className="max-w-[1340px] mx-auto px-4 text-[11px] md:text-[13px]">
-          <a href="/ai-behavior-index/" className="text-[#1e3a5f] hover:underline">
+          <a
+            href="/ai-behavior-index/"
+            className="text-[#1e3a5f] hover:underline"
+          >
             Home
           </a>
           <span className="text-[#888] mx-[6px] md:mx-[8px]">/</span>
