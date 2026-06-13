@@ -6,6 +6,7 @@ export interface ITopic extends Document {
   title: string;
   description: string;
   methodologyNote?: string;
+  aboutData?: string;       // ← NEW: Tiptap formatted About this data section
   metaTitle?: string;
   keyphrase?: string;
   metaDescription?: string;
@@ -43,6 +44,10 @@ const TopicSchema = new Schema<ITopic>(
       required: true,
     },
     methodologyNote: {
+      type: String,
+      default: '',
+    },
+    aboutData: {
       type: String,
       default: '',
     },

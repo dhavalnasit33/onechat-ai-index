@@ -54,7 +54,12 @@ export default function EmbedModal({
       const trendHtml = chart.data?.trend
         ? `\n  <div style="display: inline-flex; align-items: center; gap: 4px; background-color: #ffffff; color: #1d5436; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 9999px; border: 1px solid #c7e7d4; margin-bottom: 12px;">\n    <span>↑</span> ${chart.data.trend.amount}\n  </div>`
         : "";
-      return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; border: 1px solid #e5e5e5; border-radius: 12px; padding: 20px; max-width: 400px; background: linear-gradient(135deg, #eaf2fb 0%, #d8e6f5 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center;">\n  <div style="font-family: Georgia, Cambria, 'Times New Roman', Times, serif; font-size: 44px; font-weight: bold; line-height: 1; color: #1e3a5f; margin: 0 0 6px;">\n    ${chart.data?.value}\n  </div>\n  <div style="font-size: 13px; color: #1a1a1a; font-weight: 500; line-height: 1.4; margin: 0 0 12px;">\n    ${chart.data?.label}\n  </div>${trendHtml}\n  <div style="border-top: 1px solid rgba(30, 58, 95, 0.15); padding-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #666;">\n    <span>${getCleanSourceLine()}</span>\n    <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank" style="color: #6C56E5; font-weight: 600; text-decoration: none;">\n      View index\n    </a>\n  </div>\n</div>`;
+      const prefixHtml = chart.data?.prefix ? `<span style="font-size: 28px; font-weight: bold; margin-right: 2px; color: #1e3a5f; align-baseline: middle;">${chart.data.prefix}</span>` : "";
+      const isSmallSuffix = chart.data?.suffixSize === "small";
+      const suffixHtml = chart.data?.suffix 
+        ? `<span style="${isSmallSuffix ? "font-size: 16px; font-weight: normal; font-family: sans-serif;" : "font-size: 36px; font-weight: 600;"} color: #1e3a5f; margin-left: 2px; align-baseline: middle;">${chart.data.suffix}</span>` 
+        : "";
+      return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px; max-width: 480px; background: linear-gradient(135deg, #eaf2fb 0%, #d8e6f5 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; box-sizing: border-box;">\n  <div style="font-family: Georgia, Cambria, 'Times New Roman', Times, serif; font-size: 56px; font-weight: bold; line-height: 1; color: #1e3a5f; margin: 0 0 8px; display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap;">\n    ${prefixHtml}${chart.data?.value}${suffixHtml}\n  </div>\n  <div style="font-size: 14px; color: #1a1a1a; font-weight: 500; line-height: 1.45; margin: 0 0 14px;">\n    ${chart.data?.label}\n  </div>${trendHtml}\n  <div style="border-top: 1px solid rgba(30, 58, 95, 0.15); padding-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #666; gap: 12px; text-align: left;">\n    <span style="max-width: 75%; line-height: 1.35;">${getCleanSourceLine()}</span>\n    <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank" style="color: #6C56E5; font-weight: 600; text-decoration: none; white-space: nowrap; margin-left: auto;">\n      View index\n    </a>\n  </div>\n</div>`;
     }
     return `<a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank">\n  <img src="${baseUrl}/chart-images/${chartId}.png" alt="${chartName}. — AI Behavior Index" width="600" height="400" loading="lazy" style="max-width: 100%; height: auto; border: 1px solid #e5e5e5;" />\n</a>\n<p style="font-size: 12px; color: #666; margin-top: 4px;">\n  Source: <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank">AI Behavior Index</a>\n</p>`;
   };
@@ -62,7 +67,8 @@ export default function EmbedModal({
   const getMarkdownCode = () => {
     if (chart.chartType === "hero_stat") {
       const trendText = chart.data?.trend ? `\n> **↑ ${chart.data.trend.amount}**\n>` : "";
-      return `> ### **${chart.data?.value}**\n> **${chart.data?.label}**\n>${trendText}\n> *[${stripHtml(getCleanSourceLine())}](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})*`;
+      const displayVal = `${chart.data?.prefix || ""}${chart.data?.value}${chart.data?.suffix || ""}`;
+      return `> ### **${displayVal}**\n> **${chart.data?.label}**\n>${trendText}\n> *[${stripHtml(getCleanSourceLine())}](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})*`;
     }
     return `[![${chartName}. — AI Behavior Index](${baseUrl}/chart-images/${chartId}.png)](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})\n\n*Source: [AI Behavior Index](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})*`;
   };
@@ -111,24 +117,40 @@ export default function EmbedModal({
               </div>
               <div className="flex items-center justify-center bg-white border border-[#e5e5e5] rounded p-2 min-h-[120px] w-full">
                 {chart.chartType === "hero_stat" ? (
-                  <div className="bg-gradient-to-br from-[#eaf2fb] to-[#d8e6f5] rounded-xl p-5 text-center relative overflow-hidden w-full max-w-sm border border-[#e5e5e5]">
-                    <div className="font-serif text-[36px] font-bold leading-none text-[#1e3a5f] mb-1.5">
-                      {chart.data?.value}
+                  <div className="bg-gradient-to-br from-[#eaf2fb] to-[#d8e6f5] rounded-xl p-[24px_20px] text-center relative overflow-hidden w-full max-w-[480px] border border-[#e5e5e5]">
+                    <div className="font-serif text-[44px] md:text-[56px] font-bold leading-none text-[#1e3a5f] mb-2 flex items-baseline justify-center flex-wrap">
+                      {chart.data?.prefix && (
+                        <span className="text-[24px] font-bold mr-0.5 align-baseline text-[#1e3a5f]">
+                          {chart.data.prefix}
+                        </span>
+                      )}
+                      <span>{chart.data?.value}</span>
+                      {chart.data?.suffix && (
+                        <span
+                          className={`font-semibold ml-0.5 align-baseline text-[#1e3a5f] ${
+                            chart.data.suffixSize === "small"
+                              ? "text-[16px] font-sans font-normal"
+                              : "text-[32px]"
+                          }`}
+                        >
+                          {chart.data.suffix}
+                        </span>
+                      )}
                     </div>
-                    <div className="text-[12px] text-[#1a1a1a] font-medium leading-[1.3] mb-3">
+                    <div className="text-[13px] md:text-[14px] text-[#1a1a1a] font-medium leading-[1.45] mb-4">
                       {chart.data?.label}
                     </div>
                     {chart.data?.trend && (
-                      <div className="inline-flex items-center gap-1 bg-white text-[#1d5436] text-[10.5px] font-semibold px-2 py-0.5 rounded-full border border-[#c7e7d4] mb-3">
+                      <div className="inline-flex items-center gap-1 bg-white text-[#1d5436] text-[11px] font-semibold px-2.5 py-1 rounded-full border border-[#c7e7d4] mb-4">
                         <span>↑</span> {chart.data.trend.amount}
                       </div>
                     )}
-                    <div className="border-t border-[#1e3a5f]/15 pt-2.5 flex justify-between items-center text-[10px] text-[#666]">
+                    <div className="border-t border-[#1e3a5f]/15 pt-3 flex justify-between items-center text-[10.5px] text-[#666] gap-3">
                       <span 
-                        className="text-left max-w-[70%] leading-[1.3] source-line-link"
+                        className="text-left max-w-[75%] leading-[1.35] source-line-link"
                         dangerouslySetInnerHTML={{ __html: getCleanSourceLine() }}
                       />
-                      <span className="text-[#6C56E5] font-semibold hover:underline">
+                      <span className="text-[#6C56E5] font-semibold hover:underline whitespace-nowrap ml-auto">
                         View index
                       </span>
                     </div>

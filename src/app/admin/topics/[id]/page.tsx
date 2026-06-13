@@ -136,6 +136,8 @@ export default function TopicEditorPage({ params }: { params: Promise<{ id: stri
     description: topic.description || "",
     methodologyNote: topic.methodologyNote || "",
     metaTitle: topic.metaTitle || "",
+    keyphrase: topic.keyphrase || "",
+    aboutData: topic.aboutData || "",
     metaDescription: topic.metaDescription || "",
     ogImageUrl: topic.ogImageUrl || "",
     iconUrl: topic.iconUrl || "",

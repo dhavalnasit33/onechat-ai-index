@@ -8,6 +8,7 @@ import { Input } from "@/src/components/admin/ui/Input";
 import { Textarea } from "@/src/components/admin/ui/Textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/src/components/admin/ui/Select";
 import IconUploadField from "@/src/components/admin/IconUploadField";
+import RichTextEditor from "@/src/components/admin/RichTextEditor";
 
 interface TopicFormProps {
   initialData?: TopicFormValues | null;
@@ -41,6 +42,7 @@ export default function TopicForm({
       categoryId: initialData?.categoryId || "",
       description: initialData?.description || "",
       methodologyNote: initialData?.methodologyNote || "",
+      aboutData: initialData?.aboutData || "",
       metaTitle: initialData?.metaTitle || "",
       keyphrase: (initialData as any)?.keyphrase || "",
       metaDescription: initialData?.metaDescription || "",
@@ -159,14 +161,22 @@ export default function TopicForm({
         />
       </div>
 
-      {/* ── Methodology ── */}
+       {/* ── Methodology ── */}
       <div className="admin-form-section">
-        <h3 className="admin-form-section-title">Methodology</h3>
-        <div className="admin-form-group">
+        <h3 className="admin-form-section-title">Methodology & About Data</h3>
+        <div className="admin-form-group" style={{ marginBottom: 20 }}>
           <label className="admin-form-label">Methodology Note</label>
           <Textarea 
             placeholder="Explain data collection methodology..." 
             {...register("methodologyNote")} 
+          />
+        </div>
+        <div className="admin-form-group">
+          <label className="admin-form-label">About This Data (Rich Text Override)</label>
+          <RichTextEditor 
+            value={watch("aboutData") ?? ""}
+            onChange={(val) => setValue("aboutData", val, { shouldDirty: true, shouldValidate: true })}
+            placeholder="All statistics on this page are compiled from publicly available studies..." 
           />
         </div>
       </div>

@@ -158,6 +158,7 @@ export default async function Home() {
                       chartId={chart.chartId}
                       chartType={chart.chartType}
                       data={chart.data}
+                      title={chart.title}
                     />
                   </div>
                   <div className="px-[20px] md:px-[28px] py-[11px] md:py-[12px] pb-[13px] md:pb-[14px] border-t border-[#eaf2fb] bg-[#eaf2fb] flex justify-between items-center font-sans text-[10px] md:text-[10.5px] text-[#8a8a95]">

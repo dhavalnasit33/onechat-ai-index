@@ -8,6 +8,7 @@ export const CHART_TYPES = [
   "hero_stat",
   "timeline",
   "text_block",
+  "list_block", // <-- Add this right here
 ] as const;
 
 // 2. Extract the TypeScript literal type from the array
@@ -123,6 +124,7 @@ export const topicSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
   description: z.string().min(1, "Description is required"),
   methodologyNote: z.string().optional(),
+  aboutData: z.string().optional(),
   metaTitle: z.string().optional(),
   keyphrase: z.string().optional(),
   metaDescription: z.string().optional(),

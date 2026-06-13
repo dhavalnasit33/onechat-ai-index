@@ -69,6 +69,7 @@ export default function TopicChartsClient({
               chartId={heroStatChart.chartId}
               chartType="hero_stat"
               data={heroStatChart.data}
+              title={heroStatChart.title}
             />
           </div>
 
@@ -90,95 +91,115 @@ export default function TopicChartsClient({
       )}
 
       {/* CHART GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6">
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6">
         {regularCharts.map((chart, idx) => {
           // If multiple charts share the same position, display them side-by-side (not full width). Otherwise, display them full width.
           const isSharedPosition = positionCounts[chart.position] > 1;
           const isFullWidth = !isSharedPosition;
+          
+          // Check if this is a list block
+          const isListBlock = chart.chartType === "list_block";
+
           return (
             <div
               key={chart._id}
               id={`chart-${chart.chartId}`}
-              className={`bg-white border border-[#e5e5e5] rounded-[10px] p-[16px_16px_14px] md:p-[24px_28px] relative transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] flex flex-col ${isFullWidth ? "md:col-span-2" : ""}`}
+              className={
+                isListBlock
+                  ? `relative flex flex-col ${isFullWidth ? "md:col-span-2" : ""}` // Bare wrapper for List Block
+                  : `bg-white border border-[#e5e5e5] rounded-[10px] p-[16px_16px_14px] md:p-[24px_28px] relative transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] flex flex-col ${isFullWidth ? "md:col-span-2" : ""}` // Standard card for other charts
+              }
             >
-              {/* Header */}
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4 mb-1.5 md:mb-2">
-                <div className="flex-1 md:pr-[120px]">
-                  <div className="text-[10px] md:text-[11px] text-[#888] uppercase tracking-[0.6px] md:tracking-[0.8px] font-semibold mb-1">
-                    {chart.heading ? (
-                      chart.heading
-                    ) : (
-                      <>
-                        Chart {chart.position} ·{" "}
-                        {chart.chartType === "donut"
-                          ? "Preference"
-                          : "Comparison"}
-                      </>
-                    )}
+              {/* Header (Hidden for list_block) */}
+              {!isListBlock && (
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4 mb-1.5 md:mb-2">
+                  <div className="flex-1 md:pr-[120px]">
+                    <div className="text-[10px] md:text-[11px] text-[#888] uppercase tracking-[0.6px] md:tracking-[0.8px] font-semibold mb-1">
+                      {chart.heading ? (
+                        chart.heading
+                      ) : (
+                        <>
+                          Chart {chart.position} ·{" "}
+                          {chart.chartType === "donut"
+                            ? "Preference"
+                            : "Comparison"}
+                        </>
+                      )}
+                    </div>
+                    <div className="font-serif text-[15.5px] md:text-[20px] font-bold text-[#1a1a1a] leading-[1.25] flex items-center gap-2">
+                      {chart.icon && (
+                        <span className="text-lg md:text-xl flex items-center justify-center w-5 h-5 md:w-6 md:h-6 shrink-0">
+                          {chart.icon.startsWith("http") ||
+                            chart.icon.startsWith("/") ? (
+                            <img
+                              src={chart.icon}
+                              alt=""
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            chart.icon
+                          )}
+                        </span>
+                      )}
+                      <span>{chart.title}</span>
+                    </div>
                   </div>
-                  <div className="font-serif text-[15.5px] md:text-[20px] font-bold text-[#1a1a1a] leading-[1.25] flex items-center gap-2">
-                    {chart.icon && (
-                      <span className="text-lg md:text-xl flex items-center justify-center w-5 h-5 md:w-6 md:h-6 shrink-0">
-                        {chart.icon.startsWith("http") ||
-                          chart.icon.startsWith("/") ? (
-                          <img
-                            src={chart.icon}
-                            alt=""
-                            className="w-full h-full object-contain"
-                          />
-                        ) : (
-                          chart.icon
-                        )}
-                      </span>
-                    )}
-                    <span>{chart.title}</span>
-                  </div>
+                  
+                  {/* Conditionally render the Embed button */}
+                  {chart.chartType !== "text_block" && (
+                    <button
+                      onClick={() => openModal(chart)}
+                      className="cursor-pointer inline-flex items-center gap-1.5 bg-white border border-[#d4d4d8] rounded-lg px-3.5 py-2 text-[13px] font-semibold text-[#111827] shadow-sm transition-all duration-200 hover:border-[#c4b5fd] hover:bg-[#faf8ff] md:absolute md:top-5 md:right-6"
+                    >
+                      <Code2
+                        size={14}
+                        className="text-[#6C56E5]"
+                        strokeWidth={2.25}
+                      />
+                      <span>Embed</span>
+                    </button>
+                  )}
                 </div>
-                <button
-                  onClick={() => openModal(chart)}
-                  className=" cursor-pointer inline-flex items-center gap-1.5 bg-white border border-[#d4d4d8] rounded-lg px-3.5 py-2 text-[13px] font-semibold text-[#111827] shadow-sm transition-all duration-200 hover:border-[#c4b5fd] hover:bg-[#faf8ff] md:absolute md:top-5 md:right-6 "
-                >
-                  <Code2
-                    size={14}
-                    className="text-[#6C56E5]"
-                    strokeWidth={2.25}
-                  />
-                  <span>Embed</span>
-                </button>
-              </div>
+              )}
 
               {/* Chart Container */}
               <div
-                className={`relative w-full mt-2 md:mt-3 ${chart.chartType === "timeline"
-                    ? "h-auto py-2"
-                    : chart.chartType === "text_block"
-                      ? "h-auto py-4"
-                      : chart.chartType === "donut"
-                        ? "h-[220px] md:h-[320px]"
-                        : chart.chartType === "hbar"
-                          ? "h-[280px] md:h-[320px]"
-                          : "h-[240px] md:h-[320px]"
+                className={`relative w-full ${!isListBlock ? "mt-2 md:mt-3" : ""} ${
+                  chart.chartType === "list_block"
+                    ? "flex-1 flex flex-col"
+                    : chart.chartType === "timeline"
+                      ? "h-auto"
+                      : chart.chartType === "text_block"
+                        ? "h-auto py-4"
+                        : chart.chartType === "donut"
+                          ? "h-[220px] md:h-[320px]"
+                          : chart.chartType === "hbar"
+                            ? "h-[280px] md:h-[320px]"
+                            : "h-[240px] md:h-[320px]"
                   }`}
               >
                 <InteractiveChart
                   chartId={chart.chartId}
                   chartType={chart.chartType}
                   data={chart.data}
+                  title={chart.title}
                 />
               </div>
 
-              {/* Source & Mobile Embed */}
-              <div className="mt-2.5 md:mt-4 pt-2 md:pt-3 border-t border-dashed border-[#e5e5e5] text-[10.5px] md:text-[12px] text-[#555] leading-[1.5]">
-                <span className="font-semibold text-[#1a1a1a] uppercase tracking-[0.4px] md:tracking-[0.5px] text-[9.5px] md:text-[10.5px]">
-                  Source:{" "}
-                </span>
-                <span
-                  className="source-line-link"
-                  dangerouslySetInnerHTML={{
-                    __html: getDisplaySource(chart.sourceLine).replace(/^source:\s*/i, "")
-                  }}
-                />
-              </div>
+              {/* Source & Mobile Embed (Hidden for list_block) */}
+              {!isListBlock && (
+                <div className="mt-2.5 md:mt-4 pt-2 md:pt-3 border-t border-dashed border-[#e5e5e5] text-[10.5px] md:text-[12px] text-[#555] leading-[1.5]">
+                  <span className="font-semibold text-[#1a1a1a] uppercase tracking-[0.4px] md:tracking-[0.5px] text-[9.5px] md:text-[10.5px]">
+                    Source:{" "}
+                  </span>
+                  <span
+                    className="source-line-link"
+                    dangerouslySetInnerHTML={{
+                      __html: getDisplaySource(chart.sourceLine).replace(/^source:\s*/i, "")
+                    }}
+                  />
+                </div>
+              )}
             </div>
           );
         })}

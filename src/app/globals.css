@@ -267,10 +267,11 @@ a:focus-visible {
 /* Source Line links styling */
 .source-line-link a {
   color: #6C56E5;
-  text-decoration: underline;
+  text-decoration: none;
   font-weight: 600;
   transition: color 0.15s ease-in-out;
 }
 .source-line-link a:hover {
   color: #4c3aae;
+  text-decoration: underline;
 }

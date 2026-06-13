@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { Bold, Italic, Link2, Link2Off, Trash } from "lucide-react";
+import { Bold, Italic, Link2, Link2Off, Trash, Palette, Code } from "lucide-react";
 
 interface RichTextEditorProps {
   value: string;
@@ -15,6 +15,7 @@ export default function RichTextEditor({
   placeholder = "e.g. Source: Pew Research Center, 2024",
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
+  const colorInputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
   // Sync value from parent to innerHTML (only if they actually differ to prevent cursor jump)
@@ -35,6 +36,10 @@ export default function RichTextEditor({
     handleInput();
   };
 
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    executeCommand("foreColor", e.target.value);
+  };
+
   const addLink = () => {
     const url = prompt("Enter source URL:");
     if (url) {
@@ -50,7 +55,7 @@ export default function RichTextEditor({
           link.setAttribute("rel", "noopener noreferrer");
           // Add default styling class or inline styles to link inside editor
           link.style.color = "#6C56E5";
-          link.style.textDecoration = "underline";
+          link.style.textDecoration = "none";
         });
         onChange(editorRef.current.innerHTML);
       }
@@ -85,6 +90,26 @@ export default function RichTextEditor({
         </button>
         <button
           type="button"
+          onClick={() => {
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+              const parent = selection.getRangeAt(0).commonAncestorContainer.parentElement;
+              if (parent && (parent.closest("pre") || parent.closest("code"))) {
+                executeCommand("formatBlock", "p");
+              } else {
+                executeCommand("formatBlock", "pre");
+              }
+            } else {
+              executeCommand("formatBlock", "pre");
+            }
+          }}
+          className="p-1.5 rounded text-gray-600 hover:bg-[#eaf2fb] hover:text-[#6C56E5] transition-colors"
+          title="Code Block"
+        >
+          <Code size={15} strokeWidth={2.5} />
+        </button>
+        <button
+          type="button"
           onClick={addLink}
           className="p-1.5 rounded text-gray-600 hover:bg-[#eaf2fb] hover:text-[#6C56E5] transition-colors"
           title="Insert Link"
@@ -99,6 +124,25 @@ export default function RichTextEditor({
         >
           <Link2Off size={15} strokeWidth={2.5} />
         </button>
+
+        {/* Color Picker Button */}
+        <div className="relative flex items-center">
+          <input
+            ref={colorInputRef}
+            type="color"
+            onChange={handleColorChange}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            title="Text Color"
+          />
+          <button
+            type="button"
+            className="p-1.5 rounded text-gray-600 hover:bg-[#eaf2fb] hover:text-[#6C56E5] transition-colors flex items-center justify-center"
+            title="Text Color"
+          >
+            <Palette size={15} strokeWidth={2.5} />
+          </button>
+        </div>
+
         <div className="w-px h-5 bg-[#e2e8f0] mx-1"></div>
         <button
           type="button"
@@ -124,7 +168,7 @@ export default function RichTextEditor({
           setIsFocused(false);
         }}
         onFocus={() => setIsFocused(true)}
-        className="min-h-[84px] p-3 text-sm text-[#1e293b] outline-none leading-relaxed select-text font-sans [&_a]:text-[#6C56E5] [&_a]:underline [&_a]:font-medium"
+        className="min-h-[84px] p-3 text-sm text-[#1e293b] outline-none leading-relaxed select-text font-sans [&_a]:text-[#6C56E5] [&_a]:underline [&_a]:font-medium [&_pre]:bg-gray-100 [&_pre]:p-2.5 [&_pre]:rounded-r [&_pre]:font-mono [&_pre]:text-xs [&_pre]:my-2 [&_pre]:border-l-4 [&_pre]:border-gray-400 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:font-mono"
         style={{
           minHeight: "84px",
         }}

@@ -3,7 +3,16 @@
 import { useState, useEffect, FormEvent, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Plus, Trash2, GripVertical, ChevronDown, ChevronUp, PlusCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Plus,
+  Trash2,
+  GripVertical,
+  ChevronDown,
+  ChevronUp,
+  PlusCircle,
+} from "lucide-react";
 import { apiUrl } from "@/src/lib/basePath";
 import InteractiveChart from "@/src/components/InteractiveChart";
 import IconUploadField from "@/src/components/admin/IconUploadField";
@@ -11,7 +20,13 @@ import RichTextEditor from "@/src/components/admin/RichTextEditor";
 import { DataRow, SourceRow, LineSeries } from "@/src/types";
 import { Input } from "@/src/components/admin/ui/Input";
 import { Textarea } from "@/src/components/admin/ui/Textarea";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/src/components/admin/ui/Select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/src/components/admin/ui/Select";
 import { Switch } from "@/src/components/admin/ui/Switch";
 import { toast } from "@/src/hooks/use-toast";
 import { Card } from "@/src/components/admin/ui/Card";
@@ -25,6 +40,7 @@ export const CHART_TYPES = [
   { value: "hero_stat", label: "Hero Stat" },
   { value: "timeline", label: "Timeline Milestones" },
   { value: "text_block", label: "Callout Text Block" },
+  { value: "list_block", label: "List Block (Pros/Cons/Trends)" },
 ];
 
 // Parse existing chart.data into our row format
@@ -44,16 +60,48 @@ function parseDataRows(chartType: string, data: unknown): DataRow[] {
   }
 
   if (chartType === "text_block") {
+    if (typedData.quotes && Array.isArray(typedData.quotes)) {
+      return (typedData.quotes as Record<string, unknown>[]).map((q) => ({
+        label: String(q.author || ""),
+        value: String(q.text || ""),
+        color: String(typedData.color || ""),
+        eventColor: String(typedData.borderColor || ""),
+      }));
+    }
     return [
       {
         label: String(typedData.author || ""),
         value: String(typedData.text || ""),
         color: String(typedData.color || ""),
+        eventColor: String(typedData.borderColor || ""),
       },
     ];
   }
 
-  if (chartType === "timeline" && typedData.events && Array.isArray(typedData.events)) {
+  if (chartType === "list_block") {
+    if (typedData.items && Array.isArray(typedData.items)) {
+      return (typedData.items as Record<string, unknown>[]).map((item) => ({
+        label: String(item.boldText || ""), // Used for Bold Text
+        value: String(item.text || ""),     // Used for Regular Text
+        color: String(typedData.color || ""),
+        eventColor: String(typedData.borderColor || ""),
+      }));
+    }
+    return [
+      {
+        label: "",
+        value: "",
+        color: String(typedData.color || ""),
+        eventColor: String(typedData.borderColor || ""),
+      },
+    ];
+  }
+
+  if (
+    chartType === "timeline" &&
+    typedData.events &&
+    Array.isArray(typedData.events)
+  ) {
     return (typedData.events as Record<string, unknown>[]).map((e) => ({
       label: String(e.date || ""),
       value: String(e.title || ""),
@@ -104,19 +152,25 @@ function buildChartDataPayload(
   ySuffix: string,
   yPrefix: string,
   isGrouped: boolean,
+  heroPrefix: string = "",
+  heroSuffix: string = "",
+  heroSuffixSize: "small" | "large" = "large",
 ): unknown {
   if (chartType === "hero_stat") {
     return {
       type: "hero_stat",
       value: rows[0]?.value || "",
       label: rows[0]?.label || "",
+      prefix: heroPrefix || undefined,
+      suffix: heroSuffix || undefined,
+      suffixSize: heroSuffixSize || undefined,
       ...(trendDirection || trendAmount
         ? {
-          trend: {
-            direction: trendDirection || undefined,
-            amount: trendAmount || undefined,
-          },
-        }
+            trend: {
+              direction: trendDirection || undefined,
+              amount: trendAmount || undefined,
+            },
+          }
         : {}),
     };
   }
@@ -135,13 +189,28 @@ function buildChartDataPayload(
     };
   }
 
+
   // Handle callout insight quote payloads
   if (chartType === "text_block") {
     return {
       type: "text_block",
-      text: rows[0]?.value || "",
-      author: rows[0]?.label || "",
       color: rows[0]?.color || "",
+      borderColor: rows[0]?.eventColor || "",
+      quotes: rows.map((r) => ({
+        text: r.value || "",
+        author: r.label || "",
+      })),
+    };
+  }
+
+  if (chartType === "list_block") {
+    return {
+      type: "list_block",
+      color: rows[0]?.color || "",
+      borderColor: rows[0]?.eventColor || "",
+      items: rows
+        .map((r) => ({ boldText: r.label || "", text: r.value || "" }))
+        .filter((i) => i.boldText.trim() !== "" || i.text.trim() !== ""), // Keep if either has text
     };
   }
 
@@ -169,9 +238,9 @@ function buildChartDataPayload(
           chartType === "line"
             ? s.dataPoints.map((dp) => ({ x: dp.x, y: Number(dp.y) || 0 }))
             : labels.map((l) => {
-              const match = s.dataPoints.find((dp) => dp.x === l);
-              return { x: l, y: match ? Number(match.y) || 0 : 0 };
-            }),
+                const match = s.dataPoints.find((dp) => dp.x === l);
+                return { x: l, y: match ? Number(match.y) || 0 : 0 };
+              }),
       })),
     };
   }
@@ -229,6 +298,11 @@ export default function ChartEditorPage({
   const [isGrouped, setIsGrouped] = useState(false);
   const [trendDirection, setTrendDirection] = useState<"up" | "down" | "">("");
   const [trendAmount, setTrendAmount] = useState("");
+  const [heroPrefix, setHeroPrefix] = useState("");
+  const [heroSuffix, setHeroSuffix] = useState("");
+  const [heroSuffixSize, setHeroSuffixSize] = useState<"small" | "large">(
+    "large",
+  );
 
   // Line Series builder state
   const [lineSeries, setLineSeries] = useState<LineSeries[]>([
@@ -239,20 +313,33 @@ export default function ChartEditorPage({
   const [previewData, setPreviewData] = useState<unknown | null>(null);
 
   // Collapse states for lists
-  const [collapsedRows, setCollapsedRows] = useState<Record<number, boolean>>({});
-  const [collapsedSeries, setCollapsedSeries] = useState<Record<number, boolean>>({});
-  const [collapsedSources, setCollapsedSources] = useState<Record<number, boolean>>({});
+  const [collapsedRows, setCollapsedRows] = useState<Record<number, boolean>>(
+    {},
+  );
+  const [collapsedSeries, setCollapsedSeries] = useState<
+    Record<number, boolean>
+  >({});
+  const [collapsedSources, setCollapsedSources] = useState<
+    Record<number, boolean>
+  >({});
 
   // Drag states
   const [draggedRowIndex, setDraggedRowIndex] = useState<number | null>(null);
-  const [draggedSeriesIndex, setDraggedSeriesIndex] = useState<number | null>(null);
-  const [draggedSourceIndex, setDraggedSourceIndex] = useState<number | null>(null);
+  const [draggedSeriesIndex, setDraggedSeriesIndex] = useState<number | null>(
+    null,
+  );
+  const [draggedSourceIndex, setDraggedSourceIndex] = useState<number | null>(
+    null,
+  );
 
   const showToast = (
     message: string,
     type: "success" | "error" = "success",
   ) => {
-    toast({ title: message, variant: type === "error" ? "destructive" : "default" });
+    toast({
+      title: message,
+      variant: type === "error" ? "destructive" : "default",
+    });
   };
 
   // Fetch topic (to get slug and chart count for new chart ID) and chart data
@@ -267,7 +354,8 @@ export default function ChartEditorPage({
         if (topicRes.success) {
           tSlug = topicRes.data.slug;
           nextIndex = topicRes.data.charts
-            ? topicRes.data.charts.filter((c: any) => c.status !== "removed").length
+            ? topicRes.data.charts.filter((c: any) => c.status !== "removed")
+                .length
             : 0;
         }
 
@@ -298,8 +386,8 @@ export default function ChartEditorPage({
                 publication: String(s.publication || ""),
                 publicationDate: s.publicationDate
                   ? new Date(String(s.publicationDate))
-                    .toISOString()
-                    .split("T")[0]
+                      .toISOString()
+                      .split("T")[0]
                   : "",
               }),
             ) || [],
@@ -322,13 +410,20 @@ export default function ChartEditorPage({
                   color: "",
                 },
               ]);
+              setHeroPrefix(c.data.prefix || "");
+              setHeroSuffix(c.data.suffix || "");
+              setHeroSuffixSize(c.data.suffixSize || "large");
               if (c.data.trend) {
                 setTrendDirection(
                   (c.data.trend.direction || "") as "up" | "down" | "",
                 );
                 setTrendAmount(c.data.trend.amount || "");
               }
-            } else if (c.chartType === "line" || ((c.chartType === "vbar" || c.chartType === "hbar") && c.data.series)) {
+            } else if (
+              c.chartType === "line" ||
+              ((c.chartType === "vbar" || c.chartType === "hbar") &&
+                c.data.series)
+            ) {
               if (c.data.series && Array.isArray(c.data.series)) {
                 setLineSeries(
                   (c.data.series as Record<string, unknown>[]).map((s) => ({
@@ -482,6 +577,9 @@ export default function ChartEditorPage({
         ySuffix,
         yPrefix,
         isGrouped,
+        heroPrefix,
+        heroSuffix,
+        heroSuffixSize,
       ),
       sources: sources.map((s) => ({
         ...s,
@@ -590,7 +688,10 @@ export default function ChartEditorPage({
             <div className="admin-form-row">
               <div className="admin-form-group">
                 <label className="admin-form-label">Chart Type *</label>
-                <Select value={chartType} onValueChange={(val: string) => setChartType(val)}>
+                <Select
+                  value={chartType}
+                  onValueChange={(val: string) => setChartType(val)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type..." />
                   </SelectTrigger>
@@ -638,13 +739,25 @@ export default function ChartEditorPage({
 
             <div className="admin-form-group" style={{ marginBottom: 20 }}>
               <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <div className="text-sm font-semibold text-[var(--admin-text)]">Display on Dashboard</div>
-                  <div className="text-xs text-[var(--admin-text-muted)] font-normal">Show this chart on the home page admin dashboard</div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "2px",
+                  }}
+                >
+                  <div className="text-sm font-semibold text-[var(--admin-text)]">
+                    Display on Dashboard
+                  </div>
+                  <div className="text-xs text-[var(--admin-text-muted)] font-normal">
+                    Show this chart on the home page admin dashboard
+                  </div>
                 </div>
                 <Switch
                   checked={displayHome}
-                  onCheckedChange={(checked: boolean) => setDisplayHome(checked)}
+                  onCheckedChange={(checked: boolean) =>
+                    setDisplayHome(checked)
+                  }
                 />
               </Card>
             </div>
@@ -667,81 +780,104 @@ export default function ChartEditorPage({
             {(chartType === "vbar" ||
               chartType === "hbar" ||
               chartType === "line") && (
-                <>
-                  <div className="admin-form-row" style={{ marginBottom: 20 }}>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">X-Axis Label</label>
-                      <Input
-                        placeholder="e.g. Year or Country"
-                        value={xLabel}
-                        onChange={(e) => setXLabel(e.target.value)}
-                      />
-                    </div>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Y-Axis Label</label>
-                      <Input
-                        placeholder="e.g. Percentage"
-                        value={yLabel}
-                        onChange={(e) => setYLabel(e.target.value)}
-                      />
-                    </div>
+              <>
+                <div className="admin-form-row" style={{ marginBottom: 20 }}>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">X-Axis Label</label>
+                    <Input
+                      placeholder="e.g. Year or Country"
+                      value={xLabel}
+                      onChange={(e) => setXLabel(e.target.value)}
+                    />
                   </div>
-
-                  <div className="admin-form-row" style={{ marginBottom: 20 }}>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Y-Axis Format</label>
-                      <Select value={yFormat || "raw"} onValueChange={(val: string) => setYFormat(val === "raw" ? "" : val)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Number (Raw)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="raw">Number (Raw)</SelectItem>
-                          <SelectItem value="percentage">Percentage (%)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Custom Max Value</label>
-                      <Input
-                        placeholder="e.g. 100, 120, 5.0 (blank for auto)"
-                        value={yMax}
-                        onChange={(e) => setYMax(e.target.value)}
-                      />
-                    </div>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Custom Prefix</label>
-                      <Input
-                        placeholder="e.g. $"
-                        value={yPrefix}
-                        onChange={(e) => setYPrefix(e.target.value)}
-                      />
-                    </div>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Custom Suffix</label>
-                      <Input
-                        placeholder="e.g. %, M, B, months"
-                        value={ySuffix}
-                        onChange={(e) => setYSuffix(e.target.value)}
-                      />
-                    </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Y-Axis Label</label>
+                    <Input
+                      placeholder="e.g. Percentage"
+                      value={yLabel}
+                      onChange={(e) => setYLabel(e.target.value)}
+                    />
                   </div>
+                </div>
 
-                  {(chartType === "vbar" || chartType === "hbar") && (
-                    <div className="admin-form-group" style={{ marginBottom: 20 }}>
-                      <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
-                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                          <div className="text-sm font-semibold text-[var(--admin-text)]">Grouped Chart (Multi-Series)</div>
-                          <div className="text-xs text-[var(--admin-text-muted)] font-normal font-sans">Enable side-by-side bar comparisons using multiple series (e.g. 2023 vs 2025)</div>
+                <div className="admin-form-row" style={{ marginBottom: 20 }}>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Y-Axis Format</label>
+                    <Select
+                      value={yFormat || "raw"}
+                      onValueChange={(val: string) =>
+                        setYFormat(val === "raw" ? "" : val)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Number (Raw)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="raw">Number (Raw)</SelectItem>
+                        <SelectItem value="percentage">
+                          Percentage (%)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Custom Max Value</label>
+                    <Input
+                      placeholder="e.g. 100, 120, 5.0 (blank for auto)"
+                      value={yMax}
+                      onChange={(e) => setYMax(e.target.value)}
+                    />
+                  </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Custom Prefix</label>
+                    <Input
+                      placeholder="e.g. $"
+                      value={yPrefix}
+                      onChange={(e) => setYPrefix(e.target.value)}
+                    />
+                  </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Custom Suffix</label>
+                    <Input
+                      placeholder="e.g. %, M, B, months"
+                      value={ySuffix}
+                      onChange={(e) => setYSuffix(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {(chartType === "vbar" || chartType === "hbar") && (
+                  <div
+                    className="admin-form-group"
+                    style={{ marginBottom: 20 }}
+                  >
+                    <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "2px",
+                        }}
+                      >
+                        <div className="text-sm font-semibold text-[var(--admin-text)]">
+                          Grouped Chart (Multi-Series)
                         </div>
-                        <Switch
-                          checked={isGrouped}
-                          onCheckedChange={(checked: boolean) => setIsGrouped(checked)}
-                        />
-                      </Card>
-                    </div>
-                  )}
-                </>
-              )}
+                        <div className="text-xs text-[var(--admin-text-muted)] font-normal font-sans">
+                          Enable side-by-side bar comparisons using multiple
+                          series (e.g. 2023 vs 2025)
+                        </div>
+                      </div>
+                      <Switch
+                        checked={isGrouped}
+                        onCheckedChange={(checked: boolean) =>
+                          setIsGrouped(checked)
+                        }
+                      />
+                    </Card>
+                  </div>
+                )}
+              </>
+            )}
 
             {isHeroStat ? (
               <div>
@@ -759,7 +895,7 @@ export default function ChartEditorPage({
                   <div className="admin-form-group">
                     <label className="admin-form-label">Value</label>
                     <Input
-                      placeholder="e.g. 73%"
+                      placeholder="e.g. 73"
                       value={dataRows[0]?.value || ""}
                       onChange={(e) =>
                         updateDataRow(0, "value", e.target.value)
@@ -767,10 +903,60 @@ export default function ChartEditorPage({
                     />
                   </div>
                 </div>
-                <div className="admin-form-row">
+                <div className="admin-form-row" style={{ marginTop: 12 }}>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">
+                      Prefix (Optional)
+                    </label>
+                    <Input
+                      placeholder="e.g. $"
+                      value={heroPrefix}
+                      onChange={(e) => setHeroPrefix(e.target.value)}
+                    />
+                  </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">
+                      Suffix (Optional)
+                    </label>
+                    <Input
+                      placeholder="e.g. % or months"
+                      value={heroSuffix}
+                      onChange={(e) => setHeroSuffix(e.target.value)}
+                    />
+                  </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Suffix Size</label>
+                    <Select
+                      value={heroSuffixSize}
+                      onValueChange={(val: "small" | "large") =>
+                        setHeroSuffixSize(val)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Large" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="large">
+                          Large (same as number)
+                        </SelectItem>
+                        <SelectItem value="small">
+                          Small (smaller font)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="admin-form-row" style={{ marginTop: 12 }}>
                   <div className="admin-form-group">
                     <label className="admin-form-label">Trend Direction</label>
-                    <Select value={trendDirection || "none"} onValueChange={(val: string) => setTrendDirection(val === "none" ? "" : (val as "up" | "down"))}>
+                    <Select
+                      value={trendDirection || "none"}
+                      onValueChange={(val: string) =>
+                        setTrendDirection(
+                          val === "none" ? "" : (val as "up" | "down"),
+                        )
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="No Trend" />
                       </SelectTrigger>
@@ -796,13 +982,26 @@ export default function ChartEditorPage({
             ) : chartType === "timeline" ? (
               /* Timeline Events Editor */
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>Timeline Events</h4>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 16,
+                  }}
+                >
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>
+                    Timeline Events
+                  </h4>
                   <button
                     type="button"
                     className="admin-add-row-btn"
                     onClick={addDataRow}
-                    style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}
+                    style={{
+                      width: "auto",
+                      display: "inline-flex",
+                      padding: "6px 12px",
+                    }}
                   >
                     <PlusCircle size={14} /> Add Event
                   </button>
@@ -822,9 +1021,13 @@ export default function ChartEditorPage({
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault();
-                        if (draggedRowIndex === null || draggedRowIndex === i) return;
+                        if (draggedRowIndex === null || draggedRowIndex === i)
+                          return;
                         const updated = [...dataRows];
-                        const [draggedItem] = updated.splice(draggedRowIndex, 1);
+                        const [draggedItem] = updated.splice(
+                          draggedRowIndex,
+                          1,
+                        );
                         updated.splice(i, 0, draggedItem);
                         setDataRows(updated);
                         setDraggedRowIndex(null);
@@ -832,8 +1035,16 @@ export default function ChartEditorPage({
                     >
                       <div className="admin-drag-card-header">
                         <div className="admin-drag-card-title">
-                          <GripVertical size={16} style={{ cursor: "grab", color: "var(--admin-text-dim)" }} />
-                          <span>{row.label || row.value || `Event #${i + 1}`}</span>
+                          <GripVertical
+                            size={16}
+                            style={{
+                              cursor: "grab",
+                              color: "var(--admin-text-dim)",
+                            }}
+                          />
+                          <span>
+                            {row.label || row.value || `Event #${i + 1}`}
+                          </span>
                         </div>
                         <div className="admin-drag-card-actions">
                           <button
@@ -844,7 +1055,7 @@ export default function ChartEditorPage({
                               color: "var(--admin-danger)",
                               border: "1px solid rgba(239, 68, 68, 0.2)",
                               borderRadius: "50%",
-                              padding: 5
+                              padding: 5,
                             }}
                           >
                             <Trash2 size={14} />
@@ -852,17 +1063,33 @@ export default function ChartEditorPage({
                           <button
                             type="button"
                             className="admin-btn-icon"
-                            onClick={() => setCollapsedRows(prev => ({ ...prev, [i]: !prev[i] }))}
+                            onClick={() =>
+                              setCollapsedRows((prev) => ({
+                                ...prev,
+                                [i]: !prev[i],
+                              }))
+                            }
                           >
-                            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                            {isCollapsed ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronUp size={16} />
+                            )}
                           </button>
                         </div>
                       </div>
 
-                      <div className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}>
-                        <div className="admin-form-row" style={{ marginBottom: 12 }}>
+                      <div
+                        className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}
+                      >
+                        <div
+                          className="admin-form-row"
+                          style={{ marginBottom: 12 }}
+                        >
                           <div className="admin-form-group">
-                            <label className="admin-form-label">Date (e.g. JAN 2025)</label>
+                            <label className="admin-form-label">
+                              Date (e.g. JAN 2025)
+                            </label>
                             <Input
                               placeholder="Date"
                               value={row.label}
@@ -872,7 +1099,9 @@ export default function ChartEditorPage({
                             />
                           </div>
                           <div className="admin-form-group">
-                            <label className="admin-form-label">Event Title</label>
+                            <label className="admin-form-label">
+                              Event Title
+                            </label>
                             <Input
                               placeholder="Event Title"
                               value={row.value}
@@ -882,8 +1111,13 @@ export default function ChartEditorPage({
                             />
                           </div>
                         </div>
-                        <div className="admin-form-group" style={{ marginBottom: 12 }}>
-                          <label className="admin-form-label">Event Description</label>
+                        <div
+                          className="admin-form-group"
+                          style={{ marginBottom: 12 }}
+                        >
+                          <label className="admin-form-label">
+                            Event Description
+                          </label>
                           <Textarea
                             placeholder="Describe what happened..."
                             value={row.color}
@@ -893,9 +1127,14 @@ export default function ChartEditorPage({
                             rows={2}
                           />
                         </div>
-                        <div className="admin-form-row" style={{ marginBottom: 0 }}>
+                        <div
+                          className="admin-form-row"
+                          style={{ marginBottom: 0 }}
+                        >
                           <div className="admin-form-group">
-                            <label className="admin-form-label">Event Source (Optional)</label>
+                            <label className="admin-form-label">
+                              Event Source (Optional)
+                            </label>
                             <Input
                               placeholder="e.g. OpenAI announcement (February 2026)"
                               value={row.source || ""}
@@ -905,8 +1144,16 @@ export default function ChartEditorPage({
                             />
                           </div>
                           <div className="admin-form-group">
-                            <label className="admin-form-label">Event Circle Color (Optional)</label>
-                            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                            <label className="admin-form-label">
+                              Event Circle Color (Optional)
+                            </label>
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: 6,
+                                alignItems: "center",
+                              }}
+                            >
                               <input
                                 type="color"
                                 value={row.eventColor || "#088DFF"}
@@ -941,23 +1188,17 @@ export default function ChartEditorPage({
             ) : chartType === "text_block" ? (
               /* Text Block Editor */
               <div>
-                <div className="admin-form-row">
+                <div className="admin-form-row" style={{ marginBottom: 20 }}>
                   <div className="admin-form-group">
-                    <label className="admin-form-label">Author / Citation (Optional)</label>
-                    <Input
-                      placeholder="e.g. Goldman Sachs research note (July 2024)"
-                      value={dataRows[0]?.label || ""}
-                      onChange={(e) =>
-                        updateDataRow(0, "label", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">Block Theme Color</label>
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <label className="admin-form-label">
+                      Background Color
+                    </label>
+                    <div
+                      style={{ display: "flex", gap: 6, alignItems: "center" }}
+                    >
                       <input
                         type="color"
-                        value={dataRows[0]?.color || "#E5483F"}
+                        value={dataRows[0]?.color || "#fdf2f2"}
                         onChange={(e) =>
                           updateDataRow(0, "color", e.target.value)
                         }
@@ -975,33 +1216,297 @@ export default function ChartEditorPage({
                         onChange={(e) =>
                           updateDataRow(0, "color", e.target.value)
                         }
+                        placeholder="e.g. #fdf2f2"
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">
+                      Left Accent Border Color
+                    </label>
+                    <div
+                      style={{ display: "flex", gap: 6, alignItems: "center" }}
+                    >
+                      <input
+                        type="color"
+                        value={dataRows[0]?.eventColor || "#E5483F"}
+                        onChange={(e) =>
+                          updateDataRow(0, "eventColor", e.target.value)
+                        }
+                        style={{
+                          width: 34,
+                          height: 34,
+                          padding: 0,
+                          border: "none",
+                          borderRadius: 4,
+                          cursor: "pointer",
+                        }}
+                      />
+                      <Input
+                        value={dataRows[0]?.eventColor || ""}
+                        onChange={(e) =>
+                          updateDataRow(0, "eventColor", e.target.value)
+                        }
                         placeholder="e.g. #E5483F"
                         style={{ flex: 1 }}
                       />
                     </div>
                   </div>
                 </div>
-                <div className="admin-form-row" style={{ marginTop: 12 }}>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 16,
+                  }}
+                >
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>
+                    Quotes / Callout List
+                  </h4>
+                  <button
+                    type="button"
+                    className="admin-add-row-btn"
+                    onClick={addDataRow}
+                    style={{
+                      width: "auto",
+                      display: "inline-flex",
+                      padding: "6px 12px",
+                    }}
+                  >
+                    <PlusCircle size={14} /> Add Quote
+                  </button>
+                </div>
+
+                {dataRows.map((row, i) => {
+                  const isCollapsed = !!collapsedRows[i];
+                  return (
+                    <div
+                      key={i}
+                      className="admin-drag-card"
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedRowIndex(i);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedRowIndex === null || draggedRowIndex === i)
+                          return;
+                        const updated = [...dataRows];
+                        const [draggedItem] = updated.splice(
+                          draggedRowIndex,
+                          1,
+                        );
+                        updated.splice(i, 0, draggedItem);
+                        setDataRows(updated);
+                        setDraggedRowIndex(null);
+                      }}
+                    >
+                      <div className="admin-drag-card-header">
+                        <div className="admin-drag-card-title">
+                          <GripVertical
+                            size={16}
+                            style={{
+                              cursor: "grab",
+                              color: "var(--admin-text-dim)",
+                            }}
+                          />
+                          <span>
+                            {row.value
+                              ? row.value.substring(0, 60) + (row.value.length > 60 ? "..." : "")
+                              : `Quote #${i + 1}`}
+                          </span>
+                        </div>
+                        <div className="admin-drag-card-actions">
+                          {dataRows.length > 1 && (
+                            <button
+                              type="button"
+                              className="admin-btn-icon"
+                              onClick={() => removeDataRow(i)}
+                              style={{
+                                color: "var(--admin-danger)",
+                                border: "1px solid rgba(239, 68, 68, 0.2)",
+                                borderRadius: "50%",
+                                padding: 5,
+                              }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="admin-btn-icon"
+                            onClick={() =>
+                              setCollapsedRows((prev) => ({
+                                ...prev,
+                                [i]: !prev[i],
+                              }))
+                            }
+                          >
+                            {isCollapsed ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronUp size={16} />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}
+                      >
+                        <div
+                          className="admin-form-group"
+                          style={{ marginBottom: 12 }}
+                        >
+                          <label className="admin-form-label">
+                            Quote Text
+                          </label>
+                          <Textarea
+                            placeholder="Enter the quote content (without quote marks, e.g. Due to overhyped expectations...)"
+                            value={row.value || ""}
+                            onChange={(e) =>
+                              updateDataRow(i, "value", e.target.value)
+                            }
+                            rows={3}
+                          />
+                        </div>
+                        <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                          <label className="admin-form-label">
+                            Author / Citation (Optional)
+                          </label>
+                          <Input
+                            placeholder="e.g. Industry analyst quoted in Fortune CEO Daily, January 2024"
+                            value={row.label || ""}
+                            onChange={(e) =>
+                              updateDataRow(i, "label", e.target.value)
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : chartType === "list_block" ? (
+              /* List Block Editor */
+              <div>
+                <div className="admin-form-row" style={{ marginBottom: 24 }}>
                   <div className="admin-form-group">
-                    <label className="admin-form-label">Quote / Callout Content (Rich Text)</label>
-                    <RichTextEditor
-                      value={dataRows[0]?.value || ""}
-                      onChange={(val) => updateDataRow(0, "value", val)}
-                      placeholder="Enter the quote or text block content..."
-                    />
+                    <label className="admin-form-label">Background Color</label>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <input
+                        type="color"
+                        value={dataRows[0]?.color || "#ecfdf5"}
+                        onChange={(e) => updateDataRow(0, "color", e.target.value)}
+                        style={{ width: 34, height: 34, padding: 0, border: "none", borderRadius: 4, cursor: "pointer" }}
+                      />
+                      <Input
+                        value={dataRows[0]?.color || ""}
+                        onChange={(e) => updateDataRow(0, "color", e.target.value)}
+                        placeholder="e.g. #ecfdf5 (Light Green)"
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">Accent Border & Arrow Color</label>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <input
+                        type="color"
+                        value={dataRows[0]?.eventColor || "#10B981"}
+                        onChange={(e) => updateDataRow(0, "eventColor", e.target.value)}
+                        style={{ width: 34, height: 34, padding: 0, border: "none", borderRadius: 4, cursor: "pointer" }}
+                      />
+                      <Input
+                        value={dataRows[0]?.eventColor || ""}
+                        onChange={(e) => updateDataRow(0, "eventColor", e.target.value)}
+                        placeholder="e.g. #10B981 (Dark Green)"
+                        style={{ flex: 1 }}
+                      />
+                    </div>
                   </div>
                 </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>List Items</h4>
+                  <button type="button" className="admin-add-row-btn" onClick={addDataRow} style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}>
+                    <PlusCircle size={14} /> Add Item
+                  </button>
+                </div>
+
+                {dataRows.map((row, i) => {
+                  const isCollapsed = !!collapsedRows[i];
+                  return (
+                    <div key={i} className="admin-drag-card" draggable onDragStart={(e) => { setDraggedRowIndex(i); e.dataTransfer.effectAllowed = "move"; }} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); if (draggedRowIndex === null || draggedRowIndex === i) return; const updated = [...dataRows]; const [draggedItem] = updated.splice(draggedRowIndex, 1); updated.splice(i, 0, draggedItem); setDataRows(updated); setDraggedRowIndex(null); }}>
+                      <div className="admin-drag-card-header">
+                        <div className="admin-drag-card-title">
+                          <GripVertical size={16} style={{ cursor: "grab", color: "var(--admin-text-dim)" }} />
+                          <span>{row.label ? row.label.substring(0, 50) + (row.label.length > 50 ? "..." : "") : `List Item #${i + 1}`}</span>
+                        </div>
+                        <div className="admin-drag-card-actions">
+                          {dataRows.length > 1 && (
+                            <button type="button" className="admin-btn-icon" onClick={() => removeDataRow(i)} style={{ color: "var(--admin-danger)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "50%", padding: 5 }}>
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                          <button type="button" className="admin-btn-icon" onClick={() => setCollapsedRows((prev) => ({ ...prev, [i]: !prev[i] }))}>
+                            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}>
+                        <div className="admin-form-group" style={{ marginBottom: 12 }}>
+                          <label className="admin-form-label">Bold Text (Prefix)</label>
+                          <Input
+                            placeholder="e.g. Claude paid subs more than doubled"
+                            value={row.label || ""}
+                            onChange={(e) => updateDataRow(i, "label", e.target.value)}
+                          />
+                        </div>
+                        <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                          <label className="admin-form-label">Regular Text</label>
+                          <Textarea
+                            placeholder="e.g. January-February 2026, per Anthropic confirmation..."
+                            value={row.value || ""}
+                            onChange={(e) => updateDataRow(i, "value", e.target.value)}
+                            rows={2}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ) : (chartType === "line" || ((chartType === "vbar" || chartType === "hbar") && isGrouped)) ? (
+            ) : chartType === "line" ||
+              ((chartType === "vbar" || chartType === "hbar") && isGrouped) ? (
               /* Line Series Builder */
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>Line Series</h4>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 16,
+                  }}
+                >
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>
+                    Line Series
+                  </h4>
                   <button
                     type="button"
                     className="admin-add-row-btn"
                     onClick={addLineSeries}
-                    style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}
+                    style={{
+                      width: "auto",
+                      display: "inline-flex",
+                      padding: "6px 12px",
+                    }}
                   >
                     <PlusCircle size={14} /> Add Series
                   </button>
@@ -1021,9 +1526,16 @@ export default function ChartEditorPage({
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault();
-                        if (draggedSeriesIndex === null || draggedSeriesIndex === seriesIdx) return;
+                        if (
+                          draggedSeriesIndex === null ||
+                          draggedSeriesIndex === seriesIdx
+                        )
+                          return;
                         const updated = [...lineSeries];
-                        const [draggedItem] = updated.splice(draggedSeriesIndex, 1);
+                        const [draggedItem] = updated.splice(
+                          draggedSeriesIndex,
+                          1,
+                        );
                         updated.splice(seriesIdx, 0, draggedItem);
                         setLineSeries(updated);
                         setDraggedSeriesIndex(null);
@@ -1034,8 +1546,16 @@ export default function ChartEditorPage({
                     >
                       <div className="admin-drag-card-header">
                         <div className="admin-drag-card-title">
-                          <GripVertical size={16} style={{ cursor: "grab", color: "var(--admin-text-dim)" }} />
-                          <span>{series.name || `Series #${seriesIdx + 1}`}</span>
+                          <GripVertical
+                            size={16}
+                            style={{
+                              cursor: "grab",
+                              color: "var(--admin-text-dim)",
+                            }}
+                          />
+                          <span>
+                            {series.name || `Series #${seriesIdx + 1}`}
+                          </span>
                         </div>
                         <div className="admin-drag-card-actions">
                           {lineSeries.length > 1 && (
@@ -1047,7 +1567,7 @@ export default function ChartEditorPage({
                                 color: "var(--admin-danger)",
                                 border: "1px solid rgba(239, 68, 68, 0.2)",
                                 borderRadius: "50%",
-                                padding: 5
+                                padding: 5,
                               }}
                             >
                               <Trash2 size={14} />
@@ -1056,17 +1576,33 @@ export default function ChartEditorPage({
                           <button
                             type="button"
                             className="admin-btn-icon"
-                            onClick={() => setCollapsedSeries(prev => ({ ...prev, [seriesIdx]: !prev[seriesIdx] }))}
+                            onClick={() =>
+                              setCollapsedSeries((prev) => ({
+                                ...prev,
+                                [seriesIdx]: !prev[seriesIdx],
+                              }))
+                            }
                           >
-                            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                            {isCollapsed ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronUp size={16} />
+                            )}
                           </button>
                         </div>
                       </div>
 
-                      <div className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}>
-                        <div className="admin-form-row" style={{ marginBottom: 12 }}>
+                      <div
+                        className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}
+                      >
+                        <div
+                          className="admin-form-row"
+                          style={{ marginBottom: 12 }}
+                        >
                           <div className="admin-form-group">
-                            <label className="admin-form-label">Series Name</label>
+                            <label className="admin-form-label">
+                              Series Name
+                            </label>
                             <Input
                               placeholder="e.g. Gen Z (18-25)"
                               value={series.name}
@@ -1080,8 +1616,16 @@ export default function ChartEditorPage({
                             />
                           </div>
                           <div className="admin-form-group">
-                            <label className="admin-form-label">Series Color</label>
-                            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                            <label className="admin-form-label">
+                              Series Color
+                            </label>
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: 6,
+                                alignItems: "center",
+                              }}
+                            >
                               <input
                                 type="color"
                                 value={series.color || "#088DFF"}
@@ -1117,23 +1661,51 @@ export default function ChartEditorPage({
                           </div>
                         </div>
 
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                          <label className="admin-form-label" style={{ marginBottom: 0 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: 8,
+                          }}
+                        >
+                          <label
+                            className="admin-form-label"
+                            style={{ marginBottom: 0 }}
+                          >
                             Data Points (X/Y pairs)
                           </label>
                           <button
                             type="button"
                             className="admin-add-row-btn"
                             onClick={() => addDataPoint(seriesIdx)}
-                            style={{ width: "auto", display: "inline-flex", padding: "4px 10px", fontSize: 11 }}
+                            style={{
+                              width: "auto",
+                              display: "inline-flex",
+                              padding: "4px 10px",
+                              fontSize: 11,
+                            }}
                           >
                             <PlusCircle size={12} /> Add Data Point
                           </button>
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 6,
+                          }}
+                        >
                           {series.dataPoints.map((pt, ptIdx) => (
-                            <div key={ptIdx} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                            <div
+                              key={ptIdx}
+                              style={{
+                                display: "flex",
+                                gap: 8,
+                                alignItems: "center",
+                              }}
+                            >
                               <Input
                                 placeholder="X value (e.g. 2022)"
                                 value={pt.x}
@@ -1164,7 +1736,9 @@ export default function ChartEditorPage({
                               <button
                                 type="button"
                                 className="admin-btn-icon"
-                                onClick={() => removeDataPoint(seriesIdx, ptIdx)}
+                                onClick={() =>
+                                  removeDataPoint(seriesIdx, ptIdx)
+                                }
                                 style={{ color: "var(--admin-danger)" }}
                                 disabled={series.dataPoints.length <= 1}
                               >
@@ -1181,13 +1755,26 @@ export default function ChartEditorPage({
             ) : (
               /* Flat Bar / Donut Table Data Editor */
               <>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>Data Rows</h4>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 16,
+                  }}
+                >
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>
+                    Data Rows
+                  </h4>
                   <button
                     type="button"
                     className="admin-add-row-btn"
                     onClick={addDataRow}
-                    style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}
+                    style={{
+                      width: "auto",
+                      display: "inline-flex",
+                      padding: "6px 12px",
+                    }}
                   >
                     <PlusCircle size={14} /> Add Data Row
                   </button>
@@ -1207,9 +1794,13 @@ export default function ChartEditorPage({
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
                         e.preventDefault();
-                        if (draggedRowIndex === null || draggedRowIndex === i) return;
+                        if (draggedRowIndex === null || draggedRowIndex === i)
+                          return;
                         const updated = [...dataRows];
-                        const [draggedItem] = updated.splice(draggedRowIndex, 1);
+                        const [draggedItem] = updated.splice(
+                          draggedRowIndex,
+                          1,
+                        );
                         updated.splice(i, 0, draggedItem);
                         setDataRows(updated);
                         setDraggedRowIndex(null);
@@ -1217,7 +1808,13 @@ export default function ChartEditorPage({
                     >
                       <div className="admin-drag-card-header">
                         <div className="admin-drag-card-title">
-                          <GripVertical size={16} style={{ cursor: "grab", color: "var(--admin-text-dim)" }} />
+                          <GripVertical
+                            size={16}
+                            style={{
+                              cursor: "grab",
+                              color: "var(--admin-text-dim)",
+                            }}
+                          />
                           <span>{row.label || `Row #${i + 1}`}</span>
                         </div>
                         <div className="admin-drag-card-actions">
@@ -1229,7 +1826,7 @@ export default function ChartEditorPage({
                               color: "var(--admin-danger)",
                               border: "1px solid rgba(239, 68, 68, 0.2)",
                               borderRadius: "50%",
-                              padding: 5
+                              padding: 5,
                             }}
                           >
                             <Trash2 size={14} />
@@ -1237,16 +1834,29 @@ export default function ChartEditorPage({
                           <button
                             type="button"
                             className="admin-btn-icon"
-                            onClick={() => setCollapsedRows(prev => ({ ...prev, [i]: !prev[i] }))}
+                            onClick={() =>
+                              setCollapsedRows((prev) => ({
+                                ...prev,
+                                [i]: !prev[i],
+                              }))
+                            }
                           >
-                            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                            {isCollapsed ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronUp size={16} />
+                            )}
                           </button>
                         </div>
                       </div>
-
-                      <div className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}>
-                        <div className="admin-form-row">
-                          <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                      <div
+                        className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}
+                      >
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                          <div
+                            className="admin-form-group"
+                            style={{ marginBottom: 0 }}
+                          >
                             <label className="admin-form-label">Label</label>
                             <Input
                               placeholder="Label"
@@ -1256,7 +1866,10 @@ export default function ChartEditorPage({
                               }
                             />
                           </div>
-                          <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                          <div
+                            className="admin-form-group"
+                            style={{ marginBottom: 0 }}
+                          >
                             <label className="admin-form-label">Value</label>
                             <Input
                               placeholder="Value"
@@ -1267,37 +1880,49 @@ export default function ChartEditorPage({
                               }
                             />
                           </div>
-                        </div>
-                        {showColors && (
-                          <div className="admin-form-group" style={{ marginTop: 12, marginBottom: 0 }}>
-                            <label className="admin-form-label">Color</label>
-                            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                              <input
-                                type="color"
-                                value={row.color || "#088DFF"}
-                                onChange={(e) =>
-                                  updateDataRow(i, "color", e.target.value)
-                                }
+                          {showColors ? (
+                            <div
+                              className="admin-form-group"
+                              style={{ marginBottom: 0 }}
+                            >
+                              <label className="admin-form-label">Color</label>
+                              <div
                                 style={{
-                                  width: 34,
-                                  height: 34,
-                                  padding: 0,
-                                  border: "none",
-                                  borderRadius: 4,
-                                  cursor: "pointer",
+                                  display: "flex",
+                                  gap: 6,
+                                  alignItems: "center",
                                 }}
-                              />
-                              <Input
-                                value={row.color || ""}
-                                onChange={(e) =>
-                                  updateDataRow(i, "color", e.target.value)
-                                }
-                                placeholder="#hex"
-                                style={{ flex: 1 }}
-                              />
+                              >
+                                <input
+                                  type="color"
+                                  value={row.color || "#088DFF"}
+                                  onChange={(e) =>
+                                    updateDataRow(i, "color", e.target.value)
+                                  }
+                                  style={{
+                                    width: 34,
+                                    height: 34,
+                                    padding: 0,
+                                    border: "none",
+                                    borderRadius: 4,
+                                    cursor: "pointer",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <Input
+                                  value={row.color || ""}
+                                  onChange={(e) =>
+                                    updateDataRow(i, "color", e.target.value)
+                                  }
+                                  placeholder="#hex"
+                                  style={{ flex: 1 }}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          ) : (
+                            <div className="hidden md:block"></div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -1308,13 +1933,29 @@ export default function ChartEditorPage({
 
           {/* Sources Editor */}
           <div className="admin-form-section">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h3 className="admin-form-section-title" style={{ margin: 0, borderBottom: "none" }}>Sources</h3>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 16,
+              }}
+            >
+              <h3
+                className="admin-form-section-title"
+                style={{ margin: 0, borderBottom: "none" }}
+              >
+                Sources
+              </h3>
               <button
                 type="button"
                 className="admin-add-row-btn"
                 onClick={addSource}
-                style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}
+                style={{
+                  width: "auto",
+                  display: "inline-flex",
+                  padding: "6px 12px",
+                }}
               >
                 <PlusCircle size={14} /> Add Source
               </button>
@@ -1334,19 +1975,29 @@ export default function ChartEditorPage({
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
                     e.preventDefault();
-                    if (draggedSourceIndex === null || draggedSourceIndex === i) return;
+                    if (draggedSourceIndex === null || draggedSourceIndex === i)
+                      return;
                     const updated = [...sources];
                     const [draggedItem] = updated.splice(draggedSourceIndex, 1);
                     updated.splice(i, 0, draggedItem);
                     // Re-assign position
-                    const final = updated.map((s, idx) => ({ ...s, position: idx }));
+                    const final = updated.map((s, idx) => ({
+                      ...s,
+                      position: idx,
+                    }));
                     setSources(final);
                     setDraggedSourceIndex(null);
                   }}
                 >
                   <div className="admin-drag-card-header">
                     <div className="admin-drag-card-title">
-                      <GripVertical size={16} style={{ cursor: "grab", color: "var(--admin-text-dim)" }} />
+                      <GripVertical
+                        size={16}
+                        style={{
+                          cursor: "grab",
+                          color: "var(--admin-text-dim)",
+                        }}
+                      />
                       <span>{src.sourceName || `Source #${i + 1}`}</span>
                     </div>
                     <div className="admin-drag-card-actions">
@@ -1358,7 +2009,7 @@ export default function ChartEditorPage({
                           color: "var(--admin-danger)",
                           border: "1px solid rgba(239, 68, 68, 0.2)",
                           borderRadius: "50%",
-                          padding: 5
+                          padding: 5,
                         }}
                       >
                         <Trash2 size={14} />
@@ -1366,15 +2017,29 @@ export default function ChartEditorPage({
                       <button
                         type="button"
                         className="admin-btn-icon"
-                        onClick={() => setCollapsedSources(prev => ({ ...prev, [i]: !prev[i] }))}
+                        onClick={() =>
+                          setCollapsedSources((prev) => ({
+                            ...prev,
+                            [i]: !prev[i],
+                          }))
+                        }
                       >
-                        {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                        {isCollapsed ? (
+                          <ChevronDown size={16} />
+                        ) : (
+                          <ChevronUp size={16} />
+                        )}
                       </button>
                     </div>
                   </div>
-                  <div className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}>
+                  <div
+                    className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}
+                  >
                     <div className="admin-form-row">
-                      <div className="admin-form-group" style={{ marginBottom: 8 }}>
+                      <div
+                        className="admin-form-group"
+                        style={{ marginBottom: 8 }}
+                      >
                         <label className="admin-form-label">Name</label>
                         <Input
                           value={src.sourceName}
@@ -1384,7 +2049,10 @@ export default function ChartEditorPage({
                           placeholder="e.g. Stanford AI Index"
                         />
                       </div>
-                      <div className="admin-form-group" style={{ marginBottom: 8 }}>
+                      <div
+                        className="admin-form-group"
+                        style={{ marginBottom: 8 }}
+                      >
                         <label className="admin-form-label">URL</label>
                         <Input
                           value={src.sourceUrl}
@@ -1396,7 +2064,10 @@ export default function ChartEditorPage({
                       </div>
                     </div>
                     <div className="admin-form-row">
-                      <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                      <div
+                        className="admin-form-group"
+                        style={{ marginBottom: 0 }}
+                      >
                         <label className="admin-form-label">Publication</label>
                         <Input
                           value={src.publication}
@@ -1406,7 +2077,10 @@ export default function ChartEditorPage({
                           placeholder="e.g. Nature"
                         />
                       </div>
-                      <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                      <div
+                        className="admin-form-group"
+                        style={{ marginBottom: 0 }}
+                      >
                         <label className="admin-form-label">Date</label>
                         <DatePicker
                           value={src.publicationDate}
@@ -1436,15 +2110,15 @@ export default function ChartEditorPage({
                 }}
               >
                 {chartType === "line" &&
-                  (() => {
-                    const pd = previewData as { series?: { data?: unknown[] }[] };
-                    return (
-                      !pd.series ||
-                      !pd.series[0] ||
-                      !pd.series[0].data ||
-                      pd.series[0].data.length === 0
-                    );
-                  })() ? (
+                (() => {
+                  const pd = previewData as { series?: { data?: unknown[] }[] };
+                  return (
+                    !pd.series ||
+                    !pd.series[0] ||
+                    !pd.series[0].data ||
+                    pd.series[0].data.length === 0
+                  );
+                })() ? (
                   <div
                     style={{
                       display: "flex",
@@ -1461,13 +2135,14 @@ export default function ChartEditorPage({
                     chartId="preview-chart"
                     chartType={
                       chartType as
-                      | "vbar"
-                      | "hbar"
-                      | "line"
-                      | "donut"
-                      | "hero_stat"
+                        | "vbar"
+                        | "hbar"
+                        | "line"
+                        | "donut"
+                        | "hero_stat"
                     }
                     data={previewData}
+                    title={title}
                   />
                 )}
               </div>
@@ -1502,6 +2177,9 @@ export default function ChartEditorPage({
                     ySuffix,
                     yPrefix,
                     isGrouped,
+                    heroPrefix,
+                    heroSuffix,
+                    heroSuffixSize,
                   ),
                 );
               }}

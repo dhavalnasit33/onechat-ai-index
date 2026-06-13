@@ -215,7 +215,7 @@ export default async function TopicPage({ params }: PageProps) {
       {/* TOPIC HERO */}
       <div className="max-w-[1340px] mx-auto px-4 pt-6 pb-5 md:pt-[48px] md:pb-[32px]">
         <span className="inline-block bg-[#eaf2fb] text-[#1e3a5f] text-[10px] md:text-[12px] font-semibold uppercase tracking-[0.6px] md:tracking-[0.8px] px-2.5 py-1 md:px-[14px] md:py-[5px] rounded-full mb-3 md:mb-4">
-          By {category.name}
+           {category.name}
         </span>
         <h1 className="font-serif text-[24px] md:text-[44px] font-bold leading-[1.15] text-[#1a1a1a] mb-2.5 md:mb-4 max-w-[900px]">
           {topic.title}
@@ -256,20 +256,28 @@ export default async function TopicPage({ params }: PageProps) {
           <h3 className="font-serif text-[14px] md:text-[17px] mb-1.5 md:mb-2 text-[#1a1a1a] font-bold">
             About this data
           </h3>
-          <p className="text-[12px] md:text-[14px] text-[#555] mb-1.5 md:mb-2">
-            {topic.methodologyNote ||
-              "All statistics on this page are compiled from publicly available studies. We do not conduct primary research. Each chart cites its source studies, and we link to original publications wherever possible."}
-          </p>
-          <p className="text-[12px] md:text-[14px] text-[#555]">
-            Data is refreshed quarterly. Have a study to suggest? Contact{" "}
-            <a
-              href="mailto:research@aibehaviorindex.org"
-              className="text-[#6C56E5] font-semibold hover:underline"
-            >
-              research@aibehaviorindex.org
-            </a>
-            .
-          </p>
+          {topic.aboutData ? (
+            <div
+              className="text-[12px] md:text-[14px] text-[#555] mb-1.5 md:mb-2 font-sans [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_a]:text-[#6C56E5] [&_a]:no-underline [&_a]:hover:underline [&_a]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_li]:mb-1"
+              dangerouslySetInnerHTML={{ __html: topic.aboutData }}
+            />
+          ) : (
+            <>  
+              <p className="text-[12px] md:text-[14px] text-[#555] mb-1.5 md:mb-2">
+                All statistics on this page are compiled from publicly available studies. We do not conduct primary research. Each chart cites its source studies, and we link to original publications wherever possible.
+              </p>
+              <p className="text-[12px] md:text-[14px] text-[#555]">
+                Data is refreshed quarterly. Have a study to suggest? Contact{" "}
+                <a
+                  href="mailto:research@aibehaviorindex.org"
+                  className="text-[#6C56E5] font-semibold hover:underline"
+                >
+                  research@aibehaviorindex.org
+                </a>
+                .
+              </p>
+            </>
+          )}
         </div>
 
         {/* JOURNALIST CTA */}

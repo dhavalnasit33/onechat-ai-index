@@ -70,6 +70,7 @@ export default async function ChartRenderPage({
             chartId={chart.chartId}
             chartType={chart.chartType as any}
             data={chart.data}
+            title={chart.title}
           />
         </div>
 

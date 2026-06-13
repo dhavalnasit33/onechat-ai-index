@@ -25,9 +25,15 @@ const watermarkPlugin = {
 
     ctx.save();
 
-    const isRenderMode = typeof window !== "undefined" && window.location.pathname.includes("/chart-render/");
-    const font1 = isRenderMode ? "bold 14px sans-serif" : "bold 11px sans-serif";
-    const font2 = isRenderMode ? "normal 11px sans-serif" : "normal 9px sans-serif";
+    const isRenderMode =
+      typeof window !== "undefined" &&
+      window.location.pathname.includes("/chart-render/");
+    const font1 = isRenderMode
+      ? "bold 14px sans-serif"
+      : "bold 11px sans-serif";
+    const font2 = isRenderMode
+      ? "normal 11px sans-serif"
+      : "normal 9px sans-serif";
     const spacing = isRenderMode ? 15 : 12;
 
     const textAI = "AI";
@@ -68,7 +74,7 @@ const watermarkPlugin = {
     ctx.fillText(textBehaviorIndex, xLine1Start + aiWidth, yLine1);
 
     ctx.restore();
-  }
+  },
 };
 
 ChartJS.register(
@@ -82,7 +88,7 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
-  watermarkPlugin
+  watermarkPlugin,
 );
 
 // Statista Style Palette
@@ -93,13 +99,17 @@ import { ChartData } from "@/src/types";
 export default function InteractiveChart({
   chartType,
   data,
+  title
 }: {
   chartId: string;
   chartType: ChartData["chartType"];
   data: any;
+  title: string;
 }) {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-  const isRenderMode = typeof window !== "undefined" && window.location.pathname.includes("/chart-render/");
+  const isRenderMode =
+    typeof window !== "undefined" &&
+    window.location.pathname.includes("/chart-render/");
 
   const getValueAxisOptions = (axisLabel?: string) => {
     const prefix = data?.yPrefix || "";
@@ -112,8 +122,11 @@ export default function InteractiveChart({
           return data.data.some((d: any) => (d.value ?? 0) > 100);
         }
         if (data?.series && Array.isArray(data.series)) {
-          return data.series.some((s: any) =>
-            s.data && Array.isArray(s.data) && s.data.some((dp: any) => (dp.y ?? dp.value ?? 0) > 100)
+          return data.series.some(
+            (s: any) =>
+              s.data &&
+              Array.isArray(s.data) &&
+              s.data.some((dp: any) => (dp.y ?? dp.value ?? 0) > 100),
           );
         }
         return false;
@@ -167,23 +180,42 @@ export default function InteractiveChart({
         callback: (value: any) => {
           return `${prefix}${value}${suffix}`;
         },
-        font: { size: isRenderMode ? 14 : (isMobile ? 10 : 12) },
+        font: { size: isRenderMode ? 14 : isMobile ? 10 : 12 },
       },
       grid: { color: "#f0f0f0" },
       title: {
         display: !!axisLabel,
         text: axisLabel || "",
-        font: { size: isRenderMode ? 14 : (isMobile ? 10 : 11), weight: "bold" },
+        font: { size: isRenderMode ? 14 : isMobile ? 10 : 11, weight: "bold" },
       },
     };
   };
 
   // 1. HERO STAT UI
   if (chartType === "hero_stat") {
+    // Determine suffix size formatting
+    const isSmallSuffix = data.suffixSize === "small";
+
     return (
       <>
-        <div className="font-serif text-[56px] md:text-[96px] font-bold leading-none text-[#1e3a5f] tracking-[-1px] md:tracking-[-2px]">
-          {data.value}
+        <div className="font-serif text-[56px] md:text-[96px] font-bold leading-none text-[#1e3a5f] tracking-[-1px] md:tracking-[-2px] flex items-baseline flex-wrap">
+          {data.prefix && (
+            <span className="text-[32px] md:text-[56px] font-bold mr-1 align-baseline select-none">
+              {data.prefix}
+            </span>
+          )}
+          <span>{data.value}</span>
+          {data.suffix && (
+            <span
+              className={`font-semibold ml-1 align-baseline text-[#1e3a5f] ${
+                isSmallSuffix
+                  ? "text-[20px] md:text-[32px] font-sans font-normal"
+                  : "text-[40px] md:text-[80px]"
+              }`}
+            >
+              {data.suffix}
+            </span>
+          )}
         </div>
         <div className="text-[14px] md:text-[19px] text-[#1a1a1a] mt-2 md:mt-3 font-medium leading-[1.4] max-w-[680px]">
           {data.label}
@@ -201,7 +233,10 @@ export default function InteractiveChart({
     if (!hex) return `rgba(229, 72, 63, ${alpha})`; // default #E5483F
     let cleanHex = hex.replace("#", "");
     if (cleanHex.length === 3) {
-      cleanHex = cleanHex.split("").map((c) => c + c).join("");
+      cleanHex = cleanHex
+        .split("")
+        .map((c) => c + c)
+        .join("");
     }
     const num = parseInt(cleanHex, 16);
     if (isNaN(num)) return `rgba(229, 72, 63, ${alpha})`;
@@ -221,14 +256,14 @@ export default function InteractiveChart({
             const eventColor = event.color || colors[idx % colors.length];
             return (
               <div key={idx} className="flex gap-4 items-start relative">
-                <div 
+                <div
                   className="min-w-[75px] text-[11px] font-bold uppercase tracking-wider pt-0.5"
                   style={{ color: eventColor }}
                 >
                   {event.date}
                 </div>
                 <div className="relative border-l border-[#e5e5e5] pl-5 flex-1 pb-1">
-                  <div 
+                  <div
                     className="absolute w-4 h-4 rounded-full bg-white -left-[8.5px] top-[4px]"
                     style={{ border: `3px solid ${eventColor}` }}
                   />
@@ -251,7 +286,9 @@ export default function InteractiveChart({
                         </p>
                         {src && (
                           <span className="text-[10px] text-gray-400 mt-1.5 block italic font-sans">
-                            {src.toLowerCase().startsWith("source:") ? src : `Source: ${src}`}
+                            {src.toLowerCase().startsWith("source:")
+                              ? src
+                              : `Source: ${src}`}
                           </span>
                         )}
                       </>
@@ -277,42 +314,110 @@ export default function InteractiveChart({
 
   // 3. TEXT BLOCK / HYPE CALLOUT UI (Image 3)
   if (chartType === "text_block") {
-    const themeColor = data.color || "#E5483F";
-    const bgCol = getRgbaColor(themeColor, 0.05);
-    const borderCol = getRgbaColor(themeColor, 0.2);
+    const quotes = data.quotes || [
+      { text: data.text || data.value || "", author: data.author || "" }
+    ];
 
-    const isHTML = data.text && (
-      data.text.includes("<p>") || 
-      data.text.includes("<br>") || 
-      data.text.includes("<strong>") || 
-      data.text.includes("<em>") || 
-      data.text.includes("href=")
-    );
+    const isLegacy = !data.borderColor;
+    const themeColor = data.color || "#E5483F";
+    const borderColor = isLegacy ? themeColor : (data.borderColor || "#E5483F");
+    const bgCol = isLegacy ? getRgbaColor(themeColor, 0.05) : (data.color || "#fdf2f2");
+    const borderCol = isLegacy ? getRgbaColor(themeColor, 0.2) : getRgbaColor(borderColor, 0.2);
 
     return (
-      <div 
+      <div
         style={{
           border: `1px solid ${borderCol}`,
-          borderLeft: `3px solid ${themeColor}`,
+          borderLeft: `3px solid ${borderColor}`,
           backgroundColor: bgCol,
         }}
-        className="rounded-lg p-5 text-left h-full flex flex-col justify-center"
+        className=" p-5 text-left h-full flex flex-col gap-4 justify-center"
       >
-        {isHTML ? (
-          <div 
-            className="font-serif text-[13.5px] md:text-[15px] text-[#333] leading-relaxed [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_a]:text-[#6C56E5] [&_a]:underline [&_a]:font-medium [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_li]:mb-1 [&_blockquote]:pl-4 [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:italic"
-            dangerouslySetInnerHTML={{ __html: data.text }}
-          />
-        ) : (
-          <p className="italic font-serif text-[13.5px] md:text-[15px] text-[#333] leading-relaxed">
-            {data.text || data.value ? `"${data.text || data.value}"` : ""}
-          </p>
+        {quotes.map((quote: any, idx: number) => {
+          const isHTML =
+            quote.text &&
+            (quote.text.includes("<div>") ||
+              quote.text.includes("<p>") ||
+              quote.text.includes("<br>") ||
+              quote.text.includes("<strong>") ||
+              quote.text.includes("<em>") ||
+              quote.text.includes("<pre>") ||
+              quote.text.includes("<code>") ||
+              quote.text.includes("href="));
+
+          return (
+            <div
+              key={idx}
+              className="border-l-2 pl-4 py-1.5 first:mt-0 last:mb-0"
+              style={{
+                borderColor: getRgbaColor(borderColor, 0.3),
+                ["--code-border-color" as any]: borderColor,
+              }}
+            >
+              {isHTML ? (
+                <div
+                  className="font-serif text-[13.5px] md:text-[15px] text-[#555] leading-relaxed [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_a]:text-[#6C56E5] [&_a]:no-underline [&_a]:hover:underline [&_a]:font-medium [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_li]:mb-1 [&_blockquote]:pl-4 [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:italic [&_pre]:border-l-[var(--code-border-color)] [&_pre]:border-l-4 [&_pre]:bg-gray-100/80 [&_pre]:p-3 [&_pre]:rounded-r [&_pre]:font-mono [&_pre]:text-xs [&_pre]:my-3 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:font-mono"
+                  dangerouslySetInnerHTML={{ __html: quote.text }}
+                />
+              ) : (
+                <p className="italic font-serif text-[13.5px] md:text-[15px] text-[#555] leading-relaxed">
+                  {quote.text ? `"${quote.text}"` : ""}
+                </p>
+              )}
+              {quote.author && (
+                <span className="text-[11px] text-[#888] mt-0.5 block font-sans font-medium">
+                  — {quote.author}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  } 
+
+  // 8. LIST BLOCK UI (Tailwinds / Headwinds)
+  if (chartType === "list_block") {
+    const items = data.items || [];
+    const isLegacy = !data.borderColor;
+    const themeColor = data.color || "#10B981"; // default green fallback
+    const borderColor = isLegacy ? themeColor : (data.borderColor || "#10B981");
+    const bgCol = isLegacy ? getRgbaColor(themeColor, 0.05) : (data.color || "#ecfdf5");
+    const borderCol = isLegacy ? getRgbaColor(themeColor, 0.2) : getRgbaColor(borderColor, 0.2);
+
+    return (
+      <div
+        style={{
+          border: `1px solid ${borderCol}`,
+          borderLeft: `3px solid ${borderColor}`,
+          backgroundColor: bgCol,
+        }}
+        className="rounded-lg p-5 md:p-6 text-left h-full flex flex-col overflow-y-auto"
+      >
+        {/* Render the title inside the block */}
+        {title && (
+          <h3
+            style={{ color: borderColor }}
+            className="font-serif text-[18px] md:text-[22px] font-bold mb-4 leading-tight"
+          >
+            {title}
+          </h3>
         )}
-        {data.author && (
-          <span className="text-[11px] text-gray-500 mt-2.5 block font-sans font-medium">
-            — {data.author}
-          </span>
-        )}
+        <ul className="flex flex-col gap-3.5 m-0 p-0 list-none">
+          {items.map((item: any, idx: number) => (
+            <li key={idx} className="flex items-start gap-3 text-[13.5px] md:text-[15px] text-[#333] leading-relaxed">
+              <span style={{ color: borderColor }} className="font-bold mt-[2px] shrink-0 text-[15px] leading-none">
+                →
+              </span>
+              <div>
+                {item.boldText && (
+                  <span className="font-bold text-[#1a1a1a] mr-1.5">{item.boldText}</span>
+                )}
+                <span dangerouslySetInnerHTML={{ __html: item.text }} />
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     );
   }
@@ -348,23 +453,23 @@ export default function InteractiveChart({
       : data.data?.map((d: any) => d.label) || [];
     const datasets = isGrouped
       ? data.series.map((s: any, i: number) => ({
-        label: s.name,
-        data: s.data.map((dp: any) => dp.y),
-        backgroundColor: s.color || PALETTE[i % PALETTE.length],
-        borderRadius: 4,
-        maxBarThickness: isMobile ? 24 : 40,
-      }))
-      : [
-        {
-          data: data.data?.map((d: any) => d.value) || [],
-          backgroundColor:
-            data.data?.map(
-              (d: any, i: number) => d.color || PALETTE[i % PALETTE.length],
-            ) || [],
+          label: s.name,
+          data: s.data.map((dp: any) => dp.y),
+          backgroundColor: s.color || PALETTE[i % PALETTE.length],
           borderRadius: 4,
-          maxBarThickness: isMobile ? 50 : 80,
-        },
-      ];
+          maxBarThickness: isMobile ? 24 : 40,
+        }))
+      : [
+          {
+            data: data.data?.map((d: any) => d.value) || [],
+            backgroundColor:
+              data.data?.map(
+                (d: any, i: number) => d.color || PALETTE[i % PALETTE.length],
+              ) || [],
+            borderRadius: 4,
+            maxBarThickness: isMobile ? 50 : 80,
+          },
+        ];
 
     return (
       <Bar
@@ -377,21 +482,24 @@ export default function InteractiveChart({
               display: isGrouped,
               position: "bottom",
               labels: {
-                font: { size: isRenderMode ? 13 : 12, weight: "600" }
-              }
+                font: { size: isRenderMode ? 13 : 12, weight: "600" },
+              },
             },
           },
           scales: {
             y: getValueAxisOptions(data?.yLabel),
             x: {
               grid: { display: false },
-              ticks: { font: { size: isRenderMode ? 14 : (isMobile ? 10 : 12) } },
+              ticks: { font: { size: isRenderMode ? 14 : isMobile ? 10 : 12 } },
             },
           },
         }}
       />
     );
   }
+
+  
+
 
   // 5. HORIZONTAL BAR CHART (Supports flat or grouped horizontal bars)
   if (chartType === "hbar") {
@@ -401,22 +509,22 @@ export default function InteractiveChart({
       : data.data?.map((d: any) => d.label) || [];
     const datasets = isGrouped
       ? data.series.map((s: any, i: number) => ({
-        label: s.name,
-        data: s.data.map((dp: any) => dp.y),
-        backgroundColor: s.color || PALETTE[i % PALETTE.length],
-        borderRadius: 4,
-        maxBarThickness: isMobile ? 14 : 20,
-      }))
-      : [
-        {
-          data: data.data?.map((d: any) => d.value) || [],
-          backgroundColor:
-            data.data?.map((d: any, i: number) => d.color || PALETTE[0]) ||
-            [],
+          label: s.name,
+          data: s.data.map((dp: any) => dp.y),
+          backgroundColor: s.color || PALETTE[i % PALETTE.length],
           borderRadius: 4,
-          maxBarThickness: isMobile ? 22 : 28,
-        },
-      ];
+          maxBarThickness: isMobile ? 14 : 20,
+        }))
+      : [
+          {
+            data: data.data?.map((d: any) => d.value) || [],
+            backgroundColor:
+              data.data?.map((d: any, i: number) => d.color || PALETTE[0]) ||
+              [],
+            borderRadius: 4,
+            maxBarThickness: isMobile ? 22 : 28,
+          },
+        ];
 
     return (
       <Bar
@@ -430,15 +538,17 @@ export default function InteractiveChart({
               display: isGrouped,
               position: "bottom",
               labels: {
-                font: { size: isRenderMode ? 13 : 12, weight: "600" }
-              }
+                font: { size: isRenderMode ? 13 : 12, weight: "600" },
+              },
             },
           },
           scales: {
             x: getValueAxisOptions(data?.yLabel),
             y: {
               grid: { display: false },
-              ticks: { font: { size: isRenderMode ? 14 : (isMobile ? 10.5 : 12) } },
+              ticks: {
+                font: { size: isRenderMode ? 14 : isMobile ? 10.5 : 12 },
+              },
             },
           },
         }}
@@ -474,7 +584,10 @@ export default function InteractiveChart({
               position: isMobile ? "bottom" : "right",
               labels: {
                 padding: isMobile ? 8 : 14,
-                font: { size: isRenderMode ? 13 : (isMobile ? 10 : 12), weight: "500" },
+                font: {
+                  size: isRenderMode ? 13 : isMobile ? 10 : 12,
+                  weight: "500",
+                },
                 boxWidth: 12,
               },
             },
@@ -516,7 +629,10 @@ export default function InteractiveChart({
               position: "bottom",
               labels: {
                 padding: 12,
-                font: { size: isRenderMode ? 13 : (isMobile ? 11 : 12), weight: "600" },
+                font: {
+                  size: isRenderMode ? 13 : isMobile ? 11 : 12,
+                  weight: "600",
+                },
               },
             },
           },
@@ -524,11 +640,14 @@ export default function InteractiveChart({
             y: getValueAxisOptions(data?.yLabel),
             x: {
               grid: { display: false },
-              ticks: { font: { size: isRenderMode ? 14 : (isMobile ? 10 : 12) } },
+              ticks: { font: { size: isRenderMode ? 14 : isMobile ? 10 : 12 } },
               title: {
                 display: !!data.xLabel,
                 text: data.xLabel,
-                font: { size: isRenderMode ? 14 : (isMobile ? 10 : 11), weight: "bold" },
+                font: {
+                  size: isRenderMode ? 14 : isMobile ? 10 : 11,
+                  weight: "bold",
+                },
               },
             },
           },
