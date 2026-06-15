@@ -155,6 +155,10 @@ function buildChartDataPayload(
   heroPrefix: string = "",
   heroSuffix: string = "",
   heroSuffixSize: "small" | "large" = "large",
+  tooltipTitleTemplate: string = "",
+  tooltipValueSuffix: string = "",
+  xMax: string = "",
+  stacked: boolean = false,
 ): unknown {
   if (chartType === "hero_stat") {
     return {
@@ -226,10 +230,14 @@ function buildChartDataPayload(
       type: chartType,
       xLabel: xLabel || undefined,
       yLabel: yLabel || undefined,
-      yFormat: yFormat || undefined,
+      yFormat: yFormat || "raw",
       yMax: yMax !== "" ? (yMax === "auto" ? "auto" : Number(yMax)) : undefined,
       ySuffix: ySuffix || undefined,
       yPrefix: yPrefix || undefined,
+      tooltipTitleTemplate: tooltipTitleTemplate || undefined,
+      tooltipValueSuffix: tooltipValueSuffix || undefined,
+      xMax: xMax || undefined,
+      stacked: stacked || undefined,
       labels: labels.length > 0 ? labels : undefined,
       series: lineSeries.map((s) => ({
         name: s.name,
@@ -250,10 +258,14 @@ function buildChartDataPayload(
     type: chartType,
     xLabel: xLabel || undefined,
     yLabel: yLabel || undefined,
-    yFormat: yFormat || undefined,
+    yFormat: yFormat || "raw",
     yMax: yMax !== "" ? (yMax === "auto" ? "auto" : Number(yMax)) : undefined,
     ySuffix: ySuffix || undefined,
     yPrefix: yPrefix || undefined,
+    tooltipTitleTemplate: tooltipTitleTemplate || undefined,
+    tooltipValueSuffix: tooltipValueSuffix || undefined,
+    xMax: xMax || undefined,
+    stacked: stacked || undefined,
     data: rows.map((r) => ({
       label: r.label,
       value: Number(r.value) || 0,
@@ -293,8 +305,12 @@ export default function ChartEditorPage({
   const [yLabel, setYLabel] = useState("");
   const [yFormat, setYFormat] = useState("");
   const [yMax, setYMax] = useState("");
+  const [xMax, setXMax] = useState("");
   const [ySuffix, setYSuffix] = useState("");
   const [yPrefix, setYPrefix] = useState("");
+  const [tooltipTitleTemplate, setTooltipTitleTemplate] = useState("");
+  const [tooltipValueSuffix, setTooltipValueSuffix] = useState("");
+  const [stacked, setStacked] = useState(false);
   const [isGrouped, setIsGrouped] = useState(false);
   const [trendDirection, setTrendDirection] = useState<"up" | "down" | "">("");
   const [trendAmount, setTrendAmount] = useState("");
@@ -398,8 +414,12 @@ export default function ChartEditorPage({
             setYLabel(c.data.yLabel || "");
             setYFormat(c.data.yFormat || "");
             setYMax(c.data.yMax !== undefined ? String(c.data.yMax) : "");
+            setXMax(c.data.xMax !== undefined ? String(c.data.xMax) : "");
             setYSuffix(c.data.ySuffix || "");
             setYPrefix(c.data.yPrefix || "");
+            setTooltipTitleTemplate(c.data.tooltipTitleTemplate || "");
+            setTooltipValueSuffix(c.data.tooltipValueSuffix || "");
+            setStacked(!!c.data.stacked);
             setIsGrouped(!!c.data.series);
 
             if (c.chartType === "hero_stat") {
@@ -580,6 +600,10 @@ export default function ChartEditorPage({
         heroPrefix,
         heroSuffix,
         heroSuffixSize,
+        tooltipTitleTemplate,
+        tooltipValueSuffix,
+        xMax,
+        stacked,
       ),
       sources: sources.map((s) => ({
         ...s,
@@ -779,55 +803,70 @@ export default function ChartEditorPage({
             {/* Axis Configuration (Only for Bar and Line charts) */}
             {(chartType === "vbar" ||
               chartType === "hbar" ||
-              chartType === "line") && (
+              chartType === "line" ||
+              chartType === "donut") && (
               <>
-                <div className="admin-form-row" style={{ marginBottom: 20 }}>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">X-Axis Label</label>
-                    <Input
-                      placeholder="e.g. Year or Country"
-                      value={xLabel}
-                      onChange={(e) => setXLabel(e.target.value)}
-                    />
+                {chartType !== "donut" && (
+                  <div className="admin-form-row" style={{ marginBottom: 20 }}>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">X-Axis Label</label>
+                      <Input
+                        placeholder="e.g. Year or Country"
+                        value={xLabel}
+                        onChange={(e) => setXLabel(e.target.value)}
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">X-Axis Max Value</label>
+                      <Input
+                        placeholder="e.g. 10 (blank for no limit)"
+                        value={xMax}
+                        onChange={(e) => setXMax(e.target.value)}
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Y-Axis Label</label>
+                      <Input
+                        placeholder="e.g. Percentage"
+                        value={yLabel}
+                        onChange={(e) => setYLabel(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">Y-Axis Label</label>
-                    <Input
-                      placeholder="e.g. Percentage"
-                      value={yLabel}
-                      onChange={(e) => setYLabel(e.target.value)}
-                    />
-                  </div>
-                </div>
+                )}
 
                 <div className="admin-form-row" style={{ marginBottom: 20 }}>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">Y-Axis Format</label>
-                    <Select
-                      value={yFormat || "raw"}
-                      onValueChange={(val: string) =>
-                        setYFormat(val === "raw" ? "" : val)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Number (Raw)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="raw">Number (Raw)</SelectItem>
-                        <SelectItem value="percentage">
-                          Percentage (%)
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">Custom Max Value</label>
-                    <Input
-                      placeholder="e.g. 100, 120, 5.0 (blank for auto)"
-                      value={yMax}
-                      onChange={(e) => setYMax(e.target.value)}
-                    />
-                  </div>
+                  {chartType !== "donut" && (
+                    <>
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">Y-Axis Format</label>
+                        <Select
+                          value={yFormat || "raw"}
+                          onValueChange={(val: string) =>
+                            setYFormat(val === "raw" ? "" : val)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Number (Raw)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="raw">Number (Raw)</SelectItem>
+                            <SelectItem value="percentage">
+                              Percentage (%)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">Custom Max Value</label>
+                        <Input
+                          placeholder="e.g. 100, 120, 5.0 (blank for auto)"
+                          value={yMax}
+                          onChange={(e) => setYMax(e.target.value)}
+                        />
+                      </div>
+                    </>
+                  )}
                   <div className="admin-form-group">
                     <label className="admin-form-label">Custom Prefix</label>
                     <Input
@@ -845,6 +884,27 @@ export default function ChartEditorPage({
                     />
                   </div>
                 </div>
+
+                {chartType !== "donut" && (
+                  <div className="admin-form-row" style={{ marginBottom: 20 }}>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Tooltip Title Template</label>
+                      <Input
+                        placeholder="e.g. Year {x} since launch (blank for default)"
+                        value={tooltipTitleTemplate}
+                        onChange={(e) => setTooltipTitleTemplate(e.target.value)}
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Tooltip Value Suffix</label>
+                      <Input
+                        placeholder="e.g. US adoption (blank for default)"
+                        value={tooltipValueSuffix}
+                        onChange={(e) => setTooltipValueSuffix(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {(chartType === "vbar" || chartType === "hbar") && (
                   <div
@@ -871,6 +931,36 @@ export default function ChartEditorPage({
                         checked={isGrouped}
                         onCheckedChange={(checked: boolean) =>
                           setIsGrouped(checked)
+                        }
+                      />
+                    </Card>
+                  </div>
+                )}
+
+                {(chartType === "vbar" || chartType === "hbar") && isGrouped && (
+                  <div
+                    className="admin-form-group"
+                    style={{ marginBottom: 20 }}
+                  >
+                    <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "2px",
+                        }}
+                      >
+                        <div className="text-sm font-semibold text-[var(--admin-text)]">
+                          Stacked Chart
+                        </div>
+                        <div className="text-xs text-[var(--admin-text-muted)] font-normal font-sans">
+                          Stack bars on top of each other instead of showing them side-by-side
+                        </div>
+                      </div>
+                      <Switch
+                        checked={stacked}
+                        onCheckedChange={(checked: boolean) =>
+                          setStacked(checked)
                         }
                       />
                     </Card>
@@ -2180,6 +2270,10 @@ export default function ChartEditorPage({
                     heroPrefix,
                     heroSuffix,
                     heroSuffixSize,
+                    tooltipTitleTemplate,
+                    tooltipValueSuffix,
+                    xMax,
+                    stacked,
                   ),
                 );
               }}

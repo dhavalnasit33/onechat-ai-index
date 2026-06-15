@@ -14,7 +14,9 @@ export interface ITopic extends Document {
   iconUrl?: string;        // ← NEW: uploaded icon image URL
   status: 'draft' | 'published' | 'archived';
   dataPointsCount: number;
+  chartCount?: number;     // ← NEW field for chart override
   sourceCount: number;
+  chartLabel?: string;
   publishedAt?: Date;
   lastRefreshedAt?: Date;
   createdAt: Date;
@@ -81,10 +83,18 @@ const TopicSchema = new Schema<ITopic>(
       type: Number,
       default: 0,
     },
-    sourceCount: {
-      type: Number,
-      default: 0,
-    },
+    chartCount: {            // ← NEW field
+    type: Number,
+    default: 0,
+  },
+  sourceCount: {
+    type: Number,
+    default: 0,
+  },
+  chartLabel: {      
+    type: String,
+    default: 'charts',
+  },
     publishedAt: {
       type: Date,
     },

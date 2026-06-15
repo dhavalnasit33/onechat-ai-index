@@ -225,12 +225,13 @@ export default async function TopicPage({ params }: PageProps) {
         </p>
         <div className="flex flex-wrap gap-3 md:gap-6 text-[#888] text-[11px] md:text-[13px] pt-3 md:pt-5 border-t border-[#e5e5e5]">
           <span className="flex items-center gap-1.5">
-            <BarChart2 size={14} className="text-[#888]" /> {charts.length}{" "}
-            charts
+            <BarChart2 size={14} className="text-[#888]" />{" "}
+            {topic.chartCount}{" "}
+            {topic.chartLabel || "charts"}
           </span>
           <span className="flex items-center gap-1.5">
             <BookOpen size={14} className="text-[#888]" />{" "}
-            {topic.sourceCount || 6} sources
+            {topic.sourceCount > 0 ? topic.sourceCount : 6} sources
           </span>
           <span className="flex items-center gap-1.5">
             <Calendar size={14} className="text-[#888]" /> Last updated{" "}

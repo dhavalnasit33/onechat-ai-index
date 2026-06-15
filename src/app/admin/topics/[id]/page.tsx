@@ -143,6 +143,9 @@ export default function TopicEditorPage({ params }: { params: Promise<{ id: stri
     iconUrl: topic.iconUrl || "",
     status: topic.status || "draft",
     categoryId: typeof topic.categoryId === "object" ? topic.categoryId._id : topic.categoryId,
+    chartCount: topic.chartCount || 0, // ← Add this
+    sourceCount: topic.sourceCount || 0,
+    chartLabel: topic.chartLabel || "charts",
   };
 
   return (

@@ -116,6 +116,10 @@ export default function InteractiveChart({
     let suffix = "%";
     if (data?.ySuffix !== undefined) {
       suffix = data.ySuffix;
+    } else if (data?.yFormat === "raw") {
+      suffix = "";
+    } else if (data?.yFormat === "percentage") {
+      suffix = "%";
     } else {
       const hasLargeValues = (() => {
         if (data?.data && Array.isArray(data.data)) {
@@ -441,6 +445,70 @@ export default function InteractiveChart({
         cornerRadius: 5,
         boxPadding: 5,
         displayColors: true,
+        callbacks: {
+          title: (tooltipItems: any) => {
+            const xVal = tooltipItems[0].label;
+            if (data?.tooltipTitleTemplate) {
+              return data.tooltipTitleTemplate.replace("{x}", xVal);
+            }
+            const xLabel = data?.xLabel || "";
+            const xLabelLower = xLabel.toLowerCase();
+            if (xLabelLower.includes("year") && xLabelLower.includes("since")) {
+              return `Year ${xVal} since launch`;
+            }
+            return xVal;
+          },
+          label: (tooltipItem: any) => {
+            const datasetLabel = tooltipItem.dataset.label || "";
+            const rawValue = tooltipItem.raw;
+            const prefix = data?.yPrefix || "";
+            
+            let suffix = "%";
+            if (data?.ySuffix !== undefined) {
+              suffix = data.ySuffix;
+            } else if (data?.yFormat === "raw") {
+              suffix = "";
+            } else if (data?.yFormat === "percentage") {
+              suffix = "%";
+            } else {
+              const hasLargeValues = (() => {
+                if (data?.data && Array.isArray(data.data)) {
+                  return data.data.some((d: any) => (d.value ?? 0) > 100);
+                }
+                if (data?.series && Array.isArray(data.series)) {
+                  return data.series.some((s: any) =>
+                    s.data?.some((dp: any) => (dp.y ?? dp.value ?? 0) > 100)
+                  );
+                }
+                return false;
+              })();
+              if (hasLargeValues) suffix = "";
+            }
+            
+            let formattedValue = `${prefix}${rawValue}${suffix}`;
+            
+            if (data?.tooltipValueSuffix !== undefined && data.tooltipValueSuffix !== null) {
+              if (data.tooltipValueSuffix !== "") {
+                formattedValue += ` ${data.tooltipValueSuffix}`;
+              }
+            } else {
+              const titleLower = (data?.title || "").toLowerCase();
+              const yLabelLower = (data?.yLabel || "").toLowerCase();
+              const isUsAdoption = 
+                (yLabelLower.includes("adopt") && titleLower.includes("us")) ||
+                (titleLower.includes("adopt") && titleLower.includes("us"));
+                
+              if (isUsAdoption) {
+                formattedValue += " US adoption";
+              }
+            }
+            
+            if (chartType === "donut" && tooltipItem.label) {
+              return `${tooltipItem.label}: ${formattedValue}`;
+            }
+            return datasetLabel ? `${datasetLabel}: ${formattedValue}` : formattedValue;
+          }
+        }
       },
     },
   };
@@ -487,10 +555,14 @@ export default function InteractiveChart({
             },
           },
           scales: {
-            y: getValueAxisOptions(data?.yLabel),
+            y: {
+              ...getValueAxisOptions(data?.yLabel),
+              stacked: !!data.stacked,
+            },
             x: {
               grid: { display: false },
               ticks: { font: { size: isRenderMode ? 14 : isMobile ? 10 : 12 } },
+              stacked: !!data.stacked,
             },
           },
         }}
@@ -543,12 +615,16 @@ export default function InteractiveChart({
             },
           },
           scales: {
-            x: getValueAxisOptions(data?.yLabel),
+            x: {
+              ...getValueAxisOptions(data?.yLabel),
+              stacked: !!data.stacked,
+            },
             y: {
               grid: { display: false },
               ticks: {
                 font: { size: isRenderMode ? 14 : isMobile ? 10.5 : 12 },
               },
+              stacked: !!data.stacked,
             },
           },
         }}
@@ -599,14 +675,48 @@ export default function InteractiveChart({
 
   // 7. LINE TREND CHART
   if (chartType === "line") {
+    // Use data.labels directly if defined, otherwise generate and sort if numeric
+    const sortedLabels = (() => {
+      if (data.labels && Array.isArray(data.labels)) {
+        return [...data.labels];
+      }
+      const allXValues = Array.from(
+        new Set(data.series?.flatMap((s: any) => s.data?.map((p: any) => p.x)) || [])
+      ).filter(Boolean);
+
+      const isAllNumeric = allXValues.every((x: any) => !isNaN(Number(x)));
+      if (isAllNumeric) {
+        return allXValues.sort((a: any, b: any) => Number(a) - Number(b));
+      }
+      return allXValues; // Keep original order of appearance if not all numeric
+    })();
+
+    // Filter labels based on custom xMax limit
+    const filteredLabels = (() => {
+      let labs = sortedLabels;
+      if (data.xMax !== undefined && data.xMax !== "" && data.xMax !== null) {
+        const xMaxNum = Number(data.xMax);
+        if (!isNaN(xMaxNum)) {
+          labs = labs.filter((label: any) => {
+            const num = Number(label);
+            return isNaN(num) || num <= xMaxNum;
+          });
+        }
+      }
+      return labs;
+    })();
+
     return (
       <Line
         data={{
-          labels: data.series?.[0]?.data?.map((p: any) => p.x) || [],
+          labels: filteredLabels,
           datasets:
             data.series?.map((s: any, i: number) => ({
               label: s.name,
-              data: s.data.map((p: any) => p.y),
+              data: filteredLabels.map((xVal: any) => {
+                const match = s.data?.find((p: any) => String(p.x) === String(xVal));
+                return match && match.y !== undefined && match.y !== "" ? Number(match.y) : null;
+              }),
               borderColor: s.color || PALETTE[i % PALETTE.length],
               backgroundColor: `${s.color || PALETTE[i % PALETTE.length]}14`,
               borderWidth: 3,
@@ -617,6 +727,7 @@ export default function InteractiveChart({
               pointHoverRadius: 7,
               tension: 0.3,
               fill: true,
+              spanGaps: false,
             })) || [],
         }}
         options={{

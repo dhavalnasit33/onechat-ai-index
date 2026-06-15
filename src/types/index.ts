@@ -125,6 +125,9 @@ export const topicSchema = z.object({
   description: z.string().min(1, "Description is required"),
   methodologyNote: z.string().optional(),
   aboutData: z.string().optional(),
+  chartCount: z.coerce.number().optional().default(0), // ← NEW field
+  sourceCount: z.coerce.number().optional().default(0),
+  chartLabel: z.string().optional().default("charts"),
   metaTitle: z.string().optional(),
   keyphrase: z.string().optional(),
   metaDescription: z.string().optional(),
