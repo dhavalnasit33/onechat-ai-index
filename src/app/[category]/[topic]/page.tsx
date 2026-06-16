@@ -22,29 +22,22 @@ export async function generateMetadata({
 
   if (!topic) return { title: "Topic Not Found | AI Behavior Index" };
 
-  const baseTitle = topic.metaTitle || topic.title;
-  let pageTitle = `${baseTitle} | AI Behavior Index`;
-  if (pageTitle.length > 60) pageTitle = baseTitle.substring(0, 57) + "...";
+  const pageTitle = `${topic.title} - AI Behavior Index`;
+  const plainDesc = (topic.description || "").substring(0, 150);
+  const description = `${topic.title}: ${plainDesc}`;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
-  const firstChart = await Chart.findOne({
-    topicId: topic._id,
-    status: "active",
-  })
-    .sort({ position: 1 })
-    .lean();
-
   const ogImageUrl = topic.ogImageUrl || topic.iconUrl || "";
 
   return {
     title: pageTitle,
-    description: topic.metaDescription || topic.description,
+    description: description,
     alternates: {
       canonical: `${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/`,
     },
     openGraph: {
-      title: baseTitle,
-      description: topic.metaDescription || topic.description,
+      title: topic.title,
+      description: description,
       url: `${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/`,
       images: ogImageUrl ? [{ url: ogImageUrl }] : [],
       type: "article",
@@ -254,9 +247,9 @@ export default async function TopicPage({ params }: PageProps) {
 
         {/* METHODOLOGY BLOCK */}
         <div className="bg-[#fafafc] border-l-[3px] md:border-l-[4px] border-[#6C56E5] rounded-r-md md:rounded-r-lg p-[14px_16px] md:p-[24px_28px] my-5 md:mt-[40px] md:mb-0">
-          <h3 className="font-serif text-[14px] md:text-[17px] mb-1.5 md:mb-2 text-[#1a1a1a] font-bold">
+          <h2 className="font-serif text-[14px] md:text-[17px] mb-1.5 md:mb-2 text-[#1a1a1a] font-bold">
             About this data
-          </h3>
+          </h2>
           {topic.aboutData ? (
             <div
               className="text-[12px] md:text-[14px] text-[#555] mb-1.5 md:mb-2 font-sans [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_a]:text-[#6C56E5] [&_a]:no-underline [&_a]:hover:underline [&_a]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_li]:mb-1"
@@ -281,31 +274,14 @@ export default async function TopicPage({ params }: PageProps) {
           )}
         </div>
 
-        {/* JOURNALIST CTA */}
-        <div className="bg-[#1e3a5f] text-white rounded-[10px] md:rounded-xl p-[20px_18px] md:p-[36px_40px] mt-5 md:mt-[32px] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-8">
-          <div>
-            <h3 className="font-serif text-[16px] md:text-[22px] mb-1.5 font-bold">
-              Writing about AI usage trends?
-            </h3>
-            <p className="text-[12px] md:text-[14px] text-white/80 m-0">
-              All charts on this page are free to embed in articles,
-              newsletters, and reports.
-            </p>
-          </div>
-          <a
-            href="/ai-behavior-index/for-journalists/"
-            className="block md:inline-block w-full md:w-auto text-center bg-white text-[#1e3a5f] px-4.5 py-2.5 md:px-[24px] md:py-[12px] rounded-md font-semibold text-[13px] md:text-[14px] whitespace-nowrap"
-          >
-            Press resources →
-          </a>
-        </div>
+
 
         {/* RELATED TOPICS */}
         {relatedTopics.length > 0 && (
           <div className="mt-6 md:mt-[48px]">
-            <h3 className="font-serif text-[16px] md:text-[22px] mb-3 md:mb-5 font-bold text-[#1a1a1a]">
+            <h2 className="font-serif text-[16px] md:text-[22px] mb-3 md:mb-5 font-bold text-[#1a1a1a]">
               Related topics in {category.name}
-            </h3>
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-5">
               {relatedTopics.map((rel: any) => (
                 <a
@@ -316,9 +292,9 @@ export default async function TopicPage({ params }: PageProps) {
                   <div className="text-[9.5px] md:text-[11px] text-[#6C56E5] uppercase tracking-[0.5px] md:tracking-[0.8px] font-semibold mb-1 md:mb-2">
                     {category.name}
                   </div>
-                  <div className="font-serif text-[14px] md:text-[17px] font-bold leading-[1.3] mb-1 md:mb-1.5">
+                  <h3 className="font-serif text-[14px] md:text-[17px] font-bold leading-[1.3] mb-1 md:mb-1.5">
                     {rel.title}
-                  </div>
+                  </h3>
                   <div className="text-[11px] md:text-[12px] text-[#888]">
                     Updated recently
                   </div>

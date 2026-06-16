@@ -3,8 +3,12 @@ import Footer from '@/src/components/Footer';
 import React from 'react';
 
 export const metadata = {
-  title: 'Terms of Service | AI Behavior Index | OneChat AI',
-  description: 'Terms of Service for the AI Behavior Index, a research publication operated by OneChat AI LLC.',
+  title: "Terms of Service - AI Behavior Index",
+  description:
+    "The terms of service for using the AI Behavior Index, including how our AI research data, charts, and statistics may be viewed, downloaded, and embedded.",
+  alternates: {
+    canonical: "https://onechatai.ai/ai-behavior-index/terms-of-service/",
+  },
 };
 
 export default function TermsOfServicePage() {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import InteractiveChart from "@/src/components/InteractiveChart";
 import EmbedModal from "@/src/components/EmbedModal";
 import { Code2 } from "lucide-react";
@@ -19,6 +19,33 @@ export default function TopicChartsClient({
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeChart, setActiveChart] = useState<ChartData | null>(null);
+
+  useEffect(() => {
+    const handleScrollToHash = () => {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith("#chart-")) {
+        const chartId = hash.replace("#chart-", "");
+        const element = document.getElementById(`chart-${chartId}`);
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+            // Highlight effect optional: can add border highlight if needed
+          }, 400); // 400ms delay to ensure DOM and charts are fully initialized/loaded
+        }
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      // Check on initial load
+      handleScrollToHash();
+
+      // Listen for hashchange events
+      window.addEventListener("hashchange", handleScrollToHash);
+      return () => {
+        window.removeEventListener("hashchange", handleScrollToHash);
+      };
+    }
+  }, []);
 
   const openModal = (chart: ChartData) => {
     setActiveChart(chart);
@@ -126,7 +153,7 @@ export default function TopicChartsClient({
                         </>
                       )}
                     </div>
-                    <div className="font-serif text-[15.5px] md:text-[20px] font-bold text-[#1a1a1a] leading-[1.25] flex items-center gap-2">
+                    <h2 className="font-serif text-[15.5px] md:text-[20px] font-bold text-[#1a1a1a] leading-[1.25] flex items-center gap-2">
                       {chart.icon && (
                         <span className="text-lg md:text-xl flex items-center justify-center w-5 h-5 md:w-6 md:h-6 shrink-0">
                           {chart.icon.startsWith("http") ||
@@ -142,7 +169,7 @@ export default function TopicChartsClient({
                         </span>
                       )}
                       <span>{chart.title}</span>
-                    </div>
+                    </h2>
                   </div>
                   
                   {/* Conditionally render the Embed button */}

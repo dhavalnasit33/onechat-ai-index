@@ -106,19 +106,32 @@ export default function InteractiveChart({
   data: any;
   title: string;
 }) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const isRenderMode =
     typeof window !== "undefined" &&
     window.location.pathname.includes("/chart-render/");
 
-  const getValueAxisOptions = (axisLabel?: string) => {
-    const prefix = data?.yPrefix || "";
+  if (!mounted) {
+    return <div className="min-h-[220px] flex items-center justify-center text-xs text-gray-400 font-sans">Loading chart...</div>;
+  }
+
+  const getValueAxisOptions = (axisLabel?: string, isRight: boolean = false) => {
+    const prefix = isRight ? (data?.y1Prefix || "") : (data?.yPrefix || "");
     let suffix = "%";
-    if (data?.ySuffix !== undefined) {
-      suffix = data.ySuffix;
-    } else if (data?.yFormat === "raw") {
+    const ySuffixVal = isRight ? data?.y1Suffix : data?.ySuffix;
+    const yFormatVal = isRight ? data?.y1Format : data?.yFormat;
+    const yMaxVal = isRight ? data?.y1Max : data?.yMax;
+
+    if (ySuffixVal !== undefined) {
+      suffix = ySuffixVal;
+    } else if (yFormatVal === "raw") {
       suffix = "";
-    } else if (data?.yFormat === "percentage") {
+    } else if (yFormatVal === "percentage") {
       suffix = "%";
     } else {
       const hasLargeValues = (() => {
@@ -141,11 +154,11 @@ export default function InteractiveChart({
     }
 
     let maxVal: number | undefined = undefined;
-    if (data?.yMax !== undefined) {
-      if (data.yMax === "auto" || data.yMax === "") {
+    if (yMaxVal !== undefined) {
+      if (yMaxVal === "auto" || yMaxVal === "") {
         maxVal = undefined;
       } else {
-        const num = Number(data.yMax);
+        const num = Number(yMaxVal);
         maxVal = isNaN(num) ? undefined : num;
       }
     } else {
@@ -159,7 +172,8 @@ export default function InteractiveChart({
         }
         if (data?.series && Array.isArray(data.series)) {
           data.series.forEach((s: any) => {
-            if (s.data && Array.isArray(s.data)) {
+            const belongsToAxis = isRight ? s.useRightAxis : !s.useRightAxis;
+            if (belongsToAxis && s.data && Array.isArray(s.data)) {
               s.data.forEach((dp: any) => {
                 const v = Number(dp.y ?? dp.value);
                 if (!isNaN(v) && v > currentMax) currentMax = v;
@@ -461,14 +475,18 @@ export default function InteractiveChart({
           label: (tooltipItem: any) => {
             const datasetLabel = tooltipItem.dataset.label || "";
             const rawValue = tooltipItem.raw;
-            const prefix = data?.yPrefix || "";
+            const useRight = !!tooltipItem.dataset.yAxisID && tooltipItem.dataset.yAxisID === "y1";
+            const prefix = useRight ? (data?.y1Prefix || "") : (data?.yPrefix || "");
             
             let suffix = "%";
-            if (data?.ySuffix !== undefined) {
-              suffix = data.ySuffix;
-            } else if (data?.yFormat === "raw") {
+            const ySuffixVal = useRight ? data?.y1Suffix : data?.ySuffix;
+            const yFormatVal = useRight ? data?.y1Format : data?.yFormat;
+
+            if (ySuffixVal !== undefined) {
+              suffix = ySuffixVal;
+            } else if (yFormatVal === "raw") {
               suffix = "";
-            } else if (data?.yFormat === "percentage") {
+            } else if (yFormatVal === "percentage") {
               suffix = "%";
             } else {
               const hasLargeValues = (() => {
@@ -526,6 +544,7 @@ export default function InteractiveChart({
           backgroundColor: s.color || PALETTE[i % PALETTE.length],
           borderRadius: 4,
           maxBarThickness: isMobile ? 24 : 40,
+          yAxisID: s.useRightAxis ? "y1" : "y",
         }))
       : [
           {
@@ -559,6 +578,15 @@ export default function InteractiveChart({
               ...getValueAxisOptions(data?.yLabel),
               stacked: !!data.stacked,
             },
+            ...(data.enableRightYAxis ? {
+              y1: {
+                type: "linear" as const,
+                ...getValueAxisOptions(data?.y1Label, true),
+                position: "right" as const,
+                grid: { drawOnChartArea: false },
+                stacked: !!data.stacked,
+              }
+            } : {}),
             x: {
               grid: { display: false },
               ticks: { font: { size: isRenderMode ? 14 : isMobile ? 10 : 12 } },
@@ -728,6 +756,7 @@ export default function InteractiveChart({
               tension: 0.3,
               fill: true,
               spanGaps: false,
+              yAxisID: s.useRightAxis ? "y1" : "y",
             })) || [],
         }}
         options={{
@@ -749,6 +778,14 @@ export default function InteractiveChart({
           },
           scales: {
             y: getValueAxisOptions(data?.yLabel),
+            ...(data.enableRightYAxis ? {
+              y1: {
+                type: "linear" as const,
+                ...getValueAxisOptions(data?.y1Label, true),
+                position: "right" as const,
+                grid: { drawOnChartArea: false },
+              }
+            } : {}),
             x: {
               grid: { display: false },
               ticks: { font: { size: isRenderMode ? 14 : isMobile ? 10 : 12 } },

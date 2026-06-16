@@ -194,4 +194,5 @@ export interface LineSeries {
   name: string;
   color: string;
   dataPoints: { x: string; y: string }[];
+  useRightAxis?: boolean;
 }

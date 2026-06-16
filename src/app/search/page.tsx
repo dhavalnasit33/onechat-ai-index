@@ -15,15 +15,16 @@ export async function generateMetadata({
   searchParams: Promise<{ q?: string }>;
 }): Promise<Metadata> {
   const { q = "" } = await searchParams;
-  const title = q
-    ? `Search: "${q}" | AI Behavior Index`
-    : "Search Topics | AI Behavior Index";
-  const description = q
-    ? `Search results for "${q}" in the AI Behavior Index.`
-    : "Search all topics, Adoption trends, and AI tools statistics on the AI Behavior Index.";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
   return {
-    title,
-    description,
+    title: "Search for AI Research, Data, Charts & Statistics - AI Behavior Index.",
+    description:
+      "Search the AI Behavior Index for research, data, charts, and statistics on AI adoption and use. Find the AI numbers you need — free to view, download, and embed.",
+    alternates: {
+      canonical: q
+        ? `${baseUrl}/ai-behavior-index/search/?q=${encodeURIComponent(q)}`
+        : `${baseUrl}/ai-behavior-index/search/`,
+    },
   };
 }
 
@@ -454,29 +455,6 @@ export default async function SearchPage({ searchParams }: PageProps) {
                 </a>
               </nav>
             )}
-
-            {/* METHODOLOGY NOTE */}
-            <div className="my-[4px] md:my-[8px] mb-[24px] md:mb-[32px] p-[18px_20px] md:p-[22px_26px] bg-white border border-[#d7e3f0] rounded md:rounded-[4px] text-left">
-              <div className="font-sans text-[10px] tracking-[0.16em] uppercase text-[#8a8a95] font-bold mb-[8px]">
-                A note on methodology
-              </div>
-              <p className="font-sans text-[12.5px] md:text-[13px] text-[#4a4a55] leading-[1.55] max-w-[1340px]">
-                Every statistic shown is sourced from a publicly available
-                study, survey, or report. We aggregate, organize, and
-                contextualize this data — but the underlying research is
-                conducted by the cited sources. Click any source link to access
-                the original methodology. This index is refreshed quarterly to
-                incorporate new research as it becomes available. If you run
-                into any issues or have a study to suggest, contact us at{" "}
-                <a
-                  href="mailto:research@aibehaviorindex.org"
-                  className="text-[#4a4a55] underline"
-                >
-                  research@aibehaviorindex.org
-                </a>
-                .
-              </p>
-            </div>
           </div>
         </main>
 

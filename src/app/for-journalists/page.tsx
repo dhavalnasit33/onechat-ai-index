@@ -19,9 +19,12 @@ import Header from '@/src/components/Header';
 import Footer from '@/src/components/Footer';
 
 export const metadata = {
-  title: 'For Journalists | AI Behavior Index | OneChat AI',
+  title: "AI Research Data and Charts for Journalists - AI Behavior Index",
   description:
-    'Free charts, embed code, press contact, and citation guidelines for journalists covering AI adoption data from the AI Behavior Index.',
+    "Free, citable AI research data, charts, and statistics for journalists. Independent figures on AI adoption and use — ready to quote, download, and embed in your reporting.",
+  alternates: {
+    canonical: "https://onechatai.ai/ai-behavior-index/for-journalists/",
+  },
 };
 
 const PURPLE = '#6C56E5';
@@ -141,12 +144,12 @@ export default function ForJournalistsPage() {
           <h1 className="font-serif text-3xl md:text-5xl font-bold tracking-tight text-[#0e0e14] leading-[1.1] mb-5 max-w-[760px]">
             Data for journalists covering AI.
           </h1>
-          <p className="font-serif text-[#55556a] text-lg md:text-xl leading-relaxed max-w-[680px] mb-8">
+          <p className="font-serif text-[#55556a] text-lg md:text-xl leading-relaxed max-w-[750px] mb-8">
             The AI Behavior Index exists to make AI adoption and usage data more accessible to working journalists. Every chart is free to embed — with attribution.
           </p>
 
           {/* Quick start pill strip */}
-          <div className="flex flex-wrap gap-4 mt-6">
+          {/* <div className="flex flex-wrap gap-4 mt-6">
             <a
               href="mailto:press@onechatai.ai"
               className="inline-flex items-center gap-2 font-sans text-sm font-semibold px-5 py-2.5 rounded-full text-white transition-opacity hover:opacity-90 cursor-pointer"
@@ -162,7 +165,7 @@ export default function ForJournalistsPage() {
               <Download size={15} />
               Download Press Kit (PDF)
             </a>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -212,7 +215,7 @@ export default function ForJournalistsPage() {
               What we cover
             </h2>
           </div>
-          <p className="font-serif text-[16px] md:text-[17px] text-[#55556a] leading-relaxed mb-8 max-w-[680px]">
+          <p className="font-serif text-[16px] md:text-[17px] text-[#55556a] leading-relaxed mb-8 ">
             The Index focuses on six primary categories of behavioral data — how people actually use AI, not what they think about it.
           </p>
 
@@ -235,25 +238,7 @@ export default function ForJournalistsPage() {
             ))}
           </div>
 
-          {/* What we do NOT cover callout */}
-          <div
-            className="rounded-xl p-5 flex items-start gap-3"
-            style={{ background: '#fff8f0', borderLeft: '4px solid #f59e0b', borderRadius: '0 12px 12px 0' }}
-          >
-            <AlertCircle size={18} className="shrink-0 mt-0.5 text-amber-500" />
-            <div>
-              <p className="font-sans text-[12px] font-bold uppercase tracking-wider text-amber-600 mb-1.5">
-                What we do not cover
-              </p>
-              <p className="font-sans text-[13px] text-[#5a4a30] leading-relaxed">
-                AI capability benchmarks, model performance comparisons, AI safety research, and AI policy analysis.
-                Better sources exist for those topics — we recommend{' '}
-                <a href="https://aiindex.stanford.edu" target="_blank" rel="noopener noreferrer" className="underline font-medium">Stanford HAI's AI Index Report</a>,{' '}
-                <a href="https://artificialanalysis.ai" target="_blank" rel="noopener noreferrer" className="underline font-medium">Artificial Analysis</a>, and{' '}
-                <a href="https://www.safe.ai" target="_blank" rel="noopener noreferrer" className="underline font-medium">the Center for AI Safety</a>.
-              </p>
-            </div>
-          </div>
+          
         </section>
 
         {/* DIVIDER */}
@@ -347,7 +332,7 @@ export default function ForJournalistsPage() {
               Preferred citation format
             </p>
             <p className="font-mono text-[13px] text-[#3a3460] leading-relaxed">
-              AI Behavior Index (2026). "Topic Title." OneChat AI. Retrieved from aibehaviorindex.org/[category]/[topic]
+              AI Behavior Index (2026). "Topic Title." Retrieved from aibehaviorindex.org/[category]/[topic]
             </p>
           </div>
         </section>
@@ -378,14 +363,14 @@ export default function ForJournalistsPage() {
                 For custom data requests, background interviews, or to request high-resolution chart assets — contact us with your deadline.
               </p>
               <p className="font-sans text-[13px] text-[#2a2a3a] mb-2">
-                <strong>Press Officer:</strong> Habib
+                <strong>Press Officer:</strong> Habib Kamara
               </p>
               <a
-                href="mailto:press@onechatai.ai"
+                href="mailto:research@aibehaviorindex.org"
                 className="inline-flex items-center gap-1.5 font-sans text-[13px] font-semibold underline transition-colors"
                 style={{ color: PURPLE }}
               >
-                press@onechatai.ai
+                research@aibehaviorindex.org
                 <ArrowRight size={13} />
               </a>
             </div>

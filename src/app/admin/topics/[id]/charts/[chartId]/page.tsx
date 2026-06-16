@@ -159,6 +159,12 @@ function buildChartDataPayload(
   tooltipValueSuffix: string = "",
   xMax: string = "",
   stacked: boolean = false,
+  enableRightYAxis: boolean = false,
+  y1Label: string = "",
+  y1Format: string = "",
+  y1Max: string = "",
+  y1Prefix: string = "",
+  y1Suffix: string = "",
 ): unknown {
   if (chartType === "hero_stat") {
     return {
@@ -238,10 +244,17 @@ function buildChartDataPayload(
       tooltipValueSuffix: tooltipValueSuffix || undefined,
       xMax: xMax || undefined,
       stacked: stacked || undefined,
+      enableRightYAxis: enableRightYAxis || undefined,
+      y1Label: y1Label || undefined,
+      y1Format: y1Format || undefined,
+      y1Max: y1Max !== "" ? (y1Max === "auto" ? "auto" : Number(y1Max)) : undefined,
+      y1Prefix: y1Prefix || undefined,
+      y1Suffix: y1Suffix || undefined,
       labels: labels.length > 0 ? labels : undefined,
       series: lineSeries.map((s) => ({
         name: s.name,
         color: s.color || undefined,
+        useRightAxis: s.useRightAxis || undefined,
         data:
           chartType === "line"
             ? s.dataPoints.map((dp) => ({ x: dp.x, y: Number(dp.y) || 0 }))
@@ -319,6 +332,12 @@ export default function ChartEditorPage({
   const [heroSuffixSize, setHeroSuffixSize] = useState<"small" | "large">(
     "large",
   );
+  const [enableRightYAxis, setEnableRightYAxis] = useState(false);
+  const [y1Label, setY1Label] = useState("");
+  const [y1Format, setY1Format] = useState("");
+  const [y1Max, setY1Max] = useState("");
+  const [y1Prefix, setY1Prefix] = useState("");
+  const [y1Suffix, setYSuffix1] = useState("");
 
   // Line Series builder state
   const [lineSeries, setLineSeries] = useState<LineSeries[]>([
@@ -417,6 +436,13 @@ export default function ChartEditorPage({
             setXMax(c.data.xMax !== undefined ? String(c.data.xMax) : "");
             setYSuffix(c.data.ySuffix || "");
             setYPrefix(c.data.yPrefix || "");
+            setEnableRightYAxis(!!c.data.enableRightYAxis);
+            setY1Label(c.data.y1Label || "");
+            setY1Format(c.data.y1Format || "");
+            setY1Max(c.data.y1Max !== undefined ? String(c.data.y1Max) : "");
+            setYPrefix(c.data.yPrefix || "");
+            setY1Prefix(c.data.y1Prefix || "");
+            setYSuffix1(c.data.y1Suffix || "");
             setTooltipTitleTemplate(c.data.tooltipTitleTemplate || "");
             setTooltipValueSuffix(c.data.tooltipValueSuffix || "");
             setStacked(!!c.data.stacked);
@@ -449,6 +475,7 @@ export default function ChartEditorPage({
                   (c.data.series as Record<string, unknown>[]).map((s) => ({
                     name: String(s.name || ""),
                     color: String(s.color || ""),
+                    useRightAxis: !!s.useRightAxis,
                     dataPoints: Array.isArray(s.data)
                       ? (s.data as Record<string, unknown>[]).map((dp) => ({
                           x: String(dp.x || ""),
@@ -604,6 +631,12 @@ export default function ChartEditorPage({
         tooltipValueSuffix,
         xMax,
         stacked,
+        enableRightYAxis,
+        y1Label,
+        y1Format,
+        y1Max,
+        y1Prefix,
+        y1Suffix,
       ),
       sources: sources.map((s) => ({
         ...s,
@@ -901,6 +934,89 @@ export default function ChartEditorPage({
                         placeholder="e.g. US adoption (blank for default)"
                         value={tooltipValueSuffix}
                         onChange={(e) => setTooltipValueSuffix(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {(chartType === "vbar" || chartType === "line") && (
+                  <div className="admin-form-group" style={{ marginBottom: 20 }}>
+                    <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "2px",
+                        }}
+                      >
+                        <div className="text-sm font-semibold text-[var(--admin-text)]">
+                          Dual Y-Axis (Right Y-Axis)
+                        </div>
+                        <div className="text-xs text-[var(--admin-text-muted)] font-normal font-sans">
+                          Enable a secondary Y-axis on the right side of the chart
+                        </div>
+                      </div>
+                      <Switch
+                        checked={enableRightYAxis}
+                        onCheckedChange={(checked: boolean) =>
+                          setEnableRightYAxis(checked)
+                        }
+                      />
+                    </Card>
+                  </div>
+                )}
+
+                {(chartType === "vbar" || chartType === "line") && enableRightYAxis && (
+                  <div className="admin-form-row" style={{ marginBottom: 20 }}>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Right Y-Axis Label</label>
+                      <Input
+                        placeholder="e.g. Companies"
+                        value={y1Label}
+                        onChange={(e) => setY1Label(e.target.value)}
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Right Y-Axis Format</label>
+                      <Select
+                        value={y1Format || "raw"}
+                        onValueChange={(val: string) =>
+                          setY1Format(val === "raw" ? "" : val)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Number (Raw)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="raw">Number (Raw)</SelectItem>
+                          <SelectItem value="percentage">
+                            Percentage (%)
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Right Y-Axis Custom Max Value</label>
+                      <Input
+                        placeholder="e.g. 100 (blank for auto)"
+                        value={y1Max}
+                        onChange={(e) => setY1Max(e.target.value)}
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Right Y-Axis Custom Prefix</label>
+                      <Input
+                        placeholder="e.g. $"
+                        value={y1Prefix}
+                        onChange={(e) => setY1Prefix(e.target.value)}
+                      />
+                    </div>
+                    <div className="admin-form-group">
+                      <label className="admin-form-label">Right Y-Axis Custom Suffix</label>
+                      <Input
+                        placeholder="e.g. K, M, B"
+                        value={y1Suffix}
+                        onChange={(e) => setYSuffix1(e.target.value)}
                       />
                     </div>
                   </div>
@@ -1749,6 +1865,26 @@ export default function ChartEditorPage({
                               />
                             </div>
                           </div>
+                          {(chartType === "vbar" || chartType === "line") && enableRightYAxis && (
+                            <div className="admin-form-group flex flex-col justify-end">
+                              <Card className="flex items-center justify-between p-2.5 bg-[var(--admin-surface-2)] h-[40px] mt-auto">
+                                <span className="text-xs font-semibold text-[var(--admin-text)]">
+                                  Use Right Y-Axis
+                                </span>
+                                <Switch
+                                  checked={!!series.useRightAxis}
+                                  onCheckedChange={(checked: boolean) => {
+                                    const updated = [...lineSeries];
+                                    updated[seriesIdx] = {
+                                      ...updated[seriesIdx],
+                                      useRightAxis: checked,
+                                    };
+                                    setLineSeries(updated);
+                                  }}
+                                />
+                              </Card>
+                            </div>
+                          )}
                         </div>
 
                         <div

@@ -3,8 +3,12 @@ import Header from '@/src/components/Header';
 import Footer from '@/src/components/Footer';
 
 export const metadata = {
-  title: 'Methodology | AI Behavior Index | OneChat AI',
-  description: 'How the AI Behavior Index sources, verifies, and publishes data on AI adoption and usage.',
+  title: "Methodology & Sources - AI Behavior Index",
+  description:
+    "How the AI Behavior Index collects, sources, and verifies its AI data. Read the methodology behind our research, statistics, and charts on AI adoption and use.",
+  alternates: {
+    canonical: "https://onechatai.ai/ai-behavior-index/methodology/",
+  },
 };
 
 const PURPLE = '#6C56E5';
@@ -106,7 +110,7 @@ export default function MethodologyPage() {
             {/* Source chips */}
             <div className="rounded-xl border border-[#e2e2ef] bg-white p-5">
               <p className="font-sans text-xs text-[#8a8a95] uppercase tracking-wider mb-4 font-semibold">
-                Sources we draw from
+                Examples of sources we draw from
               </p>
               <div className="flex flex-wrap gap-2">
                 {[
@@ -198,7 +202,7 @@ export default function MethodologyPage() {
           </div>
           <div className="pl-12">
             <p className="font-serif text-[16px] md:text-[17px] leading-[1.8] text-[#3a3a4a] mb-6">
-              Data is refreshed quarterly. New topics are added on an ongoing basis as warranted by significant new research releases or notable shifts in the underlying data. Our editorial process includes verification of every cited source URL and a quarterly review of all published statistics.
+              New topics are added on an ongoing basis as warranted by significant new research releases or notable shifts in the underlying data. Our editorial process includes verification of every cited source URL and a quarterly review of all published statistics.
             </p>
             {/* Timeline strip */}
             <div className="rounded-xl border border-[#e2e2ef] bg-white overflow-hidden">

@@ -2,7 +2,12 @@ import React from "react";
 import Link from "next/link";
 
 interface HeaderProps {
-  activeTab?: "home" | "methodology" | "for-journalists" | "none";
+  activeTab?:
+  | "home"
+  | "categories"
+  | "methodology"
+  | "for-journalists"
+  | "none";
 }
 
 export default function Header({ activeTab = "none" }: HeaderProps) {
@@ -11,10 +16,7 @@ export default function Header({ activeTab = "none" }: HeaderProps) {
       <div className="max-w-[1340px] mx-auto px-4  py-3.5 flex items-center justify-between relative">
         {/* LOGO */}
         <div className="font-serif text-[13px] md:text-[15px] tracking-[0.06em] md:tracking-[0.08em] uppercase font-bold">
-          <Link
-            href="/"
-            className="no-underline text-inherit"
-          >
+          <Link href="/" className="no-underline text-inherit">
             <span className="text-[#6C56E5]">AI</span>{" "}
             <span className="text-[#1e3a5f]">Behavior Index</span>
           </Link>
@@ -24,42 +26,49 @@ export default function Header({ activeTab = "none" }: HeaderProps) {
         <nav className="hidden md:flex gap-7 font-sans text-[13px] text-[#4a4a55] items-center">
           <Link
             href="/"
-            className={`hover:text-[#15151a] transition-colors ${
-              activeTab === "home" ? "text-[#15151a] font-semibold" : ""
-            }`}
+            className={`hover:text-[#15151a]  transition-colors ${activeTab === "home" ? "text-[#15151a] font-semibold" : ""
+              }    relative inline-block after:absolute after:bg-[#6c56e5] 
+                after:left-1/2 after:bottom-0  after:h-[2px]  after:w-0 after:-translate-x-1/2 
+                 after:transition-all after:duration-300  hover:after:w-full  
+              `}
           >
             Home
           </Link>
           <Link
-            href="/#categories"
-            className="hover:text-[#15151a] transition-colors"
+            href="/categories/"
+            className={`hover:text-[#15151a]  transition-colors ${activeTab === "categories" ? "text-[#15151a] font-semibold" : ""
+              }   relative inline-block after:absolute after:bg-[#6c56e5] after:left-1/2 after:bottom-0  
+               after:h-[2px]  after:w-0 after:-translate-x-1/2 
+                after:transition-all after:duration-300  hover:after:w-full  `}
           >
             Categories
           </Link>
           <Link
             href="/methodology/"
-            className={`hover:text-[#15151a] transition-colors ${
-              activeTab === "methodology" ? "text-[#15151a] font-semibold" : ""
-            }`}
+            className={`hover:text-[#15151a]  transition-colors ${activeTab === "methodology" ? "text-[#15151a] font-semibold" : ""
+              }  relative inline-block after:absolute after:bg-[#6c56e5] after:left-1/2 after:bottom-0  
+              after:h-[2px]  after:w-0 after:-translate-x-1/2 
+               after:transition-all after:duration-300  hover:after:w-full   `}
           >
             Methodology
           </Link>
           <Link
             href="/for-journalists/"
-            className={`hover:text-[#15151a] transition-colors ${
-              activeTab === "for-journalists"
+            className={`hover:text-[#15151a]  transition-colors ${activeTab === "for-journalists"
                 ? "text-[#15151a] font-semibold"
                 : ""
-            }`}
+              }  relative inline-block after:absolute after:bg-[#6c56e5] after:left-1/2 after:bottom-0  
+              after:h-[2px]  after:w-0 after:-translate-x-1/2 
+               after:transition-all after:duration-300  hover:after:w-full   `}
           >
             For Journalists
           </Link>
-          <a
+          {/* <Link
             href="https://onechatai.ai/"
             className="bg-[#6C56E5] hover:bg-[#5b46d6] text-white px-4 py-2 rounded-md font-semibold text-[13px] md:text-[14px] transition-colors ml-2 no-underline"
           >
             Try OneChat AI
-          </a>
+          </Link> */}
         </nav>
 
         {/* MOBILE HAMBURGER MENU (CSS-only details/summary dropdown) */}
@@ -72,46 +81,46 @@ export default function Header({ activeTab = "none" }: HeaderProps) {
             <nav className="flex flex-col font-sans text-[14px] text-[#4a4a55]">
               <Link
                 href="/"
-                className={`px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline ${
-                  activeTab === "home"
+                className={`px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline ${activeTab === "home"
                     ? "text-[#15151a] font-semibold bg-[#f9fbfd]"
                     : ""
-                }`}
+                  }`}
               >
                 Home
               </Link>
               <Link
-                href="/#categories"
-                className="px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline"
+                href="/categories/"
+                className={`px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline ${activeTab === "categories"
+                    ? "text-[#15151a] font-semibold bg-[#f9fbfd]"
+                    : ""
+                  }`}
               >
                 Categories
               </Link>
               <Link
                 href="/methodology/"
-                className={`px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline ${
-                  activeTab === "methodology"
+                className={`px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline ${activeTab === "methodology"
                     ? "text-[#15151a] font-semibold bg-[#f9fbfd]"
                     : ""
-                }`}
+                  }`}
               >
                 Methodology
               </Link>
               <Link
                 href="/for-journalists/"
-                className={`px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline ${
-                  activeTab === "for-journalists"
+                className={`px-5 py-4 border-b border-[#eaf2fb] hover:bg-[#f9fbfd] hover:text-[#15151a] transition-colors no-underline ${activeTab === "for-journalists"
                     ? "text-[#15151a] font-semibold bg-[#f9fbfd]"
                     : ""
-                }`}
+                  }`}
               >
                 For Journalists
               </Link>
-              <Link
+              {/* <Link
                 href="https://onechatai.ai/"
                 className="px-5 py-4 hover:bg-[#f9fbfd] hover:text-[#6C56E5] text-[#6C56E5] font-semibold transition-colors no-underline"
               >
                 Try OneChat AI
-              </Link>
+              </Link> */}
             </nav>
           </div>
         </details>

@@ -3,8 +3,12 @@ import Footer from '@/src/components/Footer';
 import React from 'react';
 
 export const metadata = {
-  title: 'Privacy Policy | AI Behavior Index | OneChat AI',
-  description: 'Privacy Policy for the AI Behavior Index, a research publication operated by OneChat AI LLC.',
+  title: "Privacy Policy - AI Behavior Index",
+  description:
+    "Read the AI Behavior Index privacy policy: what data we collect, how it's used, and your choices. Our commitment to protecting your information.",
+  alternates: {
+    canonical: "https://onechatai.ai/ai-behavior-index/privacy-policy/",
+  },
 };
 
 export default function PrivacyPolicyPage() {

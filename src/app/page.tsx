@@ -11,9 +11,12 @@ import RenderIcon from "@/src/components/RenderIcon";
 import { Search } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "AI Behavior Index | OneChat AI",
+  title: "AI Behavior Index - AI research data, statistics, and charts",
   description:
-    "An interactive index of AI usage statistics aggregated from public studies. Search any topic, filter the dashboard, or browse by category.",
+    "Explore independent research, data, statistics, and free charts on how people adopt and use AI. The AI Behavior Index tracks AI behavior across industries, countries, and demographics.",
+  alternates: {
+    canonical: "https://onechatai.ai/ai-behavior-index/",
+  },
 };
 
 export default async function Home() {
@@ -49,14 +52,14 @@ export default async function Home() {
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": [
+    itemListElement: [
       {
         "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": `${baseUrl}/ai-behavior-index/`
-      }
-    ]
+        position: 1,
+        name: "Home",
+        item: `${baseUrl}/ai-behavior-index/`,
+      },
+    ],
   };
 
   return (
@@ -73,17 +76,16 @@ export default async function Home() {
       {/* COMPACT HEADER */}
       <section className="bg-white border-b border-[#d7e3f0] pt-8 md:pt-12 pb-6 md:pb-9 px-5 md:px-8 text-center">
         <div className="max-w-[1340px] mx-auto">
-          <div className="font-sans text-[9.5px] md:text-[11px] tracking-[0.18em] uppercase text-[#8a8a95] font-semibold mb-3.5 md:mb-4">
+          {/* <div className="font-sans text-[9.5px] md:text-[11px] tracking-[0.18em] uppercase text-[#8a8a95] font-semibold mb-3.5 md:mb-4">
             Quarterly updates · Last refreshed Q2 2026
-          </div>
-          <h1 className="font-serif text-[34px] md:text-[56px] leading-[1.05] font-bold tracking-[-0.02em] text-[#15151a] mb-3.5 md:mb-4 max-w-[900px] mx-auto">
-            How the world is actually using{" "}
-            <em className="italic text-[#088DFF] font-bold not-italic">AI.</em>
+          </div> */}
+          <h1 className="font-serif text-[34px] md:text-[48px] leading-[1.05] font-bold tracking-[-0.02em] text-[#15151a] mb-3.5 md:mb-4 max-w-[1280px] mx-auto">
+            AI statistics, charts, and data — all in one place.
           </h1>
-          <p className="text-[14px] md:text-[15px] text-[#4a4a55] max-w-[680px] mx-auto leading-[1.5] md:leading-[1.55] mb-5 md:mb-0">
-            An interactive index of AI usage statistics aggregated from public
-            studies. Search any topic, filter the dashboard below, or browse by
-            category.
+          <p className="text-[14px] md:text-[15px] text-[#4a4a55] max-w-[720px] mx-auto leading-[1.5] md:leading-[1.55] mb-5 md:mb-0">
+            An independent index of AI adoption and usage data, compiled from
+            primary research. Every chart is free to cite and embed. Search any
+            topic, browse by category, or explore the dashboard below.
           </p>
 
           <form
@@ -99,14 +101,18 @@ export default async function Home() {
               type="text"
               name="q"
               className="w-full font-sans text-[14px] md:text-[15px] truncate md:truncate-none text-[#15151a] bg-[#eaf2fb] border border-[#d7e3f0] rounded-full py-3 md:py-3.5 pr-4 md:pr-5 pl-10 md:pl-12 outline-none transition-all focus:border-[#088DFF] focus:bg-white focus:shadow-[0_0_0_3px_rgba(8,141,255,0.12)] placeholder:text-[#8a8a95]"
-              placeholder='Search all topics — e.g. "Gen Z trust", "AI by country", "healthcare AI"'
+              placeholder='Search for AI statistics, research, reports, and charts'
             />
           </form>
         </div>
       </section>
 
-      {/* DASHBOARD */}
       <main className="max-w-[1340px] mx-auto px-4  py-5 md:py-7">
+        {customHomeCharts && customHomeCharts.length > 0 ? (
+          <div className="mb-4 md:mb-6">
+            <h2 className="font-sans text-[10px] md:text-[11px] tracking-[0.18em] uppercase text-[#1e3a5f] font-bold text-left">Latest charts</h2>
+          </div>
+        ) : null}
         {customHomeCharts && customHomeCharts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[14px] md:gap-[20px]">
             {customHomeCharts.map((chart: any) => {
@@ -142,14 +148,16 @@ export default async function Home() {
                       href={chartLink}
                       className="hover:text-[#088DFF] transition-colors block"
                     >
-                      <div className="font-sans text-[15px] md:text-[17px] font-extrabold text-[#15151a] leading-[1.25] tracking-[-0.01em] mb-1.5 max-w-[90%] md:max-w-[92%]">
+                      <h3 className="font-sans text-[15px] md:text-[17px] font-extrabold text-[#15151a] leading-[1.25] tracking-[-0.01em] mb-1.5 max-w-[90%] md:max-w-[92%]">
                         {chart.heading || chart.title}
-                      </div>
+                      </h3>
                     </a>
-                    <div 
+                    <div
                       className="font-sans text-[11.5px] md:text-[12px] text-[#4a4a55] leading-[1.5] max-w-[92%] source-line-link"
                       dangerouslySetInnerHTML={{
-                        __html: (chart.sourceLine || "Compiled by AI Behavior Index").replace(/OneChat AI/g, "AI Behavior Index")
+                        __html: (
+                          chart.sourceLine || "Compiled by AI Behavior Index"
+                        ).replace(/OneChat AI/g, "AI Behavior Index"),
                       }}
                     />
                   </div>
@@ -164,14 +172,22 @@ export default async function Home() {
                   <div className="px-[20px] md:px-[28px] py-[11px] md:py-[12px] pb-[13px] md:pb-[14px] border-t border-[#eaf2fb] bg-[#eaf2fb] flex justify-between items-center font-sans text-[10px] md:text-[10.5px] text-[#8a8a95]">
                     <div>
                       Source:{" "}
-                      <span 
+                      <span
                         className="font-semibold source-line-link"
                         dangerouslySetInnerHTML={{
                           __html: chart.sourceLine
-                            ? chart.sourceLine.toLowerCase().startsWith("source:")
-                              ? chart.sourceLine.substring(7).replace(/OneChat AI/g, "AI Behavior Index").trim()
-                              : chart.sourceLine.replace(/OneChat AI/g, "AI Behavior Index")
-                            : "Compiled by AI Behavior Index"
+                            ? chart.sourceLine
+                                .toLowerCase()
+                                .startsWith("source:")
+                              ? chart.sourceLine
+                                  .substring(7)
+                                  .replace(/OneChat AI/g, "AI Behavior Index")
+                                  .trim()
+                              : chart.sourceLine.replace(
+                                  /OneChat AI/g,
+                                  "AI Behavior Index",
+                                )
+                            : "Compiled by AI Behavior Index",
                         }}
                       />
                     </div>
@@ -179,7 +195,10 @@ export default async function Home() {
                       <strong className="font-bold not-italic text-[#6C56E5]">
                         AI
                       </strong>
-                      <span className="text-[#1e3a5f] font-bold"> Behavior Index</span>
+                      <span className="text-[#1e3a5f] font-bold">
+                        {" "}
+                        Behavior Index
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -350,14 +369,17 @@ export default async function Home() {
       </section>
 
       {/* CATEGORIES */}
-      <section id="categories" className="bg-white py-[32px] md:py-[72px] px-[16px] md:px-[32px]">
+      <section
+        id="categories"
+        className="bg-white py-[32px] md:py-[72px] px-[16px] md:px-[32px]"
+      >
         <div className="max-w-[1340px] px-4 mx-auto">
           <div className="mb-[22px] md:mb-[36px] pb-[14px] md:pb-[16px] border-b border-[#d7e3f0] md:border-none md:pb-0">
             <div className="font-sans text-[10px] md:text-[11px] tracking-[0.18em] uppercase text-[#0468BD] font-bold mb-[6px] md:mb-0">
               Browse The Full Index
             </div>
             <h2 className="font-serif text-[24px] md:text-[30px] font-normal tracking-[-0.015em] text-[#15151a] mb-[6px] leading-[1.15]">
-              All categories.
+              Browse by category
             </h2>
             <p className="text-[13px] md:text-[14px] text-[#4a4a55] max-w-[640px] md:mb-[32px]">
               Filter, compare, and explore data across six categories of AI
@@ -381,12 +403,12 @@ export default async function Home() {
                         size={28}
                       />
                     </div>
-                    <div className="font-serif text-[20px] md:text-[22px] font-normal tracking-[-0.01em] text-[#15151a] mb-[6px] leading-[1.2]">
+                    <h3 className="font-serif text-[20px] md:text-[22px] font-normal tracking-[-0.01em] text-[#15151a] mb-[6px] leading-[1.2]">
                       {cat.name}
-                    </div>
-                    <div className="font-sans text-[10.5px] md:text-[11px] tracking-[0.1em] uppercase text-[#8a8a95] font-semibold mb-[12px] md:mb-[16px]">
+                    </h3>
+                    {/* <div className="font-sans text-[10.5px] md:text-[11px] tracking-[0.1em] uppercase text-[#8a8a95] font-semibold mb-[12px] md:mb-[16px]">
                       {cat.topicCount} Topics
-                    </div>
+                    </div> */}
                     <div className="text-[12.5px] md:text-[13px] text-[#4a4a55] leading-[1.55] mb-[14px] md:mb-[18px] flex-1">
                       {cat.description}
                     </div>
@@ -400,74 +422,6 @@ export default async function Home() {
               // Fallbacks if no categories from DB
               <>No Data Found</>
             )}
-          </div>
-        </div>
-      </section>
-
-      {/* JOURNALIST SECTION */}
-      <section className="bg-[#eaf2fb] border-y border-[#d7e3f0] py-[36px] md:py-[56px] px-[16px] md:px-[32px]">
-        <div className="max-w-[1340px] px-4 mx-auto">
-          <div className="mb-[22px] md:mb-[36px] pb-[14px] md:pb-[16px] border-b border-[#d7e3f0]">
-            <div>
-              <div className="font-sans text-[10px] md:text-[11px] tracking-[0.18em] uppercase text-[#1e3a5f] font-bold mb-[6px] md:mb-0">
-                For Journalists & Researchers
-              </div>
-              <h2 className="font-serif text-[24px] md:text-[30px] font-normal tracking-[-0.015em] text-[#15151a] mb-[6px] leading-[1.15]">
-                Use this data in your work.
-              </h2>
-              <p className="text-[13px] md:text-[14px] text-[#4a4a55] max-w-[640px]">
-                Every statistic in this index is free to cite, with full source
-                attribution. We make it easy to find what you need.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:max-w-[640px] md:mx-auto gap-[20px]">
-            <div className="bg-white border border-[#d7e3f0] rounded-[6px] p-[22px] md:p-[26px] md:px-[28px] flex flex-col">
-              <div className="text-[20px] md:text-[22px] leading-none mb-[12px]">
-                ✉️
-              </div>
-              <div className="font-sans text-[13.5px] md:text-[14px] font-extrabold text-[#15151a] mb-[6px] tracking-[-0.005em]">
-                Talk to our research team
-              </div>
-              <div className="text-[12.5px] md:text-[13px] text-[#4a4a55] leading-[1.5] mb-[14px] md:mb-[16px] flex-1">
-                Need a specific cut of data, an interview, or a quote? Email us
-                — we typically respond within one business day.
-              </div>
-              <a
-                href="mailto:research@aibehaviorindex.org"
-                className="font-sans text-[11.5px] md:text-[12px] text-[#0468BD] font-bold no-underline break-all"
-              >
-                research@aibehaviorindex.org →
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* METHODOLOGY */}
-      <section className="bg-white py-[28px] md:py-[48px] px-[16px] md:px-[32px] pb-[24px] md:pb-[32px]">
-        <div className="max-w-[1340px] px-4 mx-auto ">
-          <div className="bg-white border border-[#d7e3f0] rounded-[4px] py-[20px] px-[22px] md:py-[24px] md:px-[28px]">
-            <div className="font-sans text-[10px] tracking-[0.16em] uppercase text-[#8a8a95] font-bold mb-[8px]">
-              A note on methodology
-            </div>
-            <p className="text-[12.5px] md:text-[13px] text-[#4a4a55] leading-[1.55] max-w-[900px]">
-              Every statistic shown is sourced from a publicly available study,
-              survey, or report. We aggregate, organize, and contextualize this
-              data — but the underlying research is conducted by the cited
-              sources. Click any source link to access the original methodology.
-              This index is refreshed quarterly to incorporate new research as
-              it becomes available. If you run into any issues or have a study
-              to suggest, contact us at{" "}
-              <a
-                href="mailto:research@aibehaviorindex.org"
-                className="text-[#4a4a55] underline"
-              >
-                research@aibehaviorindex.org
-              </a>
-              .
-            </p>
           </div>
         </div>
       </section>
