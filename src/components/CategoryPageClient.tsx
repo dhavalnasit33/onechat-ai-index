@@ -8,6 +8,7 @@ import Header from "@/src/components/Header";
 import Footer from "@/src/components/Footer";
 
 import { apiUrl } from "@/src/lib/basePath";
+import RenderIcon from "./RenderIcon";
 
 interface CategoryPageClientProps {
   category: any;
@@ -33,7 +34,11 @@ export default function CategoryPageClient({
   const initialRender = useRef(true);
 
   // Function to fetch data client-side
-  const fetchCharts = async (page: number, searchQuery: string, sortOrder: string) => {
+  const fetchCharts = async (
+    page: number,
+    searchQuery: string,
+    sortOrder: string,
+  ) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -41,7 +46,9 @@ export default function CategoryPageClient({
         q: searchQuery,
         sort: sortOrder,
       });
-      const res = await fetch(apiUrl(`/api/categories/${category.slug}/charts?${params.toString()}`));
+      const res = await fetch(
+        apiUrl(`/api/categories/${category.slug}/charts?${params.toString()}`),
+      );
       const json = await res.json();
       if (json.success) {
         setCharts(json.data);
@@ -236,23 +243,42 @@ export default function CategoryPageClient({
                     key={chart._id.toString()}
                     className="bg-white border border-[#d7e3f0] rounded-md overflow-hidden flex flex-col h-full transition-all duration-200 hover:shadow-[0_8px_24px_rgba(8,141,255,0.08)] hover:-translate-y-[2px] text-left"
                   >
-                    <div className="px-[20px] md:px-[28px] pt-[20px] md:pt-[24px] pb-[12px] md:pb-[14px] block">
-                      <div className="font-sans text-[9.5px] md:text-[10px] tracking-[0.16em] uppercase text-[#8a8a95] font-bold mb-2">
+                    <div className="px-[20px] md:px-[28px] pt-[20px] md:pt-[24px] pb-[12px] md:pb-[14px] relative">
+                      {/* Icon */}
+                      <div className="absolute top-[18px] md:top-[20px] right-[18px] md:right-[22px] text-[22px] md:text-[24px] leading-none flex items-center justify-center w-[24px] h-[24px]">
+                        <RenderIcon
+                          icon={chart.icon || "📊"}
+                          size={24}
+                          className="text-[#8a8a95]"
+                        />
+                      </div>
+
+                      {/* Category + Topic */}
+                      <div className="font-sans text-[9.5px] md:text-[10px] tracking-[0.16em] uppercase text-[#8a8a95] font-bold mb-2 max-w-[80%] md:max-w-[85%]">
                         {category.name} {topic ? `· ${topic.title}` : ""}
                       </div>
-                      <h2 className="font-sans text-[15px] md:text-[17px] font-extrabold text-[#15151a] leading-[1.25] tracking-[-0.01em] mb-1.5">
-                        <Link
-                          href={chartLink}
-                          className="hover:text-[#6C56E5] transition-colors block"
-                        >
-                          {chart.heading || chart.title}
-                        </Link>
-                      </h2>
+
+                      {/* Title */}
+                      <Link
+                        href={chartLink}
+                        className="hover:text-[#6C56E5] transition-colors block"
+                      >
+                        <h2 className="font-serif text-[14px] md:text-[16px] font-bold text-[#15151a] leading-[1.2] tracking-[-0.01em] mb-1 max-w-[90%] md:max-w-[92%]">
+                          {chart.title}
+                        </h2>
+                      </Link>
+
+                      {/* Subtitle / Heading */}
+                      {chart.heading && (
+                        <h3 className="font-sans text-[12px] md:text-[13px] font-medium text-[#8a8a95] leading-[1.3] max-w-[90%] md:max-w-[92%]">
+                          {chart.heading}
+                        </h3>
+                      )}
                     </div>
 
                     <Link
                       href={chartLink}
-                      className="px-[20px] md:px-[28px] py-[8px] pb-[16px] md:pb-[18px] h-[250px] flex flex-col justify-center"
+                      className="px-[20px] md:px-[28px] py-[8px] pb-[16px] md:pb-[18px] h-[350px] flex flex-col justify-center"
                     >
                       <InteractiveChart
                         chartId={chart.chartId}
@@ -262,7 +288,7 @@ export default function CategoryPageClient({
                       />
                     </Link>
 
-                    <div className="mt-auto px-[20px] md:px-[28px] py-[11px] md:py-[12px] pb-[13px] md:pb-[14px] border-t border-[#eaf2fb] bg-[#eaf2fb] flex justify-between items-center font-sans text-[10px] md:text-[10.5px] text-[#8a8a95]">
+                    {/* <div className="mt-auto px-[20px] md:px-[28px] py-[11px] md:py-[12px] pb-[13px] md:pb-[14px] border-t border-[#eaf2fb] bg-[#eaf2fb] flex justify-between items-center font-sans text-[10px] md:text-[10.5px] text-[#8a8a95]">
                       <div className="flex-1 min-w-0 pr-4 text-left">
                         <div className="line-clamp-3 leading-[1.5] min-h-[45px] md:min-h-[48px]">
                           Source:{" "}
@@ -288,6 +314,59 @@ export default function CategoryPageClient({
                       </div>
                       <div className="font-serif text-[11px] tracking-[0.06em] uppercase font-bold text-[#1e3a5f] shrink-0 pt-[2px]">
                         <span className="text-[#6C56E5]">AI</span> Behavior Index
+                      </div>
+                    </div> */}
+                    <div className="mt-auto px-[20px] md:px-[28px] py-[12px] md:py-[14px] border-t border-[#eaf2fb] bg-[#eaf2fb] flex justify-between items-center font-sans text-[10px] md:text-[10.5px]  h-[64px] overflow-hidden">
+                      {/* text-[#8a8a95] */}
+                      <div className="flex-1 pr-3 min-w-0">
+                        <div
+                          className="line-clamp-2 leading-[1.5]"
+                          title="Click card to view full source details"
+                        >
+                          Source:{" "}
+                          <span
+                            className="font-semibold source-line-link"
+                            dangerouslySetInnerHTML={{
+                              __html: (() => {
+                                let raw =
+                                  chart.sourceLine ||
+                                  "Compiled by AI Behavior Index";
+
+                                // 1. Rename old references
+                                raw = raw.replace(
+                                  /OneChat AI/g,
+                                  "AI Behavior Index",
+                                );
+
+                                // 2. Remove leading "Source:" even if it's wrapped in HTML
+                                raw = raw.replace(
+                                  /^(<[^>]*>)*\s*source:\s*/i,
+                                  "$1",
+                                );
+
+                                // 3. Look for an <a> tag anywhere in the string
+                                const linkMatch =
+                                  raw.match(/<a\b[^>]*>(.*?)<\/a>/i);
+
+                                if (linkMatch) {
+                                  // If a link exists, throw away the rest of the text and ONLY show the link!
+                                  raw = linkMatch[0];
+                                }
+
+                                return raw;
+                              })(),
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="hidden md:block font-serif text-[11px] tracking-[0.06em] uppercase shrink-0 pt-0.5">
+                        <strong className="font-bold not-italic text-[#6C56E5]">
+                          AI
+                        </strong>
+                        <span className="text-[#1e3a5f] font-bold">
+                          {" "}
+                          Behavior Index
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -327,7 +406,6 @@ export default function CategoryPageClient({
               </button>
             </nav>
           )}
-
         </main>
 
         {/* FOOTER */}

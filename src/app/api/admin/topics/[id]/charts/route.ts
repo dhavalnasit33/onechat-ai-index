@@ -35,7 +35,7 @@ export async function POST(
     const { id } = await props.params;
     const body = await request.json();
 
-    const { title, chartType, chartId, position, data, sources, heading, icon, displayHome, sourceLine } = body;
+    const { title, chartType, chartId, position, data, sources, heading, icon, displayHome, sourceLine, subHeading } = body;
 
     if (!title || !chartType || !chartId) {
       return NextResponse.json(
@@ -48,6 +48,7 @@ export async function POST(
       topicId: id,
       chartId: chartId.toLowerCase().trim(),
       title,
+      subHeading: subHeading || '',
       chartType,
       position: position ?? 0,
       data: data || {},

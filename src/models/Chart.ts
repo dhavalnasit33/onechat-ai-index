@@ -14,6 +14,7 @@ export interface IChart extends Document {
   chartId: string;
   position: number;
   title: string;
+  subHeading?: string;
   chartType: ChartType;
   data: any;
   sourceLine?: string;
@@ -75,6 +76,10 @@ const ChartSchema = new Schema<IChart>(
       type: String,
       required: true,
       trim: true,
+    },
+    subHeading: {
+      type: String,
+      default: "",
     },
     chartType: {
       type: String,

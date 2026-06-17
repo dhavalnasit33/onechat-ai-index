@@ -3,6 +3,7 @@ import dbConnect from "@/src/lib/dbConnect";
 import Category from "@/src/models/Category";
 import Topic from "@/src/models/Topic";
 import Chart from "@/src/models/Chart";
+import { EXCLUDED_DISPLAY_CHART_TYPES } from "@/src/types";
 
 export async function GET(
   request: NextRequest,
@@ -38,7 +39,8 @@ export async function GET(
     const chartFilter: any = {
       topicId: { $in: topicIds },
       status: "active",
-      chartType: { $nin: ["text_block", "list_block", "hero_stat"] },
+      // chartType: { $nin: ["text_block", "list_block", "hero_stat", "timeline"] },
+      chartType: { $nin: EXCLUDED_DISPLAY_CHART_TYPES }
     };
 
     if (q) {

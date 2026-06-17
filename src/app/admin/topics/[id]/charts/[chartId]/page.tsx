@@ -82,7 +82,7 @@ function parseDataRows(chartType: string, data: unknown): DataRow[] {
     if (typedData.items && Array.isArray(typedData.items)) {
       return (typedData.items as Record<string, unknown>[]).map((item) => ({
         label: String(item.boldText || ""), // Used for Bold Text
-        value: String(item.text || ""),     // Used for Regular Text
+        value: String(item.text || ""), // Used for Regular Text
         color: String(typedData.color || ""),
         eventColor: String(typedData.borderColor || ""),
       }));
@@ -199,7 +199,6 @@ function buildChartDataPayload(
     };
   }
 
-
   // Handle callout insight quote payloads
   if (chartType === "text_block") {
     return {
@@ -247,7 +246,8 @@ function buildChartDataPayload(
       enableRightYAxis: enableRightYAxis || undefined,
       y1Label: y1Label || undefined,
       y1Format: y1Format || undefined,
-      y1Max: y1Max !== "" ? (y1Max === "auto" ? "auto" : Number(y1Max)) : undefined,
+      y1Max:
+        y1Max !== "" ? (y1Max === "auto" ? "auto" : Number(y1Max)) : undefined,
       y1Prefix: y1Prefix || undefined,
       y1Suffix: y1Suffix || undefined,
       labels: labels.length > 0 ? labels : undefined,
@@ -301,6 +301,7 @@ export default function ChartEditorPage({
 
   // Form state
   const [title, setTitle] = useState("");
+  const [subHeading, setSubHeading] = useState("");
   const [chartIdSlug, setChartIdSlug] = useState("");
   const [chartType, setChartType] = useState<string>("vbar");
   const [position, setPosition] = useState<number | "">(0);
@@ -405,6 +406,7 @@ export default function ChartEditorPage({
         if (chartRes.success) {
           const c = chartRes.data;
           setTitle(c.title);
+          setSubHeading(c.subHeading || "");
           setChartIdSlug(c.chartId);
           setChartType(c.chartType);
           setPosition(c.position);
@@ -604,6 +606,7 @@ export default function ChartEditorPage({
     setSaving(true);
     const payload = {
       title,
+      subHeading,
       chartId: chartIdSlug,
       chartType,
       position: position === "" ? 0 : Number(position),
@@ -729,6 +732,7 @@ export default function ChartEditorPage({
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </div>
+
               <div className="admin-form-group">
                 <label className="admin-form-label">Chart ID</label>
                 <Input
@@ -793,7 +797,16 @@ export default function ChartEditorPage({
                 />
               </div>
             </div>
-
+            <div className="admin-form-row">
+              <div className="admin-form-group">
+                <label className="admin-form-label">Chart Sub Heading </label>
+                <Input
+                  placeholder="e.g. AI Investment by Sector"
+                  value={subHeading}
+                  onChange={(e) => setSubHeading(e.target.value)}
+                />
+              </div>
+            </div>
             <div className="admin-form-group" style={{ marginBottom: 20 }}>
               <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
                 <div
@@ -850,7 +863,9 @@ export default function ChartEditorPage({
                       />
                     </div>
                     <div className="admin-form-group">
-                      <label className="admin-form-label">X-Axis Max Value</label>
+                      <label className="admin-form-label">
+                        X-Axis Max Value
+                      </label>
                       <Input
                         placeholder="e.g. 10 (blank for no limit)"
                         value={xMax}
@@ -872,7 +887,9 @@ export default function ChartEditorPage({
                   {chartType !== "donut" && (
                     <>
                       <div className="admin-form-group">
-                        <label className="admin-form-label">Y-Axis Format</label>
+                        <label className="admin-form-label">
+                          Y-Axis Format
+                        </label>
                         <Select
                           value={yFormat || "raw"}
                           onValueChange={(val: string) =>
@@ -891,7 +908,9 @@ export default function ChartEditorPage({
                         </Select>
                       </div>
                       <div className="admin-form-group">
-                        <label className="admin-form-label">Custom Max Value</label>
+                        <label className="admin-form-label">
+                          Custom Max Value
+                        </label>
                         <Input
                           placeholder="e.g. 100, 120, 5.0 (blank for auto)"
                           value={yMax}
@@ -921,15 +940,21 @@ export default function ChartEditorPage({
                 {chartType !== "donut" && (
                   <div className="admin-form-row" style={{ marginBottom: 20 }}>
                     <div className="admin-form-group">
-                      <label className="admin-form-label">Tooltip Title Template</label>
+                      <label className="admin-form-label">
+                        Tooltip Title Template
+                      </label>
                       <Input
                         placeholder="e.g. Year {x} since launch (blank for default)"
                         value={tooltipTitleTemplate}
-                        onChange={(e) => setTooltipTitleTemplate(e.target.value)}
+                        onChange={(e) =>
+                          setTooltipTitleTemplate(e.target.value)
+                        }
                       />
                     </div>
                     <div className="admin-form-group">
-                      <label className="admin-form-label">Tooltip Value Suffix</label>
+                      <label className="admin-form-label">
+                        Tooltip Value Suffix
+                      </label>
                       <Input
                         placeholder="e.g. US adoption (blank for default)"
                         value={tooltipValueSuffix}
@@ -940,7 +965,10 @@ export default function ChartEditorPage({
                 )}
 
                 {(chartType === "vbar" || chartType === "line") && (
-                  <div className="admin-form-group" style={{ marginBottom: 20 }}>
+                  <div
+                    className="admin-form-group"
+                    style={{ marginBottom: 20 }}
+                  >
                     <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
                       <div
                         style={{
@@ -953,7 +981,8 @@ export default function ChartEditorPage({
                           Dual Y-Axis (Right Y-Axis)
                         </div>
                         <div className="text-xs text-[var(--admin-text-muted)] font-normal font-sans">
-                          Enable a secondary Y-axis on the right side of the chart
+                          Enable a secondary Y-axis on the right side of the
+                          chart
                         </div>
                       </div>
                       <Switch
@@ -966,61 +995,75 @@ export default function ChartEditorPage({
                   </div>
                 )}
 
-                {(chartType === "vbar" || chartType === "line") && enableRightYAxis && (
-                  <div className="admin-form-row" style={{ marginBottom: 20 }}>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Right Y-Axis Label</label>
-                      <Input
-                        placeholder="e.g. Companies"
-                        value={y1Label}
-                        onChange={(e) => setY1Label(e.target.value)}
-                      />
+                {(chartType === "vbar" || chartType === "line") &&
+                  enableRightYAxis && (
+                    <div
+                      className="admin-form-row"
+                      style={{ marginBottom: 20 }}
+                    >
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">
+                          Right Y-Axis Label
+                        </label>
+                        <Input
+                          placeholder="e.g. Companies"
+                          value={y1Label}
+                          onChange={(e) => setY1Label(e.target.value)}
+                        />
+                      </div>
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">
+                          Right Y-Axis Format
+                        </label>
+                        <Select
+                          value={y1Format || "raw"}
+                          onValueChange={(val: string) =>
+                            setY1Format(val === "raw" ? "" : val)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Number (Raw)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="raw">Number (Raw)</SelectItem>
+                            <SelectItem value="percentage">
+                              Percentage (%)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">
+                          Right Y-Axis Custom Max Value
+                        </label>
+                        <Input
+                          placeholder="e.g. 100 (blank for auto)"
+                          value={y1Max}
+                          onChange={(e) => setY1Max(e.target.value)}
+                        />
+                      </div>
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">
+                          Right Y-Axis Custom Prefix
+                        </label>
+                        <Input
+                          placeholder="e.g. $"
+                          value={y1Prefix}
+                          onChange={(e) => setY1Prefix(e.target.value)}
+                        />
+                      </div>
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">
+                          Right Y-Axis Custom Suffix
+                        </label>
+                        <Input
+                          placeholder="e.g. K, M, B"
+                          value={y1Suffix}
+                          onChange={(e) => setYSuffix1(e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Right Y-Axis Format</label>
-                      <Select
-                        value={y1Format || "raw"}
-                        onValueChange={(val: string) =>
-                          setY1Format(val === "raw" ? "" : val)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Number (Raw)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="raw">Number (Raw)</SelectItem>
-                          <SelectItem value="percentage">
-                            Percentage (%)
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Right Y-Axis Custom Max Value</label>
-                      <Input
-                        placeholder="e.g. 100 (blank for auto)"
-                        value={y1Max}
-                        onChange={(e) => setY1Max(e.target.value)}
-                      />
-                    </div>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Right Y-Axis Custom Prefix</label>
-                      <Input
-                        placeholder="e.g. $"
-                        value={y1Prefix}
-                        onChange={(e) => setY1Prefix(e.target.value)}
-                      />
-                    </div>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Right Y-Axis Custom Suffix</label>
-                      <Input
-                        placeholder="e.g. K, M, B"
-                        value={y1Suffix}
-                        onChange={(e) => setYSuffix1(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
+                  )}
 
                 {(chartType === "vbar" || chartType === "hbar") && (
                   <div
@@ -1053,35 +1096,37 @@ export default function ChartEditorPage({
                   </div>
                 )}
 
-                {(chartType === "vbar" || chartType === "hbar") && isGrouped && (
-                  <div
-                    className="admin-form-group"
-                    style={{ marginBottom: 20 }}
-                  >
-                    <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "2px",
-                        }}
-                      >
-                        <div className="text-sm font-semibold text-[var(--admin-text)]">
-                          Stacked Chart
+                {(chartType === "vbar" || chartType === "hbar") &&
+                  isGrouped && (
+                    <div
+                      className="admin-form-group"
+                      style={{ marginBottom: 20 }}
+                    >
+                      <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "2px",
+                          }}
+                        >
+                          <div className="text-sm font-semibold text-[var(--admin-text)]">
+                            Stacked Chart
+                          </div>
+                          <div className="text-xs text-[var(--admin-text-muted)] font-normal font-sans">
+                            Stack bars on top of each other instead of showing
+                            them side-by-side
+                          </div>
                         </div>
-                        <div className="text-xs text-[var(--admin-text-muted)] font-normal font-sans">
-                          Stack bars on top of each other instead of showing them side-by-side
-                        </div>
-                      </div>
-                      <Switch
-                        checked={stacked}
-                        onCheckedChange={(checked: boolean) =>
-                          setStacked(checked)
-                        }
-                      />
-                    </Card>
-                  </div>
-                )}
+                        <Switch
+                          checked={stacked}
+                          onCheckedChange={(checked: boolean) =>
+                            setStacked(checked)
+                          }
+                        />
+                      </Card>
+                    </div>
+                  )}
               </>
             )}
 
@@ -1396,9 +1441,7 @@ export default function ChartEditorPage({
               <div>
                 <div className="admin-form-row" style={{ marginBottom: 20 }}>
                   <div className="admin-form-group">
-                    <label className="admin-form-label">
-                      Background Color
-                    </label>
+                    <label className="admin-form-label">Background Color</label>
                     <div
                       style={{ display: "flex", gap: 6, alignItems: "center" }}
                     >
@@ -1523,7 +1566,8 @@ export default function ChartEditorPage({
                           />
                           <span>
                             {row.value
-                              ? row.value.substring(0, 60) + (row.value.length > 60 ? "..." : "")
+                              ? row.value.substring(0, 60) +
+                                (row.value.length > 60 ? "..." : "")
                               : `Quote #${i + 1}`}
                           </span>
                         </div>
@@ -1569,9 +1613,7 @@ export default function ChartEditorPage({
                           className="admin-form-group"
                           style={{ marginBottom: 12 }}
                         >
-                          <label className="admin-form-label">
-                            Quote Text
-                          </label>
+                          <label className="admin-form-label">Quote Text</label>
                           <Textarea
                             placeholder="Enter the quote content (without quote marks, e.g. Due to overhyped expectations...)"
                             value={row.value || ""}
@@ -1581,7 +1623,10 @@ export default function ChartEditorPage({
                             rows={3}
                           />
                         </div>
-                        <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                        <div
+                          className="admin-form-group"
+                          style={{ marginBottom: 0 }}
+                        >
                           <label className="admin-form-label">
                             Author / Citation (Optional)
                           </label>
@@ -1604,33 +1649,61 @@ export default function ChartEditorPage({
                 <div className="admin-form-row" style={{ marginBottom: 24 }}>
                   <div className="admin-form-group">
                     <label className="admin-form-label">Background Color</label>
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <div
+                      style={{ display: "flex", gap: 6, alignItems: "center" }}
+                    >
                       <input
                         type="color"
                         value={dataRows[0]?.color || "#ecfdf5"}
-                        onChange={(e) => updateDataRow(0, "color", e.target.value)}
-                        style={{ width: 34, height: 34, padding: 0, border: "none", borderRadius: 4, cursor: "pointer" }}
+                        onChange={(e) =>
+                          updateDataRow(0, "color", e.target.value)
+                        }
+                        style={{
+                          width: 34,
+                          height: 34,
+                          padding: 0,
+                          border: "none",
+                          borderRadius: 4,
+                          cursor: "pointer",
+                        }}
                       />
                       <Input
                         value={dataRows[0]?.color || ""}
-                        onChange={(e) => updateDataRow(0, "color", e.target.value)}
+                        onChange={(e) =>
+                          updateDataRow(0, "color", e.target.value)
+                        }
                         placeholder="e.g. #ecfdf5 (Light Green)"
                         style={{ flex: 1 }}
                       />
                     </div>
                   </div>
                   <div className="admin-form-group">
-                    <label className="admin-form-label">Accent Border & Arrow Color</label>
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <label className="admin-form-label">
+                      Accent Border & Arrow Color
+                    </label>
+                    <div
+                      style={{ display: "flex", gap: 6, alignItems: "center" }}
+                    >
                       <input
                         type="color"
                         value={dataRows[0]?.eventColor || "#10B981"}
-                        onChange={(e) => updateDataRow(0, "eventColor", e.target.value)}
-                        style={{ width: 34, height: 34, padding: 0, border: "none", borderRadius: 4, cursor: "pointer" }}
+                        onChange={(e) =>
+                          updateDataRow(0, "eventColor", e.target.value)
+                        }
+                        style={{
+                          width: 34,
+                          height: 34,
+                          padding: 0,
+                          border: "none",
+                          borderRadius: 4,
+                          cursor: "pointer",
+                        }}
                       />
                       <Input
                         value={dataRows[0]?.eventColor || ""}
-                        onChange={(e) => updateDataRow(0, "eventColor", e.target.value)}
+                        onChange={(e) =>
+                          updateDataRow(0, "eventColor", e.target.value)
+                        }
                         placeholder="e.g. #10B981 (Dark Green)"
                         style={{ flex: 1 }}
                       />
@@ -1638,9 +1711,27 @@ export default function ChartEditorPage({
                   </div>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>List Items</h4>
-                  <button type="button" className="admin-add-row-btn" onClick={addDataRow} style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 16,
+                  }}
+                >
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>
+                    List Items
+                  </h4>
+                  <button
+                    type="button"
+                    className="admin-add-row-btn"
+                    onClick={addDataRow}
+                    style={{
+                      width: "auto",
+                      display: "inline-flex",
+                      padding: "6px 12px",
+                    }}
+                  >
                     <PlusCircle size={14} /> Add Item
                   </button>
                 </div>
@@ -1648,39 +1739,111 @@ export default function ChartEditorPage({
                 {dataRows.map((row, i) => {
                   const isCollapsed = !!collapsedRows[i];
                   return (
-                    <div key={i} className="admin-drag-card" draggable onDragStart={(e) => { setDraggedRowIndex(i); e.dataTransfer.effectAllowed = "move"; }} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); if (draggedRowIndex === null || draggedRowIndex === i) return; const updated = [...dataRows]; const [draggedItem] = updated.splice(draggedRowIndex, 1); updated.splice(i, 0, draggedItem); setDataRows(updated); setDraggedRowIndex(null); }}>
+                    <div
+                      key={i}
+                      className="admin-drag-card"
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedRowIndex(i);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedRowIndex === null || draggedRowIndex === i)
+                          return;
+                        const updated = [...dataRows];
+                        const [draggedItem] = updated.splice(
+                          draggedRowIndex,
+                          1,
+                        );
+                        updated.splice(i, 0, draggedItem);
+                        setDataRows(updated);
+                        setDraggedRowIndex(null);
+                      }}
+                    >
                       <div className="admin-drag-card-header">
                         <div className="admin-drag-card-title">
-                          <GripVertical size={16} style={{ cursor: "grab", color: "var(--admin-text-dim)" }} />
-                          <span>{row.label ? row.label.substring(0, 50) + (row.label.length > 50 ? "..." : "") : `List Item #${i + 1}`}</span>
+                          <GripVertical
+                            size={16}
+                            style={{
+                              cursor: "grab",
+                              color: "var(--admin-text-dim)",
+                            }}
+                          />
+                          <span>
+                            {row.label
+                              ? row.label.substring(0, 50) +
+                                (row.label.length > 50 ? "..." : "")
+                              : `List Item #${i + 1}`}
+                          </span>
                         </div>
                         <div className="admin-drag-card-actions">
                           {dataRows.length > 1 && (
-                            <button type="button" className="admin-btn-icon" onClick={() => removeDataRow(i)} style={{ color: "var(--admin-danger)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "50%", padding: 5 }}>
+                            <button
+                              type="button"
+                              className="admin-btn-icon"
+                              onClick={() => removeDataRow(i)}
+                              style={{
+                                color: "var(--admin-danger)",
+                                border: "1px solid rgba(239, 68, 68, 0.2)",
+                                borderRadius: "50%",
+                                padding: 5,
+                              }}
+                            >
                               <Trash2 size={14} />
                             </button>
                           )}
-                          <button type="button" className="admin-btn-icon" onClick={() => setCollapsedRows((prev) => ({ ...prev, [i]: !prev[i] }))}>
-                            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                          <button
+                            type="button"
+                            className="admin-btn-icon"
+                            onClick={() =>
+                              setCollapsedRows((prev) => ({
+                                ...prev,
+                                [i]: !prev[i],
+                              }))
+                            }
+                          >
+                            {isCollapsed ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronUp size={16} />
+                            )}
                           </button>
                         </div>
                       </div>
 
-                      <div className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}>
-                        <div className="admin-form-group" style={{ marginBottom: 12 }}>
-                          <label className="admin-form-label">Bold Text (Prefix)</label>
+                      <div
+                        className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}
+                      >
+                        <div
+                          className="admin-form-group"
+                          style={{ marginBottom: 12 }}
+                        >
+                          <label className="admin-form-label">
+                            Bold Text (Prefix)
+                          </label>
                           <Input
                             placeholder="e.g. Claude paid subs more than doubled"
                             value={row.label || ""}
-                            onChange={(e) => updateDataRow(i, "label", e.target.value)}
+                            onChange={(e) =>
+                              updateDataRow(i, "label", e.target.value)
+                            }
                           />
                         </div>
-                        <div className="admin-form-group" style={{ marginBottom: 0 }}>
-                          <label className="admin-form-label">Regular Text</label>
+                        <div
+                          className="admin-form-group"
+                          style={{ marginBottom: 0 }}
+                        >
+                          <label className="admin-form-label">
+                            Regular Text
+                          </label>
                           <Textarea
                             placeholder="e.g. January-February 2026, per Anthropic confirmation..."
                             value={row.value || ""}
-                            onChange={(e) => updateDataRow(i, "value", e.target.value)}
+                            onChange={(e) =>
+                              updateDataRow(i, "value", e.target.value)
+                            }
                             rows={2}
                           />
                         </div>
@@ -1865,26 +2028,27 @@ export default function ChartEditorPage({
                               />
                             </div>
                           </div>
-                          {(chartType === "vbar" || chartType === "line") && enableRightYAxis && (
-                            <div className="admin-form-group flex flex-col justify-end">
-                              <Card className="flex items-center justify-between p-2.5 bg-[var(--admin-surface-2)] h-[40px] mt-auto">
-                                <span className="text-xs font-semibold text-[var(--admin-text)]">
-                                  Use Right Y-Axis
-                                </span>
-                                <Switch
-                                  checked={!!series.useRightAxis}
-                                  onCheckedChange={(checked: boolean) => {
-                                    const updated = [...lineSeries];
-                                    updated[seriesIdx] = {
-                                      ...updated[seriesIdx],
-                                      useRightAxis: checked,
-                                    };
-                                    setLineSeries(updated);
-                                  }}
-                                />
-                              </Card>
-                            </div>
-                          )}
+                          {(chartType === "vbar" || chartType === "line") &&
+                            enableRightYAxis && (
+                              <div className="admin-form-group flex flex-col justify-end">
+                                <Card className="flex items-center justify-between p-2.5 bg-[var(--admin-surface-2)] h-[40px] mt-auto">
+                                  <span className="text-xs font-semibold text-[var(--admin-text)]">
+                                    Use Right Y-Axis
+                                  </span>
+                                  <Switch
+                                    checked={!!series.useRightAxis}
+                                    onCheckedChange={(checked: boolean) => {
+                                      const updated = [...lineSeries];
+                                      updated[seriesIdx] = {
+                                        ...updated[seriesIdx],
+                                        useRightAxis: checked,
+                                      };
+                                      setLineSeries(updated);
+                                    }}
+                                  />
+                                </Card>
+                              </div>
+                            )}
                         </div>
 
                         <div

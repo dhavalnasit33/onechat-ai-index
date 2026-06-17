@@ -71,10 +71,13 @@ export default function TopicChartsClient({
     .filter((c) => c.chartType !== "hero_stat")
     .sort((a, b) => a.position - b.position);
 
-  const positionCounts = regularCharts.reduce((acc, c) => {
-    acc[c.position] = (acc[c.position] || 0) + 1;
-    return acc;
-  }, {} as Record<number, number>);
+  const positionCounts = regularCharts.reduce(
+    (acc, c) => {
+      acc[c.position] = (acc[c.position] || 0) + 1;
+      return acc;
+    },
+    {} as Record<number, number>,
+  );
 
   return (
     <>
@@ -104,7 +107,9 @@ export default function TopicChartsClient({
           <div className="relative z-10 mt-3 pt-3 border-t border-[#1e3a5f]/15 md:border-none md:mt-0 md:pt-0 flex items-center justify-between gap-2 md:block md:static">
             <div
               className="text-[10px] md:text-[11px] text-[#888] leading-[1.4] flex-1 md:absolute md:bottom-[20px] md:right-[24px] md:text-right md:max-w-[420px] source-line-link"
-              dangerouslySetInnerHTML={{ __html: getDisplaySource(heroStatChart.sourceLine) }}
+              dangerouslySetInnerHTML={{
+                __html: getDisplaySource(heroStatChart.sourceLine),
+              }}
             />
             <button
               onClick={() => openModal(heroStatChart)}
@@ -118,12 +123,12 @@ export default function TopicChartsClient({
       )}
 
       {/* CHART GRID */}
-     <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-6">
         {regularCharts.map((chart, idx) => {
           // If multiple charts share the same position, display them side-by-side (not full width). Otherwise, display them full width.
           const isSharedPosition = positionCounts[chart.position] > 1;
           const isFullWidth = !isSharedPosition;
-          
+
           // Check if this is a list block
           const isListBlock = chart.chartType === "list_block";
 
@@ -154,7 +159,7 @@ export default function TopicChartsClient({
                       )}
                     </div>
                     <h2 className="font-serif text-[15.5px] md:text-[20px] font-bold text-[#1a1a1a] leading-[1.25] flex items-center gap-2">
-                      {chart.icon && (
+                      {/* {chart.icon && (
                         <span className="text-lg md:text-xl flex items-center justify-center w-5 h-5 md:w-6 md:h-6 shrink-0">
                           {chart.icon.startsWith("http") ||
                             chart.icon.startsWith("/") ? (
@@ -167,11 +172,11 @@ export default function TopicChartsClient({
                             chart.icon
                           )}
                         </span>
-                      )}
+                      )} */}
                       <span>{chart.title}</span>
                     </h2>
                   </div>
-                  
+
                   {/* Conditionally render the Embed button */}
                   {chart.chartType !== "text_block" && (
                     <button
@@ -202,9 +207,14 @@ export default function TopicChartsClient({
                           ? "h-[220px] md:h-[320px]"
                           : chart.chartType === "hbar"
                             ? "h-[280px] md:h-[320px]"
-                            : "h-[240px] md:h-[320px]"
-                  }`}
+                            : "h-[250px] md:h-[350px]"
+                }`}
               >
+                {chart.subHeading && (
+                  <p className="text-center text-[14px] md:text-[16px] lg:text-[18px] font-bold text-[#1E3A5F] mb-2 md:mb-3 leading-[1.4]">
+                    {chart.subHeading}
+                  </p>
+                )}
                 <InteractiveChart
                   chartId={chart.chartId}
                   chartType={chart.chartType}
@@ -222,7 +232,10 @@ export default function TopicChartsClient({
                   <span
                     className="source-line-link"
                     dangerouslySetInnerHTML={{
-                      __html: getDisplaySource(chart.sourceLine).replace(/^source:\s*/i, "")
+                      __html: getDisplaySource(chart.sourceLine).replace(
+                        /^source:\s*/i,
+                        "",
+                      ),
                     }}
                   />
                 </div>

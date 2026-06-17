@@ -1,6 +1,6 @@
 import React from "react";
 import { Metadata } from "next";
-import { Search, Menu, X, ChevronDown } from "lucide-react";
+import { Search, X, ChevronDown } from "lucide-react";
 import dbConnect from "@/src/lib/dbConnect";
 import Category from "@/src/models/Category";
 import Topic from "@/src/models/Topic";
@@ -8,6 +8,8 @@ import Chart from "@/src/models/Chart";
 import Header from "@/src/components/Header";
 import Footer from "@/src/components/Footer";
 import RenderIcon from "@/src/components/RenderIcon";
+import InteractiveChart from "@/src/components/InteractiveChart";
+import { EXCLUDED_DISPLAY_CHART_TYPES } from "@/src/types";
 
 export async function generateMetadata({
   searchParams,
@@ -17,7 +19,8 @@ export async function generateMetadata({
   const { q = "" } = await searchParams;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
   return {
-    title: "Search for AI Research, Data, Charts & Statistics - AI Behavior Index.",
+    title:
+      "Search for AI Research, Data, Charts & Statistics - AI Behavior Index.",
     description:
       "Search the AI Behavior Index for research, data, charts, and statistics on AI adoption and use. Find the AI numbers you need — free to view, download, and embed.",
     alternates: {
@@ -32,24 +35,6 @@ interface PageProps {
   searchParams: Promise<{ q?: string; sort?: string; page?: string }>;
 }
 
-// Highlight search terms
-function highlightMatch(text: string, query: string): string {
-  if (!query || !text) return text;
-  const terms = query.split(/\s+/).filter((t) => t.length > 1);
-  if (terms.length === 0) return text;
-
-  let result = text;
-  terms.forEach((term) => {
-    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = new RegExp(`(${escaped})`, "gi");
-    result = result.replace(
-      re,
-      '<mark class="bg-[#fff3a3] text-[#15151a] px-[2px] py-[1px] font-semibold rounded-[2px]">$1</mark>',
-    );
-  });
-  return result;
-}
-
 export default async function SearchPage({ searchParams }: PageProps) {
   await dbConnect();
 
@@ -58,113 +43,89 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
   const { q = "", sort = "relevance", page = "1" } = await searchParams;
 
-  const limit = 10;
+  const limit = 12; // Adjusted to 12 so the grid of 3 looks balanced
   const currentPage = parseInt(page) || 1;
   const skip = (currentPage - 1) * limit;
 
-  let topics: any[] = [];
   let totalCount = 0;
+  let charts: any[] = [];
+
+  // 1. Build the search filter
+  const chartFilter: any = {
+    status: "active",
+    chartType: { $nin: EXCLUDED_DISPLAY_CHART_TYPES },
+  };
 
   if (q) {
-    const filter: any = {
-      status: "published",
-      $text: { $search: q },
-    };
+    // Split the query into individual keywords
+    const keywords = q
+      .trim()
+      .split(/\s+/)
+      .filter((k) => k.length > 1);
 
-    let sortObj: any = {};
-    if (sort === "recent") {
-      sortObj = { publishedAt: -1 };
-    } else if (sort === "a-z") {
-      sortObj = { title: 1 };
-    } else {
-      sortObj = { score: { $meta: "textScore" } }; // relevance
-    }
+    if (keywords.length > 0) {
+      // Create regexes for each keyword
+      const regexes = keywords.map(
+        (k) => new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
+      );
 
-    try {
-      topics = await Topic.find(
-        filter,
-        sort === "relevance" ? { score: { $meta: "textScore" } } : {},
-      )
-        .sort(sortObj)
-        .skip(skip)
-        .limit(limit)
-        .populate("categoryId", "slug name")
-        .lean();
+      // Find any Topics whose title matches ANY of the keywords
+      const matchedTopics = await Topic.find(
+        { status: "published", $or: regexes.map((re) => ({ title: re })) },
+        "_id",
+      ).lean();
+      const matchedTopicIds = matchedTopics.map((t: any) => t._id);
 
-      totalCount = await Topic.countDocuments(filter);
-    } catch (error) {
-      console.warn("Text search failed, falling back to regex search:", error);
-      totalCount = 0;
-    }
-
-    // Fallback to regex search if no strict text search matches found
-    if (totalCount === 0) {
-      const escapedQ = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const fallbackFilter: any = {
-        status: "published",
-        $or: [
-          { title: { $regex: escapedQ, $options: "i" } },
-          { description: { $regex: escapedQ, $options: "i" } },
-        ],
-      };
-
-      topics = await Topic.find(fallbackFilter)
-        .sort(
-          sort === "recent"
-            ? { publishedAt: -1 }
-            : sort === "a-z"
-              ? { title: 1 }
-              : { dataPointsCount: -1 },
-        )
-        .skip(skip)
-        .limit(limit)
-        .populate("categoryId", "slug name")
-        .lean();
-
-      totalCount = await Topic.countDocuments(fallbackFilter);
+      // Filter charts: chart title matches ANY keyword OR chart belongs to matched topic
+      chartFilter.$or = [
+        ...regexes.map((re) => ({ title: re })),
+        ...regexes.map((re) => ({ heading: re })),
+        { topicId: { $in: matchedTopicIds } },
+      ];
     }
   }
 
-  let matchingCharts: any[] = [];
-  if (q) {
-    const escapedQ = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const chartFilter: any = {
-      status: "active",
-      $or: [
-        { title: { $regex: escapedQ, $options: "i" } },
-        { heading: { $regex: escapedQ, $options: "i" } },
-      ],
-    };
-    matchingCharts = await Chart.find(chartFilter)
-      .populate({
-        path: "topicId",
-        populate: { path: "categoryId" },
-      })
-      .lean();
+  // 2. Build the Sort logic
+  let sortObj: any = { createdAt: -1 }; // Default to most recent for relevance
+  if (sort === "a-z") {
+    sortObj = { title: 1 };
   }
+
+  // 3. Fetch the Charts
+  totalCount = await Chart.countDocuments(chartFilter);
+  const rawCharts = await Chart.find(chartFilter)
+    .sort(sortObj)
+    .skip(skip)
+    .limit(limit)
+    .populate({
+      path: "topicId",
+      populate: { path: "categoryId" },
+    })
+    .lean();
+
+  // Serialize to prevent Next.js client-component ObjectID errors
+  charts = JSON.parse(JSON.stringify(rawCharts));
 
   const totalPages = Math.ceil(totalCount / limit);
-  // Icons updated to match the static HTML examples
-  const icons = ["📱", "📚", "🛡️", "🏆", "⚡", "🔀", "🤖", "💵", "🎨", "📈"];
-
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://onechatai.ai";
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": [
+    itemListElement: [
       {
         "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": `${baseUrl}/ai-behavior-index/`
+        position: 1,
+        name: "Home",
+        item: `${baseUrl}/ai-behavior-index/`,
       },
       {
         "@type": "ListItem",
-        "position": 2,
-        "name": "Search Results",
-        "item": `${baseUrl}/ai-behavior-index/search/?q=${encodeURIComponent(q)}`
-      }
-    ]
+        position: 2,
+        name: "Search Results",
+        item: `${baseUrl}/ai-behavior-index/search/?q=${encodeURIComponent(q)}`,
+      },
+    ],
   };
 
   return (
@@ -175,7 +136,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
-      {/* MOBILE WRAPPER - Full width on desktop, constrained wrapper effect on mobile if needed */}
+      {/* MOBILE WRAPPER */}
       <div className="w-full bg-white min-h-screen shadow-[0_4px_24px_rgba(0,0,0,0.12)] md:shadow-none">
         {/* TOP NAV */}
         <Header activeTab="none" />
@@ -203,7 +164,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
             <h1 className="font-serif text-[24px] md:text-[36px] leading-[1.15] md:leading-[1.1] font-normal tracking-[-0.015em] text-[#15151a] mb-[6px] md:mb-1">
               Results for{" "}
               <span className="font-bold text-[#6C56E5]">
-                "{q || "All topics"}"
+                "{q || "All charts"}"
               </span>
             </h1>
             <p className="font-sans text-[12px] md:text-[13px] text-[#8a8a95]">
@@ -216,7 +177,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
               <strong className="text-[#15151a] font-semibold">
                 {totalCount}
               </strong>{" "}
-              matching topics{" "}
+              matching charts{" "}
               <span className="hidden md:inline">across all categories.</span>
             </p>
           </div>
@@ -239,7 +200,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                 name="q"
                 defaultValue={q}
                 className="w-full font-sans text-[14px] text-[#15151a] bg-[#eaf2fb] border border-[#d7e3f0] rounded-full py-[11px] pl-[40px] md:pl-[42px] pr-[40px] md:pr-[44px] outline-none transition-colors focus:border-[#088DFF] focus:bg-white"
-                placeholder="Search all topics…"
+                placeholder="Search all charts…"
               />
               <input type="hidden" name="sort" value={sort} />
               {q && (
@@ -263,7 +224,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                 <select
                   id="sort-select"
                   defaultValue={sort}
-                  className=" appearance-none w-full bg-white border-2 border-[#D9D2FF] rounded-xl px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 outline-none transition-all duration-200 hover:border-[#6C56E5] focus:border-[#6C56E5] focus:ring-4 focus:ring-[#6C56E5]/10 cursor-pointer"
+                  className="appearance-none w-full bg-white border-2 border-[#D9D2FF] rounded-xl px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 outline-none transition-all duration-200 hover:border-[#6C56E5] focus:border-[#6C56E5] focus:ring-4 focus:ring-[#6C56E5]/10 cursor-pointer"
                 >
                   <option value="relevance">Most Relevant</option>
                   <option value="recent">Most Recent</option>
@@ -281,124 +242,123 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
         {/* MAIN CONTENT */}
         <main className="p-[16px] md:p-[32px]">
-          <div className="max-w-[1340px] px-4 mx-auto ">
-            {/* RESULTS LIST */}
+          <div className="max-w-[1600px] px-4 mx-auto ">
             <section className="mb-0 md:mb-8">
-              <div className="hidden md:block font-sans text-[10px] tracking-[0.18em] uppercase text-[#8a8a95] font-bold mb-[18px] text-left">
-                Matching topics
-              </div>
-
-              {topics.length === 0 ? (
+              {charts.length === 0 ? (
                 <div className="text-center py-20 text-[#8a8a95] font-sans">
-                  <p className="text-lg font-medium">No results found.</p>
+                  <p className="text-lg font-medium">No charts found.</p>
                   <p className="text-sm mt-1">
                     Try searching for other keywords like "Gen Z", "Adoption",
                     or "ChatGPT".
                   </p>
                 </div>
               ) : (
-                <div className="flex flex-col">
-                  {topics.map((topic: any, i: number) => {
-                    const categorySlug = topic.categoryId?.slug || "unknown";
-                    const categoryName =
-                      topic.categoryId?.name || "Uncategorized";
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[14px] md:gap-[20px]">
+                  {charts.map((chart: any) => {
+                    const topic = chart.topicId;
+                    const category = topic?.categoryId;
+                    const categoryName = category?.name || "Insight";
+
+                    const chartLink =
+                      category?.slug && topic?.slug
+                        ? `/ai-behavior-index/${category.slug}/${topic.slug}/#chart-${chart.chartId}`
+                        : "#";
+
                     return (
-                      <a
-                        key={topic._id.toString()}
-                        href={`/ai-behavior-index/${categorySlug}/${topic.slug}/`}
-                        className={`group grid grid-cols-[32px_1fr] md:grid-cols-[40px_1fr] gap-[12px] md:gap-[18px] py-[18px] md:py-[22px] border-b border-[#eaf2fb] ${i === topics.length - 1 ? "border-none" : ""} text-left no-underline text-inherit`}
+                      <div
+                        key={chart._id.toString()}
+                        className="bg-white border border-[#d7e3f0] rounded-md overflow-hidden flex flex-col transition-all duration-200 hover:shadow-[0_8px_24px_rgba(8,141,255,0.08)] hover:-translate-y-[2px] text-left"
                       >
-                        <div className="text-[18px] md:text-[22px] leading-none pt-[3px] md:pt-1 flex items-center justify-center w-[22px] h-[22px] text-[#6C56E5]">
-                          <RenderIcon
-                            icon={topic.iconUrl || icons[i % icons.length]}
-                            size={22}
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-sans text-[9.5px] md:text-[10px] tracking-[0.14em] uppercase text-[#6C56E5] font-bold mb-[5px] md:mb-[6px]">
-                            {categoryName}
-                            <span className="text-[#8a8a95] font-normal mx-[6px] md:mx-[8px]">
-                              ·
-                            </span>
-                            <span className="text-[#8a8a95] font-medium">
-                              <span className="hidden md:inline">Updated </span>
-                              {topic.publishedAt
-                                ? new Date(
-                                    topic.publishedAt,
-                                  ).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    year: "numeric",
-                                  })
-                                : "Q2 2026"}
-                            </span>
+                        <div className="px-[20px] md:px-[28px] pt-[20px] md:pt-[24px] pb-[12px] md:pb-[14px] relative">
+                          <div className="absolute top-[18px] md:top-[20px] right-[18px] md:right-[22px] text-[22px] md:text-[24px] leading-none flex items-center justify-center w-[24px] h-[24px]">
+                            <RenderIcon
+                              icon={chart.icon || "📊"}
+                              size={24}
+                              className="text-[#8a8a95]"
+                            />
                           </div>
-                          <h3
-                            className="font-serif text-[18px] md:text-[22px] font-normal tracking-[-0.01em] text-[#15151a] leading-[1.2] mb-[7px] md:mb-[8px] transition-colors group-hover:text-[#6C56E5]"
-                            dangerouslySetInnerHTML={{
-                              __html: highlightMatch(topic.title, q),
-                            }}
+                          <div className="font-sans text-[9.5px] md:text-[10px] tracking-[0.16em] uppercase text-[#8a8a95] font-bold mb-2 max-w-[80%] md:max-w-[85%]">
+                            {categoryName} {topic ? `· ${topic.title}` : ""}
+                          </div>
+                          <a
+                            href={chartLink}
+                            className="hover:text-[#088DFF] transition-colors block"
+                          >
+                            <h3 className="font-serif text-[14px] md:text-[16px] font-bold text-[#15151a] leading-[1.2] tracking-[-0.01em] mb-1 max-w-[90%] md:max-w-[92%]">
+                              {chart.title}
+                            </h3>
+                          </a>
+
+                          {/* Heading / Subtitle (Smaller/Gray) */}
+                          {chart.heading && (
+                            <h4 className="font-sans text-[12px] md:text-[13px] font-medium text-[#8a8a95] leading-[1.3] mb-2 max-w-[92%]">
+                              {chart.heading}
+                            </h4>
+                          )}
+                        </div>
+
+                        {/* Interactive Chart Box linked to Topic page */}
+                        <a
+                          href={chartLink}
+                          className="px-[20px] md:px-[28px] py-[8px] pb-[16px] md:pb-[18px] h-[350px] flex flex-col justify-center block"
+                        >
+                          <InteractiveChart
+                            chartId={chart.chartId}
+                            chartType={chart.chartType}
+                            data={chart.data}
+                            title={chart.title}
                           />
-                          <p
-                            className="font-sans text-[12.5px] md:text-[13.5px] text-[#4a4a55] leading-[1.55] mb-[10px] md:mb-[12px]"
-                            dangerouslySetInnerHTML={{
-                              __html: highlightMatch(topic.description, q),
-                            }}
-                          />
-                          <div className="font-sans text-[10.5px] md:text-[11px] text-[#8a8a95] flex gap-[12px] md:gap-[14px] flex-wrap">
-                            <strong className="text-[#4a4a55] font-semibold">
-                              {topic.dataPointsCount} data points
+                        </a>
+
+                        <div className="mt-auto px-[20px] md:px-[28px] py-[12px] md:py-[14px] border-t border-[#eaf2fb] bg-[#eaf2fb] flex justify-between items-center font-sans text-[10px] md:text-[10.5px] text-[#8a8a95] h-[64px] overflow-hidden">
+                          <div className="flex-1 pr-3 min-w-0">
+                            <div
+                              className="line-clamp-2 leading-[1.5]"
+                              title="Click card to view full source details"
+                            >
+                              Source:{" "}
+                              <span
+                                className="font-semibold source-line-link"
+                                dangerouslySetInnerHTML={{
+                                  __html: (() => {
+                                    let raw =
+                                      chart.sourceLine ||
+                                      "Compiled by AI Behavior Index";
+                                    raw = raw.replace(
+                                      /OneChat AI/g,
+                                      "AI Behavior Index",
+                                    );
+                                    raw = raw.replace(
+                                      /^(<[^>]*>)*\s*source:\s*/i,
+                                      "$1",
+                                    );
+                                    const linkMatch =
+                                      raw.match(/<a\b[^>]*>(.*?)<\/a>/i);
+                                    if (linkMatch) {
+                                      raw = linkMatch[0];
+                                    }
+                                    return raw;
+                                  })(),
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div className="hidden md:block font-serif text-[11px] tracking-[0.06em] uppercase shrink-0 pt-0.5">
+                            <strong className="font-bold not-italic text-[#6C56E5]">
+                              AI
                             </strong>
-                            <span>{topic.sourceCount} sources</span>
+                            <span className="text-[#1e3a5f] font-bold">
+                              {" "}
+                              Behavior Index
+                            </span>
                           </div>
                         </div>
-                      </a>
+                      </div>
                     );
                   })}
                 </div>
               )}
             </section>
-
-            {matchingCharts.length > 0 && (
-              <section className="mt-8 pt-8 border-t border-[#d7e3f0] mb-8">
-                <div className="font-sans text-[10px] tracking-[0.18em] uppercase text-[#8a8a95] font-bold mb-[18px] text-left">
-                  Matching charts
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {matchingCharts.map((chart: any) => {
-                    const topic = chart.topicId;
-                    const category = topic?.categoryId;
-                    const iconToUse = chart.icon || "📊";
-
-                    return (
-                      <a
-                        key={chart._id.toString()}
-                        href={`/ai-behavior-index/${category?.slug}/${topic?.slug}/`}
-                        className="bg-white border border-[#d7e3f0] rounded-md p-5 flex flex-col transition-all duration-200 hover:border-[#088DFF] hover:shadow-[0_4px_12px_rgba(8,141,255,0.08)] hover:-translate-y-[1px] text-left no-underline text-inherit"
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <span className="font-sans text-[9px] tracking-wider uppercase text-[#6C56E5] font-bold">
-                            {category?.name || "Chart"}{" "}
-                            {topic ? `· ${topic.title}` : ""}
-                          </span>
-                          <span className="text-lg flex items-center justify-center w-5 h-5 text-[#6C56E5]">
-                            <RenderIcon icon={iconToUse} size={18} />
-                          </span>
-                        </div>
-                        <h4 className="font-serif text-[16px] font-bold text-[#15151a] mb-1.5 leading-[1.3] hover:text-[#088DFF] transition-colors">
-                          {chart.heading || chart.title}
-                        </h4>
-                        {chart.sourceLine && (
-                          <p 
-                            className="font-sans text-[11px] text-[#888] mt-auto source-line-link"
-                            dangerouslySetInnerHTML={{ __html: chart.sourceLine }}
-                          />
-                        )}
-                      </a>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
 
             {/* PAGINATION */}
             {totalPages > 1 && (

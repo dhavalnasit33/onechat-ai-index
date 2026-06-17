@@ -11,6 +11,15 @@ export const CHART_TYPES = [
   "list_block", // <-- Add this right here
 ] as const;
 
+
+// Add this new constant in your types file
+export const EXCLUDED_DISPLAY_CHART_TYPES: ChartType[] = [
+  "text_block",
+  "list_block",
+  "hero_stat",
+  "timeline",
+];
+
 // 2. Extract the TypeScript literal type from the array
 export type ChartType = (typeof CHART_TYPES)[number];
 
@@ -39,6 +48,7 @@ export interface ChartData {
   chartId: string;
   position: number;
   title: string;
+  subHeading?: string;
   heading?: string;
   icon?: string;
   chartType: ChartType;

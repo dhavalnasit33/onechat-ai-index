@@ -9,6 +9,7 @@ import Header from "@/src/components/Header";
 import Footer from "@/src/components/Footer";
 import RenderIcon from "@/src/components/RenderIcon";
 import { Search } from "lucide-react";
+import HomeChartsClient from "../components/HomeChartsClient";
 
 export const metadata: Metadata = {
   title: "AI Behavior Index - AI research data, statistics, and charts",
@@ -101,117 +102,23 @@ export default async function Home() {
               type="text"
               name="q"
               className="w-full font-sans text-[14px] md:text-[15px] truncate md:truncate-none text-[#15151a] bg-[#eaf2fb] border border-[#d7e3f0] rounded-full py-3 md:py-3.5 pr-4 md:pr-5 pl-10 md:pl-12 outline-none transition-all focus:border-[#088DFF] focus:bg-white focus:shadow-[0_0_0_3px_rgba(8,141,255,0.12)] placeholder:text-[#8a8a95]"
-              placeholder='Search for AI statistics, research, reports, and charts'
+              placeholder="Search for AI statistics, research, reports, and charts"
             />
           </form>
         </div>
       </section>
 
-      <main className="max-w-[1340px] mx-auto px-4  py-5 md:py-7">
-        {customHomeCharts && customHomeCharts.length > 0 ? (
-          <div className="mb-4 md:mb-6">
-            <h2 className="font-sans text-[10px] md:text-[11px] tracking-[0.18em] uppercase text-[#1e3a5f] font-bold text-left">Latest charts</h2>
-          </div>
-        ) : null}
-        {customHomeCharts && customHomeCharts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[14px] md:gap-[20px]">
-            {customHomeCharts.map((chart: any) => {
-              const topic = chart.topicId;
-              const category = topic?.categoryId;
-              const categoryName = category?.name || "Insight";
-              const iconToUse = (
-                <RenderIcon
-                  icon={chart.icon || "📊"}
-                  size={24}
-                  className="text-[#8a8a95]"
-                />
-              );
-
-              const chartLink =
-                category?.slug && topic?.slug
-                  ? `/ai-behavior-index/${category.slug}/${topic.slug}/`
-                  : "#";
-
-              return (
-                <div
-                  key={chart._id.toString()}
-                  className="bg-white border border-[#d7e3f0] rounded-md overflow-hidden flex flex-col transition-all duration-200 hover:shadow-[0_8px_24px_rgba(8,141,255,0.08)] hover:-translate-y-[2px] text-left"
-                >
-                  <div className="px-[20px] md:px-[28px] pt-[20px] md:pt-[24px] pb-[12px] md:pb-[14px] relative">
-                    <div className="absolute top-[18px] md:top-[20px] right-[18px] md:right-[22px] text-[22px] md:text-[24px] leading-none flex items-center justify-center w-[24px] h-[24px]">
-                      {iconToUse}
-                    </div>
-                    <div className="font-sans text-[9.5px] md:text-[10px] tracking-[0.16em] uppercase text-[#8a8a95] font-bold mb-2 max-w-[80%] md:max-w-full">
-                      {categoryName} {topic ? `· ${topic.title}` : ""}
-                    </div>
-                    <a
-                      href={chartLink}
-                      className="hover:text-[#088DFF] transition-colors block"
-                    >
-                      <h3 className="font-sans text-[15px] md:text-[17px] font-extrabold text-[#15151a] leading-[1.25] tracking-[-0.01em] mb-1.5 max-w-[90%] md:max-w-[92%]">
-                        {chart.heading || chart.title}
-                      </h3>
-                    </a>
-                    <div
-                      className="font-sans text-[11.5px] md:text-[12px] text-[#4a4a55] leading-[1.5] max-w-[92%] source-line-link"
-                      dangerouslySetInnerHTML={{
-                        __html: (
-                          chart.sourceLine || "Compiled by AI Behavior Index"
-                        ).replace(/OneChat AI/g, "AI Behavior Index"),
-                      }}
-                    />
-                  </div>
-                  <div className="px-[20px] md:px-[28px] py-[8px] pb-[16px] md:pb-[18px] flex-1 flex flex-col justify-center min-h-[220px]">
-                    <InteractiveChart
-                      chartId={chart.chartId}
-                      chartType={chart.chartType}
-                      data={chart.data}
-                      title={chart.title}
-                    />
-                  </div>
-                  <div className="px-[20px] md:px-[28px] py-[11px] md:py-[12px] pb-[13px] md:pb-[14px] border-t border-[#eaf2fb] bg-[#eaf2fb] flex justify-between items-center font-sans text-[10px] md:text-[10.5px] text-[#8a8a95]">
-                    <div>
-                      Source:{" "}
-                      <span
-                        className="font-semibold source-line-link"
-                        dangerouslySetInnerHTML={{
-                          __html: chart.sourceLine
-                            ? chart.sourceLine
-                                .toLowerCase()
-                                .startsWith("source:")
-                              ? chart.sourceLine
-                                  .substring(7)
-                                  .replace(/OneChat AI/g, "AI Behavior Index")
-                                  .trim()
-                              : chart.sourceLine.replace(
-                                  /OneChat AI/g,
-                                  "AI Behavior Index",
-                                )
-                            : "Compiled by AI Behavior Index",
-                        }}
-                      />
-                    </div>
-                    <div className="hidden md:block font-serif text-[11px] tracking-[0.06em] uppercase">
-                      <strong className="font-bold not-italic text-[#6C56E5]">
-                        AI
-                      </strong>
-                      <span className="text-[#1e3a5f] font-bold">
-                        {" "}
-                        Behavior Index
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <>No data Found</>
-        )}
-      </main>
+        <HomeChartsClient />
+      {/* <main className="max-w-[1340px] mx-auto px-4  py-5 md:py-7">
+        <div className="mb-4 md:mb-6">
+          <h2 className="font-sans text-[10px] md:text-[11px] tracking-[0.18em] uppercase text-[#1e3a5f] font-bold text-left">
+            Latest charts
+          </h2>
+        </div>
+      </main> */}
 
       {/* DIVIDER */}
-      <div className="bg-[#eaf2fb] border-y border-[#d7e3f0] py-[28px] md:py-[36px] px-[20px] md:px-[32px] text-center mt-[0px] md:mt-[24px]">
+      {/* <div className="bg-[#eaf2fb] border-y border-[#d7e3f0] py-[28px] md:py-[36px] px-[20px] md:px-[32px] text-center mt-[0px] md:mt-[24px]">
         <div className="max-w-[800px] mx-auto">
           <div className="font-sans text-[10px] md:text-[11px] tracking-[0.18em] uppercase text-[#1e3a5f] font-bold mb-[10px]">
             More from the index ↓
@@ -225,10 +132,10 @@ export default async function Home() {
             citation tools.
           </p>
         </div>
-      </div>
+      </div> */}
 
       {/* FEATURED INSIGHTS */}
-      <section className="bg-[#f9fbfd] border-b border-[#d7e3f0] py-[32px] md:py-[64px] px-[16px] md:px-[32px]">
+      {/* <section className="bg-[#f9fbfd] border-b border-[#d7e3f0] py-[32px] md:py-[64px] px-[16px] md:px-[32px]">
         <div className="max-w-[1340px] px-4 mx-auto">
           <div className="flex flex-col md:flex-row justify-between md:items-baseline mb-[22px] md:mb-[36px] pb-[14px] md:pb-[16px] border-b border-[#d7e3f0]">
             <div>
@@ -366,7 +273,7 @@ export default async function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CATEGORIES */}
       <section

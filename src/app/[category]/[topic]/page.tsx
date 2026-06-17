@@ -66,6 +66,7 @@ export default async function TopicPage({ params }: PageProps) {
     chartId: chart.chartId,
     position: chart.position,
     title: chart.title,
+    subHeading: chart.subHeading || "",
     heading: chart.heading || "",
     icon: chart.icon || "",
     chartType: chart.chartType,
