@@ -51,22 +51,88 @@ export default function EmbedModal({
 
   const getHtmlCode = () => {
     if (chart.chartType === "hero_stat") {
-      const trendHtml = chart.data?.trend
-        ? `\n  <div style="display: inline-flex; align-items: center; gap: 4px; background-color: #ffffff; color: #1d5436; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 9999px; border: 1px solid #c7e7d4; margin-bottom: 12px;">\n    <span>↑</span> ${chart.data.trend.amount}\n  </div>`
+      // const trendHtml = chart.data?.trend
+      //   ? `\n  <div style="display: inline-flex; align-items: center; gap: 4px; background-color: #ffffff; color: #1d5436; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 9999px; border: 1px solid #c7e7d4; margin-bottom: 12px;">\n    <span>↑</span> ${chart.data.trend.amount}\n  </div>`
+      //   : "";
+
+      const trendHtml =
+        chart.data?.trend && chart.data.trend.amount
+          ? `\n  <div style="display: inline-flex; align-items: center; gap: 4px; background-color: #ffffff; 
+        color: ${
+          chart.data.trend.direction === "down"
+            ? "#b91c1c"
+            : chart.data.trend.direction === "up"
+              ? "#1d5436"
+              : "#4a4a55"
+        }; 
+         font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 9999px; 
+         border: 1px solid ${
+           chart.data.trend.direction === "down"
+             ? "#fca5a5"
+             : chart.data.trend.direction === "up"
+               ? "#c7e7d4"
+               : "#d7e3f0"
+         }; 
+         margin-bottom: 12px;">
+           ${
+             chart.data.trend.direction === "up"
+               ? "↑ "
+               : chart.data.trend.direction === "down"
+                 ? "↓ "
+                 : ""
+           }${chart.data.trend.amount}\n 
+         </div>`
+          : "";
+      const prefixHtml = chart.data?.prefix
+        ? `<span style="font-size: 28px; font-weight: bold; margin-right: 2px; color: #1e3a5f; align-baseline: middle;">${chart.data.prefix}</span>`
         : "";
-      const prefixHtml = chart.data?.prefix ? `<span style="font-size: 28px; font-weight: bold; margin-right: 2px; color: #1e3a5f; align-baseline: middle;">${chart.data.prefix}</span>` : "";
       const isSmallSuffix = chart.data?.suffixSize === "small";
-      const suffixHtml = chart.data?.suffix 
-        ? `<span style="${isSmallSuffix ? "font-size: 16px; font-weight: normal; font-family: sans-serif;" : "font-size: 36px; font-weight: 600;"} color: #1e3a5f; margin-left: 2px; align-baseline: middle;">${chart.data.suffix}</span>` 
+      const suffixHtml = chart.data?.suffix
+        ? `<span style="${isSmallSuffix ? "font-size: 16px; font-weight: normal; font-family: sans-serif;" : "font-size: 36px; font-weight: 600;"} color: #1e3a5f; margin-left: 2px; align-baseline: middle;">${chart.data.suffix}</span>`
         : "";
       return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px; max-width: 480px; background: linear-gradient(135deg, #eaf2fb 0%, #d8e6f5 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; box-sizing: border-box;">\n  <div style="font-family: Georgia, Cambria, 'Times New Roman', Times, serif; font-size: 56px; font-weight: bold; line-height: 1; color: #1e3a5f; margin: 0 0 8px; display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap;">\n    ${prefixHtml}${chart.data?.value}${suffixHtml}\n  </div>\n  <div style="font-size: 14px; color: #1a1a1a; font-weight: 500; line-height: 1.45; margin: 0 0 14px;">\n    ${chart.data?.label}\n  </div>${trendHtml}\n  <div style="border-top: 1px solid rgba(30, 58, 95, 0.15); padding-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #666; gap: 12px; text-align: left;">\n    <span style="max-width: 75%; line-height: 1.35;">${getCleanSourceLine()}</span>\n    <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank" style="color: #6C56E5; font-weight: 600; text-decoration: none; white-space: nowrap; margin-left: auto;">\n      View index\n    </a>\n  </div>\n</div>`;
     }
-    return `<a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank">\n  <img src="${baseUrl}/chart-images/${chartId}.png" alt="${chartName}. — AI Behavior Index" width="600" height="400" loading="lazy" style="max-width: 100%; height: auto; border: 1px solid #e5e5e5;" />\n</a>\n<p style="font-size: 12px; color: #666; margin-top: 4px;">\n  Source: <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank">AI Behavior Index</a>\n</p>`;
+    // return 
+    // `<a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" 
+    // target="_blank">\n  <img src="${baseUrl}/chart-images/${chartId}.png" 
+    // alt="${chartName}. — AI Behavior Index" width="600" height="400" loading="lazy"
+    //  style="max-width: 100%; height: auto; border: 1px solid #e5e5e5;" />\n</a>
+    // \n<p style="font-size: 12px; color: #666; margin-top: 4px;">\n 
+    //  Source: <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}"
+    //  target="_blank">
+    // AI Behavior Index</a>\n</p>`;
+
+    // Standard chart image return with 1200x750 and multi-line formatting for clean reading
+    return `<a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank">
+  <img 
+    src="${baseUrl}/chart-images/${chartId}.png" 
+    alt="${chartName}. — AI Behavior Index" 
+    width="1200" 
+    height="750" 
+    loading="lazy" 
+    style="max-width: 100%; height: auto; border: 1px solid #e5e5e5;" 
+  />
+</a>
+<p style="font-size: 12px; color: #666; margin-top: 4px;">
+  Source: <a href="${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId}" target="_blank">
+    AI Behavior Index
+  </a>
+</p>`;
   };
 
   const getMarkdownCode = () => {
     if (chart.chartType === "hero_stat") {
-      const trendText = chart.data?.trend ? `\n> **↑ ${chart.data.trend.amount}**\n>` : "";
+      // const trendText = chart.data?.trend ? `\n> **↑ ${chart.data.trend.amount}**\n>` : "";
+      const trendText =
+        chart.data?.trend && chart.data.trend.amount
+          ? `\n> **${
+              chart.data.trend.direction === "up"
+                ? "↑ "
+                : chart.data.trend.direction === "down"
+                  ? "↓ "
+                  : ""
+            }${chart.data.trend.amount}**\n>`
+          : "";
       const displayVal = `${chart.data?.prefix || ""}${chart.data?.value}${chart.data?.suffix || ""}`;
       return `> ### **${displayVal}**\n> **${chart.data?.label}**\n>${trendText}\n> *[${stripHtml(getCleanSourceLine())}](${baseUrl}/ai-behavior-index/${categorySlug}/${topicSlug}/#chart-${chartId})*`;
     }
@@ -140,15 +206,34 @@ export default function EmbedModal({
                     <div className="text-[13px] md:text-[14px] text-[#1a1a1a] font-medium leading-[1.45] mb-4">
                       {chart.data?.label}
                     </div>
-                    {chart.data?.trend && (
+                    {/* {chart.data?.trend && (
                       <div className="inline-flex items-center gap-1 bg-white text-[#1d5436] text-[11px] font-semibold px-2.5 py-1 rounded-full border border-[#c7e7d4] mb-4">
                         <span>↑</span> {chart.data.trend.amount}
                       </div>
+                    )}*/}
+                    {chart.data?.trend && chart.data.trend.amount && (
+                      <div
+                        className={`inline-flex items-center gap-1 bg-white text-[11px] font-semibold px-2.5 py-1 rounded-full border mb-4 ${
+                          chart.data.trend.direction === "down"
+                            ? "text-[#b91c1c] border-[#fca5a5]"
+                            : chart.data.trend.direction === "up"
+                              ? "text-[#1d5436] border-[#c7e7d4]"
+                              : "text-[#4a4a55] border-[#d7e3f0]"
+                        }`}
+                      >
+                        {chart.data.trend.direction === "up" && <span>↑</span>}
+                        {chart.data.trend.direction === "down" && (
+                          <span>↓</span>
+                        )}
+                        {chart.data.trend.amount}
+                      </div>
                     )}
                     <div className="border-t border-[#1e3a5f]/15 pt-3 flex justify-between items-center text-[10.5px] text-[#666] gap-3">
-                      <span 
+                      <span
                         className="text-left max-w-[75%] leading-[1.35] source-line-link"
-                        dangerouslySetInnerHTML={{ __html: getCleanSourceLine() }}
+                        dangerouslySetInnerHTML={{
+                          __html: getCleanSourceLine(),
+                        }}
                       />
                       <span className="text-[#6C56E5] font-semibold hover:underline whitespace-nowrap ml-auto">
                         View index
@@ -162,7 +247,8 @@ export default function EmbedModal({
                     className="max-h-[160px] w-auto object-contain"
                     onError={(e) => {
                       // fallback if not yet generated or error
-                      e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%23888'>Preview Loading...</text></svg>";
+                      e.currentTarget.src =
+                        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%23888'>Preview Loading...</text></svg>";
                     }}
                   />
                 )}

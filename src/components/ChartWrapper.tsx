@@ -99,9 +99,16 @@ export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperP
       <div className="hero-stat-content">
         <div className="hero-stat-value">{data.value}</div>
         <div className="hero-stat-label">{data.label}</div>
-        {data.trend && (
+        {/* {data.trend && (
           <div className="hero-stat-trend">
             {data.trend.direction === 'up' ? '↑' : '↓'} {data.trend.amount}
+          </div>
+        )} */}
+        {data.trend && data.trend.amount && (
+          <div className="hero-stat-trend">
+            {data.trend.direction === 'up' && '↑ '}
+            {data.trend.direction === 'down' && '↓ '}
+            {data.trend.amount}
           </div>
         )}
       </div>

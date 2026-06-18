@@ -238,9 +238,24 @@ export default function InteractiveChart({
         <div className="text-[14px] md:text-[19px] text-[#1a1a1a] mt-2 md:mt-3 font-medium leading-[1.4] max-w-[680px]">
           {data.label}
         </div>
-        {data.trend && (
+        {/* {data.trend && (
           <div className="inline-flex items-center gap-1 bg-white text-[#1d5436] text-[11px] md:text-[13px] font-semibold px-[10px] py-[4px] md:px-[14px] md:py-[6px] rounded-full border border-[#c7e7d4] mt-2.5 md:mt-4">
             <span className="font-bold">↑</span> {data.trend.amount}
+          </div>
+        )} */}
+        {data.trend && data.trend.amount && (
+          <div 
+            className={`inline-flex items-center gap-1 bg-white text-[11px] md:text-[13px] font-semibold px-[10px] py-[4px] md:px-[14px] md:py-[6px] rounded-full border mt-2.5 md:mt-4 ${
+              data.trend.direction === "down" 
+                ? "text-[#b91c1c] border-[#fca5a5]" 
+                : data.trend.direction === "up"
+                ? "text-[#1d5436] border-[#c7e7d4]" 
+                : "text-[#4a4a55] border-[#d7e3f0]" 
+            }`}
+          >
+            {data.trend.direction === "up" && <span className="font-bold">↑</span>}
+            {data.trend.direction === "down" && <span className="font-bold">↓</span>}
+            {data.trend.amount}
           </div>
         )}
       </>
