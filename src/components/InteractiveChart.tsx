@@ -409,14 +409,80 @@ export default function InteractiveChart({
     );
   } 
 
-  // 8. LIST BLOCK UI (Tailwinds / Headwinds)
+  // 8. LIST BLOCK UI (Tailwinds / Headwinds / Multi-columns)
   if (chartType === "list_block") {
+    // If the data contains multiple lists, render them side-by-side inside a standard card
+    if (data.lists && Array.isArray(data.lists)) {
+      return (
+        <div className="bg-white border border-[#e5e5e5] rounded-[10px] p-[16px_16px_14px] md:p-[24px_28px] relative transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] flex flex-col text-left h-full w-full">
+          {title && (
+            <h2 className="font-serif text-[17px] md:text-[21px] font-bold text-[#1a1a1a] mb-4 md:mb-5 leading-[1.25]">
+              {title}
+            </h2>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 flex-1">
+            {data.lists.map((list: any, listIdx: number) => {
+              const listThemeColor = list.borderColor || PALETTE[listIdx % PALETTE.length];
+              const listBgCol = list.color || getRgbaColor(listThemeColor, 0.05);
+              const listBorderCol = getRgbaColor(listThemeColor, 0.2);
+              const bullet = list.bulletType === "circle" ? "●" : "→";
+
+              return (
+                <div
+                  key={listIdx}
+                  style={{
+                    border: `1px solid ${listBorderCol}`,
+                    borderLeft: `3px solid ${listThemeColor}`,
+                    backgroundColor: listBgCol,
+                  }}
+                  className="rounded-lg p-5 md:p-6 flex flex-col overflow-y-auto"
+                >
+                  {list.title && (
+                    <h3
+                      style={{ color: list.titleColor || listThemeColor }}
+                      className="font-sans text-[11px] md:text-[12px] tracking-[0.08em] uppercase font-bold mb-4"
+                    >
+                      {list.title}
+                    </h3>
+                  )}
+                  <ul className="flex flex-col gap-3.5 m-0 p-0 list-none">
+                    {(list.items || []).map((item: any, idx: number) => (
+                      <li key={idx} className="flex items-start gap-3 text-[13px] md:text-[14px] text-[#333] leading-relaxed">
+                        <span 
+                          style={{ color: listThemeColor }} 
+                          className={`shrink-0 leading-none ${
+                            list.bulletType === "circle" 
+                              ? "text-[9px] mt-[5px]" 
+                              : "text-[14px] font-bold mt-[2px]"
+                          }`}
+                        >
+                          {bullet}
+                        </span>
+                        <div>
+                          {item.boldText && (
+                            <span className="font-bold text-[#1a1a1a] mr-1.5">{item.boldText}</span>
+                          )}
+                          <span dangerouslySetInnerHTML={{ __html: item.text }} />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // Default single list block fallback
     const items = data.items || [];
     const isLegacy = !data.borderColor;
     const themeColor = data.color || "#10B981"; // default green fallback
     const borderColor = isLegacy ? themeColor : (data.borderColor || "#10B981");
     const bgCol = isLegacy ? getRgbaColor(themeColor, 0.05) : (data.color || "#ecfdf5");
     const borderCol = isLegacy ? getRgbaColor(themeColor, 0.2) : getRgbaColor(borderColor, 0.2);
+    const bullet = data.bulletType === "circle" ? "●" : "→";
 
     return (
       <div
@@ -439,8 +505,15 @@ export default function InteractiveChart({
         <ul className="flex flex-col gap-3.5 m-0 p-0 list-none">
           {items.map((item: any, idx: number) => (
             <li key={idx} className="flex items-start gap-3 text-[13.5px] md:text-[15px] text-[#333] leading-relaxed">
-              <span style={{ color: borderColor }} className="font-bold mt-[2px] shrink-0 text-[15px] leading-none">
-                →
+              <span 
+                style={{ color: borderColor }} 
+                className={`shrink-0 leading-none ${
+                  data.bulletType === "circle" 
+                    ? "text-[9px] mt-[5px]" 
+                    : "text-[15px] font-bold mt-[2px]"
+                }`}
+              >
+                {bullet}
               </span>
               <div>
                 {item.boldText && (
@@ -490,6 +563,31 @@ export default function InteractiveChart({
           label: (tooltipItem: any) => {
             const datasetLabel = tooltipItem.dataset.label || "";
             const rawValue = tooltipItem.raw;
+
+            // Look up the original item to see if there is custom tooltip text
+            const item = (() => {
+              if (data?.data && Array.isArray(data.data)) {
+                return data.data[tooltipItem.dataIndex];
+              }
+              if (data?.series && Array.isArray(data.series)) {
+                const s = data.series[tooltipItem.datasetIndex];
+                const xVal = tooltipItem.label;
+                const match = s?.data?.find((dp: any) => String(dp.x) === String(xVal));
+                return match || s?.data?.[tooltipItem.dataIndex];
+              }
+              return null;
+            })();
+
+            if (item) {
+              const customVal = item.tooltip || item.hoverVal || item.tooltipVal;
+              if (customVal) {
+                if (chartType === "donut" && tooltipItem.label) {
+                  return `${tooltipItem.label}: ${customVal}`;
+                }
+                return datasetLabel ? `${datasetLabel}: ${customVal}` : customVal;
+              }
+            }
+
             const useRight = !!tooltipItem.dataset.yAxisID && tooltipItem.dataset.yAxisID === "y1";
             const prefix = useRight ? (data?.y1Prefix || "") : (data?.yPrefix || "");
             
@@ -558,7 +656,9 @@ export default function InteractiveChart({
           data: s.data.map((dp: any) => dp.y),
           backgroundColor: s.color || PALETTE[i % PALETTE.length],
           borderRadius: 4,
-          maxBarThickness: isMobile ? 24 : 40,
+          maxBarThickness: isMobile ? 24 : 45,
+          barPercentage: 0.92,
+          categoryPercentage: chartLabels.length < 4 ? 0.45 : 0.8,
           yAxisID: s.useRightAxis ? "y1" : "y",
         }))
       : [
@@ -569,7 +669,9 @@ export default function InteractiveChart({
                 (d: any, i: number) => d.color || PALETTE[i % PALETTE.length],
               ) || [],
             borderRadius: 4,
-            maxBarThickness: isMobile ? 50 : 80,
+            maxBarThickness: isMobile ? 40 : 60,
+            barPercentage: 0.8,
+            categoryPercentage: chartLabels.length < 4 ? 0.45 : 0.6,
           },
         ];
 
@@ -613,9 +715,6 @@ export default function InteractiveChart({
     );
   }
 
-  
-
-
   // 5. HORIZONTAL BAR CHART (Supports flat or grouped horizontal bars)
   if (chartType === "hbar") {
     const isGrouped = !!data.series;
@@ -628,7 +727,9 @@ export default function InteractiveChart({
           data: s.data.map((dp: any) => dp.y),
           backgroundColor: s.color || PALETTE[i % PALETTE.length],
           borderRadius: 4,
-          maxBarThickness: isMobile ? 14 : 20,
+          maxBarThickness: isMobile ? 24 : 40,
+          barPercentage: 0.92,
+          categoryPercentage: chartLabels.length < 4 ? 0.45 : 0.8,
         }))
       : [
           {
@@ -637,7 +738,9 @@ export default function InteractiveChart({
               data.data?.map((d: any, i: number) => d.color || PALETTE[0]) ||
               [],
             borderRadius: 4,
-            maxBarThickness: isMobile ? 22 : 28,
+            maxBarThickness: isMobile ? 28 : 36,
+            barPercentage: 0.8,
+            categoryPercentage: chartLabels.length < 4 ? 0.45 : 0.6,
           },
         ];
 
@@ -768,7 +871,8 @@ export default function InteractiveChart({
               pointBorderWidth: 2,
               pointRadius: 5,
               pointHoverRadius: 7,
-              tension: 0.3,
+              tension: data.stepped ? 0 : 0.3,
+              stepped: data.stepped || false,
               fill: true,
               spanGaps: false,
               yAxisID: s.useRightAxis ? "y1" : "y",

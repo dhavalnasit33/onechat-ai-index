@@ -117,6 +117,7 @@ function parseDataRows(chartType: string, data: unknown): DataRow[] {
       label: String(d.label || ""),
       value: String(d.value ?? ""),
       color: String(d.color || ""),
+      tooltip: String(d.tooltip || d.hoverVal || d.tooltipVal || ""),
     }));
   }
 
@@ -165,6 +166,10 @@ function buildChartDataPayload(
   y1Max: string = "",
   y1Prefix: string = "",
   y1Suffix: string = "",
+  stepped: boolean = false,
+  bulletType: string = "arrow",
+  isMultiList: boolean = false,
+  lists: any[] = [],
 ): unknown {
   if (chartType === "hero_stat") {
     return {
@@ -213,8 +218,23 @@ function buildChartDataPayload(
   }
 
   if (chartType === "list_block") {
+    if (isMultiList) {
+      return {
+        type: "list_block",
+        lists: lists.map((list) => ({
+          title: list.title || "",
+          color: list.color || "",
+          borderColor: list.borderColor || "",
+          bulletType: list.bulletType || "arrow",
+          items: (list.items || [])
+            .map((item: any) => ({ boldText: item.label || "", text: item.value || "" }))
+            .filter((i: any) => i.boldText.trim() !== "" || i.text.trim() !== ""),
+        })),
+      };
+    }
     return {
       type: "list_block",
+      bulletType: bulletType || "arrow",
       color: rows[0]?.color || "",
       borderColor: rows[0]?.eventColor || "",
       items: rows
@@ -250,6 +270,7 @@ function buildChartDataPayload(
         y1Max !== "" ? (y1Max === "auto" ? "auto" : Number(y1Max)) : undefined,
       y1Prefix: y1Prefix || undefined,
       y1Suffix: y1Suffix || undefined,
+      stepped: stepped || undefined,
       labels: labels.length > 0 ? labels : undefined,
       series: lineSeries.map((s) => ({
         name: s.name,
@@ -257,10 +278,10 @@ function buildChartDataPayload(
         useRightAxis: s.useRightAxis || undefined,
         data:
           chartType === "line"
-            ? s.dataPoints.map((dp) => ({ x: dp.x, y: Number(dp.y) || 0 }))
+            ? s.dataPoints.map((dp) => ({ x: dp.x, y: Number(dp.y) || 0, tooltip: dp.tooltip || undefined }))
             : labels.map((l) => {
                 const match = s.dataPoints.find((dp) => dp.x === l);
-                return { x: l, y: match ? Number(match.y) || 0 : 0 };
+                return { x: l, y: match ? Number(match.y) || 0 : 0, tooltip: match?.tooltip || undefined };
               }),
       })),
     };
@@ -283,6 +304,7 @@ function buildChartDataPayload(
       label: r.label,
       value: Number(r.value) || 0,
       color: r.color || undefined,
+      tooltip: r.tooltip || undefined,
     })),
   };
 }
@@ -326,6 +348,16 @@ export default function ChartEditorPage({
   const [tooltipValueSuffix, setTooltipValueSuffix] = useState("");
   const [stacked, setStacked] = useState(false);
   const [isGrouped, setIsGrouped] = useState(false);
+  const [stepped, setStepped] = useState(false);
+  const [bulletType, setBulletType] = useState<string>("arrow");
+  const [isMultiList, setIsMultiList] = useState(false);
+  const [lists, setLists] = useState<{
+    title: string;
+    color: string;
+    borderColor: string;
+    bulletType: "arrow" | "circle";
+    items: DataRow[];
+  }[]>([]);
   const [trendDirection, setTrendDirection] = useState<"up" | "down" | "">("");
   const [trendAmount, setTrendAmount] = useState("");
   const [heroPrefix, setHeroPrefix] = useState("");
@@ -449,6 +481,7 @@ export default function ChartEditorPage({
             setTooltipValueSuffix(c.data.tooltipValueSuffix || "");
             setStacked(!!c.data.stacked);
             setIsGrouped(!!c.data.series);
+            setStepped(!!c.data.stepped);
 
             if (c.chartType === "hero_stat") {
               setDataRows([
@@ -482,23 +515,60 @@ export default function ChartEditorPage({
                       ? (s.data as Record<string, unknown>[]).map((dp) => ({
                           x: String(dp.x || ""),
                           y: String(dp.y ?? ""),
+                          tooltip: String(dp.tooltip || dp.hoverVal || dp.tooltipVal || ""),
                         }))
-                      : [{ x: "", y: "" }],
+                      : [{ x: "", y: "", tooltip: "" }],
                   })),
                 );
               }
             } else {
-              // bar, donut
-              if (c.data.data && Array.isArray(c.data.data)) {
-                setDataRows(
-                  (c.data.data as Record<string, unknown>[]).map((d) => ({
-                    label: String(d.label || ""),
-                    value: String(d.value ?? ""),
-                    color: String(d.color || ""),
-                  })),
-                );
+              // bar, donut, list_block
+              if (c.chartType === "list_block") {
+                if (c.data.lists && Array.isArray(c.data.lists)) {
+                  setIsMultiList(true);
+                  setLists(
+                    c.data.lists.map((list: any) => ({
+                      title: list.title || "",
+                      color: list.color || "",
+                      borderColor: list.borderColor || "",
+                      bulletType: list.bulletType || "arrow",
+                      items: (list.items || []).map((item: any) => ({
+                        label: item.boldText || "",
+                        value: item.text || "",
+                        color: "",
+                      })),
+                    }))
+                  );
+                } else {
+                  setIsMultiList(false);
+                  setBulletType(c.data.bulletType || "arrow");
+                  if (c.data.items && Array.isArray(c.data.items)) {
+                    setDataRows(
+                      c.data.items.map((item: any) => ({
+                        label: item.boldText || "",
+                        value: item.text || "",
+                        color: c.data.color || "",
+                        eventColor: c.data.borderColor || "",
+                      }))
+                    );
+                  } else {
+                    setDataRows(parseDataRows(c.chartType, c.data));
+                  }
+                }
               } else {
-                setDataRows(parseDataRows(c.chartType, c.data));
+                // bar, donut
+                if (c.data.data && Array.isArray(c.data.data)) {
+                  setDataRows(
+                    (c.data.data as Record<string, unknown>[]).map((d) => ({
+                      label: String(d.label || ""),
+                      value: String(d.value ?? ""),
+                      color: String(d.color || ""),
+                      tooltip: String(d.tooltip || d.hoverVal || d.tooltipVal || ""),
+                    })),
+                  );
+                } else {
+                  setDataRows(parseDataRows(c.chartType, c.data));
+                }
               }
             }
           }
@@ -562,7 +632,7 @@ export default function ChartEditorPage({
   const updateDataPoint = (
     seriesIdx: number,
     ptIdx: number,
-    field: "x" | "y",
+    field: "x" | "y" | "tooltip",
     val: string,
   ) => {
     const updated = [...lineSeries];
@@ -594,6 +664,47 @@ export default function ChartEditorPage({
       [field]: field === "position" ? Number(val) : val,
     } as SourceRow;
     setSources(updated);
+  };
+
+  const addListBox = () => {
+    setLists([
+      ...lists,
+      {
+        title: "",
+        color: "#ecfdf5",
+        borderColor: "#10B981",
+        bulletType: "arrow",
+        items: [{ label: "", value: "" }],
+      },
+    ]);
+  };
+
+  const removeListBox = (listIdx: number) => {
+    setLists(lists.filter((_, idx) => idx !== listIdx));
+  };
+
+  const updateListBoxField = (listIdx: number, field: string, val: any) => {
+    const updated = [...lists];
+    updated[listIdx] = { ...updated[listIdx], [field]: val };
+    setLists(updated);
+  };
+
+  const addListItem = (listIdx: number) => {
+    const updated = [...lists];
+    updated[listIdx].items.push({ label: "", value: "" });
+    setLists(updated);
+  };
+
+  const removeListItem = (listIdx: number, itemIdx: number) => {
+    const updated = [...lists];
+    updated[listIdx].items = updated[listIdx].items.filter((_, idx) => idx !== itemIdx);
+    setLists(updated);
+  };
+
+  const updateListItemField = (listIdx: number, itemIdx: number, field: "label" | "value", val: string) => {
+    const updated = [...lists];
+    updated[listIdx].items[itemIdx] = { ...updated[listIdx].items[itemIdx], [field]: val };
+    setLists(updated);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -640,6 +751,10 @@ export default function ChartEditorPage({
         y1Max,
         y1Prefix,
         y1Suffix,
+        stepped,
+        bulletType,
+        isMultiList,
+        lists,
       ),
       sources: sources.map((s) => ({
         ...s,
@@ -989,6 +1104,36 @@ export default function ChartEditorPage({
                         checked={enableRightYAxis}
                         onCheckedChange={(checked: boolean) =>
                           setEnableRightYAxis(checked)
+                        }
+                      />
+                    </Card>
+                  </div>
+                )}
+
+                {chartType === "line" && (
+                  <div
+                    className="admin-form-group"
+                    style={{ marginBottom: 20 }}
+                  >
+                    <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "2px",
+                        }}
+                      >
+                        <div className="text-sm font-semibold text-[var(--admin-text)]">
+                          Stepped Line Chart
+                        </div>
+                        <div className="text-xs text-[var(--admin-text-muted)] font-normal font-sans">
+                          Connect data points using vertical and horizontal segments (timeline/milestones layout)
+                        </div>
+                      </div>
+                      <Switch
+                        checked={stepped}
+                        onCheckedChange={(checked: boolean) =>
+                          setStepped(checked)
                         }
                       />
                     </Card>
@@ -1646,211 +1791,433 @@ export default function ChartEditorPage({
             ) : chartType === "list_block" ? (
               /* List Block Editor */
               <div>
-                <div className="admin-form-row" style={{ marginBottom: 24 }}>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">Background Color</label>
-                    <div
-                      style={{ display: "flex", gap: 6, alignItems: "center" }}
-                    >
-                      <input
-                        type="color"
-                        value={dataRows[0]?.color || "#ecfdf5"}
-                        onChange={(e) =>
-                          updateDataRow(0, "color", e.target.value)
-                        }
-                        style={{
-                          width: 34,
-                          height: 34,
-                          padding: 0,
-                          border: "none",
-                          borderRadius: 4,
-                          cursor: "pointer",
-                        }}
-                      />
-                      <Input
-                        value={dataRows[0]?.color || ""}
-                        onChange={(e) =>
-                          updateDataRow(0, "color", e.target.value)
-                        }
-                        placeholder="e.g. #ecfdf5 (Light Green)"
-                        style={{ flex: 1 }}
-                      />
+                <div className="admin-form-group" style={{ marginBottom: 20 }}>
+                  <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>Multi-Column Layout</h4>
+                      <p className="text-xs text-[var(--admin-text-dim)]" style={{ margin: "4px 0 0 0" }}>
+                        Enable to render multiple side-by-side list cards instead of a single box.
+                      </p>
                     </div>
-                  </div>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">
-                      Accent Border & Arrow Color
-                    </label>
-                    <div
-                      style={{ display: "flex", gap: 6, alignItems: "center" }}
-                    >
-                      <input
-                        type="color"
-                        value={dataRows[0]?.eventColor || "#10B981"}
-                        onChange={(e) =>
-                          updateDataRow(0, "eventColor", e.target.value)
-                        }
-                        style={{
-                          width: 34,
-                          height: 34,
-                          padding: 0,
-                          border: "none",
-                          borderRadius: 4,
-                          cursor: "pointer",
-                        }}
-                      />
-                      <Input
-                        value={dataRows[0]?.eventColor || ""}
-                        onChange={(e) =>
-                          updateDataRow(0, "eventColor", e.target.value)
-                        }
-                        placeholder="e.g. #10B981 (Dark Green)"
-                        style={{ flex: 1 }}
-                      />
-                    </div>
-                  </div>
+                    <Switch
+                      checked={isMultiList}
+                      onCheckedChange={(checked: boolean) => setIsMultiList(checked)}
+                    />
+                  </Card>
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 16,
-                  }}
-                >
-                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>
-                    List Items
-                  </h4>
-                  <button
-                    type="button"
-                    className="admin-add-row-btn"
-                    onClick={addDataRow}
-                    style={{
-                      width: "auto",
-                      display: "inline-flex",
-                      padding: "6px 12px",
-                    }}
-                  >
-                    <PlusCircle size={14} /> Add Item
-                  </button>
-                </div>
+                {!isMultiList ? (
+                  /* Single Column List Editor */
+                  <div>
+                    <div className="admin-form-row" style={{ marginBottom: 16 }}>
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">Bullet Style</label>
+                        <Select value={bulletType} onValueChange={(val) => setBulletType(val)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select bullet type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="arrow">Arrow (→)</SelectItem>
+                            <SelectItem value="circle">Circle (●)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                {dataRows.map((row, i) => {
-                  const isCollapsed = !!collapsedRows[i];
-                  return (
-                    <div
-                      key={i}
-                      className="admin-drag-card"
-                      draggable
-                      onDragStart={(e) => {
-                        setDraggedRowIndex(i);
-                        e.dataTransfer.effectAllowed = "move";
-                      }}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (draggedRowIndex === null || draggedRowIndex === i)
-                          return;
-                        const updated = [...dataRows];
-                        const [draggedItem] = updated.splice(
-                          draggedRowIndex,
-                          1,
-                        );
-                        updated.splice(i, 0, draggedItem);
-                        setDataRows(updated);
-                        setDraggedRowIndex(null);
-                      }}
-                    >
-                      <div className="admin-drag-card-header">
-                        <div className="admin-drag-card-title">
-                          <GripVertical
-                            size={16}
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">Accent / Border Color</label>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                          <input
+                            type="color"
+                            value={dataRows[0]?.eventColor || "#10B981"}
+                            onChange={(e) => {
+                              const updated = [...dataRows];
+                              updated.forEach((row, idx) => {
+                                updated[idx] = { ...row, eventColor: e.target.value };
+                              });
+                              setDataRows(updated);
+                            }}
                             style={{
-                              cursor: "grab",
-                              color: "var(--admin-text-dim)",
+                              width: 34,
+                              height: 34,
+                              padding: 0,
+                              border: "none",
+                              borderRadius: 4,
+                              cursor: "pointer",
                             }}
                           />
-                          <span>
-                            {row.label
-                              ? row.label.substring(0, 50) +
-                                (row.label.length > 50 ? "..." : "")
-                              : `List Item #${i + 1}`}
-                          </span>
-                        </div>
-                        <div className="admin-drag-card-actions">
-                          {dataRows.length > 1 && (
-                            <button
-                              type="button"
-                              className="admin-btn-icon"
-                              onClick={() => removeDataRow(i)}
-                              style={{
-                                color: "var(--admin-danger)",
-                                border: "1px solid rgba(239, 68, 68, 0.2)",
-                                borderRadius: "50%",
-                                padding: 5,
-                              }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            className="admin-btn-icon"
-                            onClick={() =>
-                              setCollapsedRows((prev) => ({
-                                ...prev,
-                                [i]: !prev[i],
-                              }))
-                            }
-                          >
-                            {isCollapsed ? (
-                              <ChevronDown size={16} />
-                            ) : (
-                              <ChevronUp size={16} />
-                            )}
-                          </button>
+                          <Input
+                            value={dataRows[0]?.eventColor || ""}
+                            onChange={(e) => {
+                              const updated = [...dataRows];
+                              updated.forEach((row, idx) => {
+                                updated[idx] = { ...row, eventColor: e.target.value };
+                              });
+                              setDataRows(updated);
+                            }}
+                            placeholder="#hex"
+                            style={{ flex: 1 }}
+                          />
                         </div>
                       </div>
 
-                      <div
-                        className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}
-                      >
-                        <div
-                          className="admin-form-group"
-                          style={{ marginBottom: 12 }}
-                        >
-                          <label className="admin-form-label">
-                            Bold Text (Prefix)
-                          </label>
-                          <Input
-                            placeholder="e.g. Claude paid subs more than doubled"
-                            value={row.label || ""}
-                            onChange={(e) =>
-                              updateDataRow(i, "label", e.target.value)
-                            }
+                      <div className="admin-form-group">
+                        <label className="admin-form-label">Background Color</label>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                          <input
+                            type="color"
+                            value={dataRows[0]?.color || "#ecfdf5"}
+                            onChange={(e) => {
+                              const updated = [...dataRows];
+                              updated.forEach((row, idx) => {
+                                updated[idx] = { ...row, color: e.target.value };
+                              });
+                              setDataRows(updated);
+                            }}
+                            style={{
+                              width: 34,
+                              height: 34,
+                              padding: 0,
+                              border: "none",
+                              borderRadius: 4,
+                              cursor: "pointer",
+                            }}
                           />
-                        </div>
-                        <div
-                          className="admin-form-group"
-                          style={{ marginBottom: 0 }}
-                        >
-                          <label className="admin-form-label">
-                            Regular Text
-                          </label>
-                          <Textarea
-                            placeholder="e.g. January-February 2026, per Anthropic confirmation..."
-                            value={row.value || ""}
-                            onChange={(e) =>
-                              updateDataRow(i, "value", e.target.value)
-                            }
-                            rows={2}
+                          <Input
+                            value={dataRows[0]?.color || ""}
+                            onChange={(e) => {
+                              const updated = [...dataRows];
+                              updated.forEach((row, idx) => {
+                                updated[idx] = { ...row, color: e.target.value };
+                              });
+                              setDataRows(updated);
+                            }}
+                            placeholder="#hex"
+                            style={{ flex: 1 }}
                           />
                         </div>
                       </div>
                     </div>
-                  );
-                })}
+
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 16,
+                      }}
+                    >
+                      <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>List Items</h4>
+                      <button
+                        type="button"
+                        className="admin-add-row-btn"
+                        onClick={addDataRow}
+                        style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}
+                      >
+                        <PlusCircle size={14} /> Add Item
+                      </button>
+                    </div>
+
+                    {dataRows.map((row, i) => {
+                      const isCollapsed = !!collapsedRows[i];
+                      return (
+                        <div
+                          key={i}
+                          className="admin-drag-card"
+                          draggable
+                          onDragStart={(e) => {
+                            setDraggedRowIndex(i);
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            if (draggedRowIndex === null || draggedRowIndex === i) return;
+                            const updated = [...dataRows];
+                            const [draggedItem] = updated.splice(draggedRowIndex, 1);
+                            updated.splice(i, 0, draggedItem);
+                            setDataRows(updated);
+                            setDraggedRowIndex(null);
+                          }}
+                          style={{
+                            borderLeft: `4px solid ${dataRows[0]?.eventColor || "#10B981"}`,
+                          }}
+                        >
+                          <div className="admin-drag-card-header">
+                            <div className="admin-drag-card-title">
+                              <GripVertical
+                                size={16}
+                                style={{ cursor: "grab", color: "var(--admin-text-dim)" }}
+                              />
+                              <span>
+                                {row.label
+                                  ? `${row.label.substring(0, 30)} - ${row.value?.substring(0, 30)}`
+                                  : `Item #${i + 1}`}
+                              </span>
+                            </div>
+                            <div className="admin-drag-card-actions">
+                              {dataRows.length > 1 && (
+                                <button
+                                  type="button"
+                                  className="admin-btn-icon"
+                                  onClick={() => removeDataRow(i)}
+                                  style={{
+                                    color: "var(--admin-danger)",
+                                    border: "1px solid rgba(239, 68, 68, 0.2)",
+                                    borderRadius: "50%",
+                                    padding: 5,
+                                  }}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="admin-btn-icon"
+                                onClick={() =>
+                                  setCollapsedRows((prev) => ({ ...prev, [i]: !prev[i] }))
+                                }
+                              >
+                                {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className={`admin-drag-card-content ${isCollapsed ? "collapsed" : ""}`}>
+                            <div className="admin-form-group" style={{ marginBottom: 12 }}>
+                              <label className="admin-form-label">Bold Text (Prefix)</label>
+                              <Input
+                                placeholder="e.g. Claude paid subs more than doubled"
+                                value={row.label || ""}
+                                onChange={(e) => updateDataRow(i, "label", e.target.value)}
+                              />
+                            </div>
+                            <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                              <label className="admin-form-label">Regular Text</label>
+                              <Textarea
+                                placeholder="e.g. January-February 2026, per Anthropic confirmation..."
+                                value={row.value || ""}
+                                onChange={(e) => updateDataRow(i, "value", e.target.value)}
+                                rows={2}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Multi Column Lists Manager */
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 16,
+                      }}
+                    >
+                      <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>List Columns / Boxes</h4>
+                      <button
+                        type="button"
+                        className="admin-add-row-btn"
+                        onClick={addListBox}
+                        style={{ width: "auto", display: "inline-flex", padding: "6px 12px" }}
+                      >
+                        <PlusCircle size={14} /> Add List Box
+                      </button>
+                    </div>
+
+                    {lists.length === 0 ? (
+                      <div className="text-center py-6 text-xs text-[var(--admin-text-dim)] border border-dashed rounded-lg">
+                        No list boxes added. Click "Add List Box" to create one.
+                      </div>
+                    ) : (
+                      lists.map((list, listIdx) => (
+                        <div
+                          key={listIdx}
+                          className="admin-drag-card"
+                          style={{
+                            borderLeft: `4px solid ${list.borderColor || "#10B981"}`,
+                            marginBottom: 20,
+                            padding: 16,
+                          }}
+                        >
+                          <div className="admin-drag-card-header" style={{ marginBottom: 12 }}>
+                            <div className="admin-drag-card-title">
+                              <span style={{ fontWeight: 700 }}>
+                                Box #{listIdx + 1}: {list.title || "Untitled List"}
+                              </span>
+                            </div>
+                            <div className="admin-drag-card-actions">
+                              <button
+                                type="button"
+                                className="admin-btn-icon"
+                                onClick={() => removeListBox(listIdx)}
+                                style={{
+                                  color: "var(--admin-danger)",
+                                  border: "1px solid rgba(239, 68, 68, 0.2)",
+                                  borderRadius: "50%",
+                                  padding: 5,
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="admin-form-row" style={{ marginBottom: 12 }}>
+                            <div className="admin-form-group">
+                              <label className="admin-form-label">Box Title</label>
+                              <Input
+                                placeholder="e.g. TAILWINDS"
+                                value={list.title}
+                                onChange={(e) => updateListBoxField(listIdx, "title", e.target.value)}
+                              />
+                            </div>
+                            <div className="admin-form-group">
+                              <label className="admin-form-label">Bullet Style</label>
+                              <Select
+                                value={list.bulletType || "arrow"}
+                                onValueChange={(val) => updateListBoxField(listIdx, "bulletType", val)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Bullet type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="arrow">Arrow (→)</SelectItem>
+                                  <SelectItem value="circle">Circle (●)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          <div className="admin-form-row" style={{ marginBottom: 16 }}>
+                            <div className="admin-form-group">
+                              <label className="admin-form-label">Accent / Border Color</label>
+                              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                <input
+                                  type="color"
+                                  value={list.borderColor || "#10B981"}
+                                  onChange={(e) => updateListBoxField(listIdx, "borderColor", e.target.value)}
+                                  style={{
+                                    width: 34,
+                                    height: 34,
+                                    padding: 0,
+                                    border: "none",
+                                    borderRadius: 4,
+                                    cursor: "pointer",
+                                  }}
+                                />
+                                <Input
+                                  value={list.borderColor || ""}
+                                  onChange={(e) => updateListBoxField(listIdx, "borderColor", e.target.value)}
+                                  placeholder="#hex"
+                                  style={{ flex: 1 }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="admin-form-group">
+                              <label className="admin-form-label">Background Color</label>
+                              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                <input
+                                  type="color"
+                                  value={list.color || "#ecfdf5"}
+                                  onChange={(e) => updateListBoxField(listIdx, "color", e.target.value)}
+                                  style={{
+                                    width: 34,
+                                    height: 34,
+                                    padding: 0,
+                                    border: "none",
+                                    borderRadius: 4,
+                                    cursor: "pointer",
+                                  }}
+                                />
+                                <Input
+                                  value={list.color || ""}
+                                  onChange={(e) => updateListBoxField(listIdx, "color", e.target.value)}
+                                  placeholder="#hex"
+                                  style={{ flex: 1 }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              marginBottom: 8,
+                            }}
+                          >
+                            <label className="admin-form-label" style={{ marginBottom: 0, fontWeight: 600 }}>
+                              Items
+                            </label>
+                            <button
+                              type="button"
+                              className="admin-add-row-btn"
+                              onClick={() => addListItem(listIdx)}
+                              style={{
+                                width: "auto",
+                                display: "inline-flex",
+                                padding: "4px 8px",
+                                fontSize: 11,
+                              }}
+                            >
+                              <PlusCircle size={12} /> Add Item
+                            </button>
+                          </div>
+
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {list.items.map((item, itemIdx) => (
+                              <div
+                                key={itemIdx}
+                                style={{
+                                  display: "flex",
+                                  gap: 8,
+                                  alignItems: "flex-start",
+                                  borderBottom: "1px solid rgba(0,0,0,0.05)",
+                                  paddingBottom: 8,
+                                }}
+                              >
+                                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                                  <Input
+                                    placeholder="Bold Text (Prefix)"
+                                    value={item.label || ""}
+                                    onChange={(e) => updateListItemField(listIdx, itemIdx, "label", e.target.value)}
+                                  />
+                                  <Textarea
+                                    placeholder="Regular Text"
+                                    value={item.value || ""}
+                                    onChange={(e) => updateListItemField(listIdx, itemIdx, "value", e.target.value)}
+                                    rows={2}
+                                  />
+                                </div>
+                                {list.items.length > 1 && (
+                                  <button
+                                    type="button"
+                                    className="admin-btn-icon"
+                                    onClick={() => removeListItem(listIdx, itemIdx)}
+                                    style={{
+                                      color: "var(--admin-danger)",
+                                      border: "1px solid rgba(239, 68, 68, 0.2)",
+                                      borderRadius: "50%",
+                                      padding: 5,
+                                      marginTop: 8,
+                                    }}
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             ) : chartType === "line" ||
               ((chartType === "vbar" || chartType === "hbar") && isGrouped) ? (
@@ -2087,17 +2454,18 @@ export default function ChartEditorPage({
                             gap: 6,
                           }}
                         >
-                          {series.dataPoints.map((pt, ptIdx) => (
+                           {series.dataPoints.map((pt, ptIdx) => (
                             <div
                               key={ptIdx}
                               style={{
                                 display: "flex",
                                 gap: 8,
                                 alignItems: "center",
+                                marginBottom: 4,
                               }}
                             >
                               <Input
-                                placeholder="X value (e.g. 2022)"
+                                placeholder="X (e.g. 2022)"
                                 value={pt.x}
                                 onChange={(e) =>
                                   updateDataPoint(
@@ -2110,7 +2478,7 @@ export default function ChartEditorPage({
                                 style={{ flex: 1 }}
                               />
                               <Input
-                                placeholder="Y value (e.g. 45)"
+                                placeholder="Y (e.g. 45)"
                                 type="number"
                                 value={pt.y}
                                 onChange={(e) =>
@@ -2122,6 +2490,19 @@ export default function ChartEditorPage({
                                   )
                                 }
                                 style={{ flex: 1 }}
+                              />
+                              <Input
+                                placeholder="Hover text (optional)"
+                                value={pt.tooltip || ""}
+                                onChange={(e) =>
+                                  updateDataPoint(
+                                    seriesIdx,
+                                    ptIdx,
+                                    "tooltip",
+                                    e.target.value,
+                                  )
+                                }
+                                style={{ flex: 1.5 }}
                               />
                               <button
                                 type="button"
@@ -2312,6 +2693,16 @@ export default function ChartEditorPage({
                           ) : (
                             <div className="hidden md:block"></div>
                           )}
+                        </div>
+                        <div className="admin-form-group" style={{ marginTop: 12, marginBottom: 0 }}>
+                          <label className="admin-form-label">Custom Hover / Tooltip Text (Optional)</label>
+                          <Input
+                            placeholder="e.g. ~15-30 min / day, Effectively unlimited, or 250-500M / week (midpoint 375M)"
+                            value={row.tooltip || ""}
+                            onChange={(e) =>
+                              updateDataRow(i, "tooltip", e.target.value)
+                            }
+                          />
                         </div>
                       </div>
                     </div>
@@ -2574,6 +2965,16 @@ export default function ChartEditorPage({
                     tooltipValueSuffix,
                     xMax,
                     stacked,
+                    enableRightYAxis,
+                    y1Label,
+                    y1Format,
+                    y1Max,
+                    y1Prefix,
+                    y1Suffix,
+                    stepped,
+                    bulletType,
+                    isMultiList,
+                    lists,
                   ),
                 );
               }}

@@ -190,6 +190,7 @@ export interface DataRow {
   color?: string;
   eventColor?: string;
   source?: string;
+  tooltip?: string;
 }
 
 export interface SourceRow {
@@ -203,6 +204,6 @@ export interface SourceRow {
 export interface LineSeries {
   name: string;
   color: string;
-  dataPoints: { x: string; y: string }[];
+  dataPoints: { x: string; y: string; tooltip?: string }[];
   useRightAxis?: boolean;
 }
