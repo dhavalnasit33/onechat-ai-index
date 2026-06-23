@@ -230,7 +230,7 @@ export default function TopicChartsClient({
                     Source:{" "}
                   </span>
                   <span
-                    className="source-line-link"
+                    className="rich-text-content"
                     dangerouslySetInnerHTML={{
                       __html: getDisplaySource(chart.sourceLine).replace(
                         /^source:\s*/i,

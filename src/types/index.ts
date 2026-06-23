@@ -204,6 +204,6 @@ export interface SourceRow {
 export interface LineSeries {
   name: string;
   color: string;
-  dataPoints: { x: string; y: string; tooltip?: string }[];
+  dataPoints: { x: string; y: string; tooltip?: string; segmentStyle?: "solid" | "dashed" | "dotted" }[];
   useRightAxis?: boolean;
 }

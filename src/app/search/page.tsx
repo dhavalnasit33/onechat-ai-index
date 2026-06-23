@@ -318,7 +318,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                             >
                               Source:{" "}
                               <span
-                                className="font-semibold source-line-link"
+                                className="font-semibold rich-text-content "
                                 dangerouslySetInnerHTML={{
                                   __html: (() => {
                                     let raw =

@@ -278,10 +278,20 @@ function buildChartDataPayload(
         useRightAxis: s.useRightAxis || undefined,
         data:
           chartType === "line"
-            ? s.dataPoints.map((dp) => ({ x: dp.x, y: Number(dp.y) || 0, tooltip: dp.tooltip || undefined }))
+            ? s.dataPoints.map((dp) => ({
+                x: dp.x,
+                y: Number(dp.y) || 0,
+                tooltip: dp.tooltip || undefined,
+                segmentStyle: dp.segmentStyle || undefined,
+              }))
             : labels.map((l) => {
                 const match = s.dataPoints.find((dp) => dp.x === l);
-                return { x: l, y: match ? Number(match.y) || 0 : 0, tooltip: match?.tooltip || undefined };
+                return {
+                  x: l,
+                  y: match ? Number(match.y) || 0 : 0,
+                  tooltip: match?.tooltip || undefined,
+                  segmentStyle: match?.segmentStyle || undefined,
+                };
               }),
       })),
     };
@@ -516,8 +526,9 @@ export default function ChartEditorPage({
                           x: String(dp.x || ""),
                           y: String(dp.y ?? ""),
                           tooltip: String(dp.tooltip || dp.hoverVal || dp.tooltipVal || ""),
+                          segmentStyle: (dp.segmentStyle as "solid" | "dashed" | "dotted") || "solid",
                         }))
-                      : [{ x: "", y: "", tooltip: "" }],
+                      : [{ x: "", y: "", tooltip: "", segmentStyle: "solid" }],
                   })),
                 );
               }
@@ -601,7 +612,7 @@ export default function ChartEditorPage({
       {
         name: `Series ${lineSeries.length + 1}`,
         color: "#088DFF",
-        dataPoints: [{ x: "", y: "" }],
+        dataPoints: [{ x: "", y: "", tooltip: "", segmentStyle: "solid" }],
       },
     ]);
   const removeLineSeries = (i: number) =>
@@ -619,7 +630,7 @@ export default function ChartEditorPage({
   // Line series data points management
   const addDataPoint = (seriesIdx: number) => {
     const updated = [...lineSeries];
-    updated[seriesIdx].dataPoints.push({ x: "", y: "" });
+    updated[seriesIdx].dataPoints.push({ x: "", y: "", tooltip: "", segmentStyle: "solid" });
     setLineSeries(updated);
   };
   const removeDataPoint = (seriesIdx: number, ptIdx: number) => {
@@ -632,8 +643,8 @@ export default function ChartEditorPage({
   const updateDataPoint = (
     seriesIdx: number,
     ptIdx: number,
-    field: "x" | "y" | "tooltip",
-    val: string,
+    field: "x" | "y" | "tooltip" | "segmentStyle",
+    val: any,
   ) => {
     const updated = [...lineSeries];
     updated[seriesIdx].dataPoints[ptIdx] = {
@@ -2504,6 +2515,28 @@ export default function ChartEditorPage({
                                 }
                                 style={{ flex: 1.5 }}
                               />
+                              {chartType === "line" && (
+                                <Select
+                                  value={pt.segmentStyle || "solid"}
+                                  onValueChange={(val) =>
+                                    updateDataPoint(
+                                      seriesIdx,
+                                      ptIdx,
+                                      "segmentStyle",
+                                      val,
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger style={{ width: 100, flexShrink: 0 }}>
+                                    <SelectValue placeholder="Style" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="solid">Solid</SelectItem>
+                                    <SelectItem value="dashed">Dashed</SelectItem>
+                                    <SelectItem value="dotted">Dotted</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
                               <button
                                 type="button"
                                 className="admin-btn-icon"

@@ -325,7 +325,7 @@ export default function CategoryPageClient({
                         >
                           Source:{" "}
                           <span
-                            className="font-semibold source-line-link"
+                            className="font-semibold rich-text-content "
                             dangerouslySetInnerHTML={{
                               __html: (() => {
                                 let raw =

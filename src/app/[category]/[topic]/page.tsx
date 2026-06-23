@@ -253,7 +253,7 @@ export default async function TopicPage({ params }: PageProps) {
           </h2>
           {topic.aboutData ? (
             <div
-              className="text-[12px] md:text-[14px] text-[#555] mb-1.5 md:mb-2 font-sans [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_a]:text-[#6C56E5] [&_a]:no-underline [&_a]:hover:underline [&_a]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_li]:mb-1"
+              className="text-[12px] md:text-[14px] text-[#555] mb-1.5 md:mb-2 font-sans rich-text-content [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_li]:mb-1"
               dangerouslySetInnerHTML={{ __html: topic.aboutData }}
             />
           ) : (

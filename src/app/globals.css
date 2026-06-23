@@ -275,3 +275,14 @@ a:focus-visible {
   color: #4c3aae;
   text-decoration: underline;
 }
+
+/* Rich Text / Editor links styling and hover underlines */
+.rich-text-content a {
+  color: #6C56E5;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s ease-in-out;
+}
+.rich-text-content a:hover {
+  text-decoration: underline !important;
+}

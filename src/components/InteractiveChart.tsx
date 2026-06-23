@@ -389,7 +389,7 @@ export default function InteractiveChart({
             >
               {isHTML ? (
                 <div
-                  className="font-serif text-[13.5px] md:text-[15px] text-[#555] leading-relaxed [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_a]:text-[#6C56E5] [&_a]:no-underline [&_a]:hover:underline [&_a]:font-medium [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_li]:mb-1 [&_blockquote]:pl-4 [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:italic [&_pre]:border-l-[var(--code-border-color)] [&_pre]:border-l-4 [&_pre]:bg-gray-100/80 [&_pre]:p-3 [&_pre]:rounded-r [&_pre]:font-mono [&_pre]:text-xs [&_pre]:my-3 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:font-mono"
+                  className="font-serif text-[13.5px] md:text-[15px] text-[#555] leading-relaxed rich-text-content [&_p]:mb-2.5 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_li]:mb-1 [&_blockquote]:pl-4 [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:italic [&_pre]:border-l-[var(--code-border-color)] [&_pre]:border-l-4 [&_pre]:bg-gray-100/80 [&_pre]:p-3 [&_pre]:rounded-r [&_pre]:font-mono [&_pre]:text-xs [&_pre]:my-3 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:font-mono"
                   dangerouslySetInnerHTML={{ __html: quote.text }}
                 />
               ) : (
@@ -462,7 +462,7 @@ export default function InteractiveChart({
                           {item.boldText && (
                             <span className="font-bold text-[#1a1a1a] mr-1.5">{item.boldText}</span>
                           )}
-                          <span dangerouslySetInnerHTML={{ __html: item.text }} />
+                          <span className="rich-text-content" dangerouslySetInnerHTML={{ __html: item.text }} />
                         </div>
                       </li>
                     ))}
@@ -519,7 +519,7 @@ export default function InteractiveChart({
                 {item.boldText && (
                   <span className="font-bold text-[#1a1a1a] mr-1.5">{item.boldText}</span>
                 )}
-                <span dangerouslySetInnerHTML={{ __html: item.text }} />
+                <span className="rich-text-content" dangerouslySetInnerHTML={{ __html: item.text }} />
               </div>
             </li>
           ))}
@@ -863,6 +863,10 @@ export default function InteractiveChart({
                 const match = s.data?.find((p: any) => String(p.x) === String(xVal));
                 return match && match.y !== undefined && match.y !== "" ? Number(match.y) : null;
               }),
+              segmentStyles: filteredLabels.map((xVal: any) => {
+                const match = s.data?.find((p: any) => String(p.x) === String(xVal));
+                return match ? match.segmentStyle || "solid" : "solid";
+              }),
               borderColor: s.color || PALETTE[i % PALETTE.length],
               backgroundColor: `${s.color || PALETTE[i % PALETTE.length]}14`,
               borderWidth: 3,
@@ -876,6 +880,22 @@ export default function InteractiveChart({
               fill: true,
               spanGaps: false,
               yAxisID: s.useRightAxis ? "y1" : "y",
+              segment: {
+                borderDash: (ctx: any) => {
+                  const index = ctx.p0DataIndex !== undefined ? ctx.p0DataIndex : ctx.p0?.$context?.index;
+                  if (index === undefined) return undefined;
+                  const xVal = filteredLabels[index];
+                  const match = s.data?.find((p: any) => String(p.x) === String(xVal));
+                  const targetStyle = match ? match.segmentStyle : "solid";
+                  if (targetStyle === "dashed") {
+                    return [6, 6];
+                  }
+                  if (targetStyle === "dotted") {
+                    return [2, 3];
+                  }
+                  return undefined;
+                },
+              },
             })) || [],
         }}
         options={{
