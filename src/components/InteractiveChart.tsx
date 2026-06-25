@@ -4,6 +4,7 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
+  LogarithmicScale,
   PointElement,
   LineElement,
   BarElement,
@@ -19,22 +20,25 @@ import { Bar, Line, Doughnut } from "react-chartjs-2";
 const watermarkPlugin = {
   id: "watermark",
   afterDraw: (chart: any) => {
-    const ctx = chart.ctx;
-    const width = chart.width;
-    const height = chart.height;
+    const { ctx, width, height, chartArea } = chart;
+
+    // CRITICAL FIX: Do not draw the watermark until the chart grid is fully initialized.
+    // This stops it from snapping to the far right edge of the card.
+    if (!chartArea) return;
 
     ctx.save();
 
     const isRenderMode =
       typeof window !== "undefined" &&
       window.location.pathname.includes("/chart-render/");
+
     const font1 = isRenderMode
       ? "bold 14px sans-serif"
       : "bold 11px sans-serif";
     const font2 = isRenderMode
       ? "normal 11px sans-serif"
       : "normal 9px sans-serif";
-    const spacing = isRenderMode ? 15 : 12;
+    const spacing = isRenderMode ? 16 : 14;
 
     const textAI = "AI";
     const textBehaviorIndex = " Behavior Index";
@@ -42,30 +46,35 @@ const watermarkPlugin = {
 
     ctx.textBaseline = "bottom";
 
-    // Line 1 Font
+    // Calculate Widths
     ctx.font = font1;
     const aiWidth = ctx.measureText(textAI).width;
     const behaviorWidth = ctx.measureText(textBehaviorIndex).width;
     const totalLine1Width = aiWidth + behaviorWidth;
 
-    // Line 2 Font
     ctx.font = font2;
     const urlWidth = ctx.measureText(textURL).width;
 
-    const marginRight = 16;
-    const marginBottom = 8;
+    // --- HORIZONTAL ALIGNMENT ---
+    // Because of the 'if (!chartArea) return;' check above, this is guaranteed
+    // to align perfectly flush with the rightmost line of the chart grid (Images 3 & 4).
+    const alignX = chartArea.right;
 
-    // Y positions
+    // --- VERTICAL ALIGNMENT ---
+    // Push it safely above the HTML dashed line.
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    const marginBottom = isRenderMode ? 36 : isMobile ? 42 : 30;
+
     const yLine2 = height - marginBottom;
     const yLine1 = yLine2 - spacing;
 
     // Line 2 (URL)
-    const xLine2Start = width - marginRight - urlWidth;
+    const xLine2Start = alignX - urlWidth;
     ctx.fillStyle = "#888888";
     ctx.fillText(textURL, xLine2Start, yLine2);
 
     // Line 1 (AI Behavior Index)
-    const xLine1Start = width - marginRight - totalLine1Width;
+    const xLine1Start = alignX - totalLine1Width;
     ctx.font = font1;
     ctx.fillStyle = "#6C56E5";
     ctx.fillText(textAI, xLine1Start, yLine1);
@@ -80,6 +89,7 @@ const watermarkPlugin = {
 ChartJS.register(
   CategoryScale,
   LinearScale,
+  LogarithmicScale,
   PointElement,
   LineElement,
   BarElement,
@@ -99,7 +109,7 @@ import { ChartData } from "@/src/types";
 export default function InteractiveChart({
   chartType,
   data,
-  title
+  title,
 }: {
   chartId: string;
   chartType: ChartData["chartType"];
@@ -116,12 +126,34 @@ export default function InteractiveChart({
     typeof window !== "undefined" &&
     window.location.pathname.includes("/chart-render/");
 
+  const formatLabel = (lbl: any) => {
+    if (typeof lbl === "string") {
+      const clean = lbl.replace(/\\n/g, "\n");
+      if (clean.includes("\n")) {
+        return clean.split("\n");
+      }
+      if (clean.length > 20 && clean.includes(" ")) {
+        const words = clean.split(" ");
+        const mid = Math.ceil(words.length / 2);
+        return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+      }
+    }
+    return lbl;
+  };
+
   if (!mounted) {
-    return <div className="min-h-[220px] flex items-center justify-center text-xs text-gray-400 font-sans">Loading chart...</div>;
+    return (
+      <div className="min-h-[220px] flex items-center justify-center text-xs text-gray-400 font-sans">
+        Loading chart...
+      </div>
+    );
   }
 
-  const getValueAxisOptions = (axisLabel?: string, isRight: boolean = false) => {
-    const prefix = isRight ? (data?.y1Prefix || "") : (data?.yPrefix || "");
+  const getValueAxisOptions = (
+    axisLabel?: string,
+    isRight: boolean = false,
+  ) => {
+    const prefix = isRight ? data?.y1Prefix || "" : data?.yPrefix || "";
     let suffix = "%";
     const ySuffixVal = isRight ? data?.y1Suffix : data?.ySuffix;
     const yFormatVal = isRight ? data?.y1Format : data?.yFormat;
@@ -191,13 +223,79 @@ export default function InteractiveChart({
       }
     }
 
+    let minVal: number | undefined = undefined;
+    if (data?.useLogarithmicScale) {
+      let datasetMin = Infinity;
+      if (data?.data && Array.isArray(data.data)) {
+        data.data.forEach((d: any) => {
+          const v = Number(d.value);
+          if (!isNaN(v) && v > 0 && v < datasetMin) datasetMin = v;
+        });
+      }
+      if (data?.series && Array.isArray(data.series)) {
+        data.series.forEach((s: any) => {
+          if (s.data && Array.isArray(s.data)) {
+            s.data.forEach((dp: any) => {
+              const v = Number(dp.y ?? dp.value);
+              if (!isNaN(v) && v > 0 && v < datasetMin) datasetMin = v;
+            });
+          }
+        });
+      }
+      if (datasetMin !== Infinity) {
+        const power = Math.floor(Math.log10(datasetMin));
+        minVal = Math.pow(10, power);
+      }
+    }
+
+    const customLabels = isRight ? data?.customValueLabels1 : data?.customValueLabels;
+
     return {
-      beginAtZero: true,
+      type: data?.useLogarithmicScale ? ("logarithmic" as const) : ("linear" as const),
+      beginAtZero: data?.useLogarithmicScale ? false : true,
+      min: minVal,
       max: maxVal,
       ticks: {
         callback: (value: any) => {
+          if (customLabels && Array.isArray(customLabels)) {
+            const index = Math.round(value);
+            
+            // Check if the dataset has values that require 1-indexing (i.e. > customLabels.length - 1)
+            const hasValuesAboveLengthMinusOne = (() => {
+              if (data.data && Array.isArray(data.data)) {
+                return data.data.some((d: any) => Number(d.value) > customLabels.length - 1);
+              }
+              if (data.series && Array.isArray(data.series)) {
+                return data.series.some((s: any) =>
+                  s.data && Array.isArray(s.data) && s.data.some((dp: any) => Number(dp.y ?? dp.value) > customLabels.length - 1)
+                );
+              }
+              return false;
+            })();
+
+            if (hasValuesAboveLengthMinusOne) {
+              if (index === 0) return "";
+              return customLabels[index - 1] ?? "";
+            } else {
+              return customLabels[index] ?? "";
+            }
+          }
+          if (data?.useLogarithmicScale) {
+            const log10 = Math.log10(value);
+            if (Math.abs(log10 - Math.round(log10)) > 1e-9) {
+              return "";
+            }
+            if (value >= 1e6) return `${prefix}${value / 1e6}M${suffix}`;
+            if (value >= 1e3) return `${prefix}${value / 1e3}k${suffix}`;
+            return `${prefix}${value}${suffix}`;
+          }
+          if (typeof value === "number" && value >= 1e3) {
+            if (value >= 1e6) return `${prefix}${value / 1e6}M${suffix}`;
+            return `${prefix}${value / 1e3}k${suffix}`;
+          }
           return `${prefix}${value}${suffix}`;
         },
+        stepSize: customLabels && Array.isArray(customLabels) ? 1 : undefined,
         font: { size: isRenderMode ? 14 : isMobile ? 10 : 12 },
       },
       grid: { color: "#f0f0f0" },
@@ -244,17 +342,21 @@ export default function InteractiveChart({
           </div>
         )} */}
         {data.trend && data.trend.amount && (
-          <div 
+          <div
             className={`inline-flex items-center gap-1 bg-white text-[11px] md:text-[13px] font-semibold px-[10px] py-[4px] md:px-[14px] md:py-[6px] rounded-full border mt-2.5 md:mt-4 ${
-              data.trend.direction === "down" 
-                ? "text-[#b91c1c] border-[#fca5a5]" 
+              data.trend.direction === "down"
+                ? "text-[#b91c1c] border-[#fca5a5]"
                 : data.trend.direction === "up"
-                ? "text-[#1d5436] border-[#c7e7d4]" 
-                : "text-[#4a4a55] border-[#d7e3f0]" 
+                  ? "text-[#1d5436] border-[#c7e7d4]"
+                  : "text-[#4a4a55] border-[#d7e3f0]"
             }`}
           >
-            {data.trend.direction === "up" && <span className="font-bold">↑</span>}
-            {data.trend.direction === "down" && <span className="font-bold">↓</span>}
+            {data.trend.direction === "up" && (
+              <span className="font-bold">↑</span>
+            )}
+            {data.trend.direction === "down" && (
+              <span className="font-bold">↓</span>
+            )}
             {data.trend.amount}
           </div>
         )}
@@ -348,14 +450,18 @@ export default function InteractiveChart({
   // 3. TEXT BLOCK / HYPE CALLOUT UI (Image 3)
   if (chartType === "text_block") {
     const quotes = data.quotes || [
-      { text: data.text || data.value || "", author: data.author || "" }
+      { text: data.text || data.value || "", author: data.author || "" },
     ];
 
     const isLegacy = !data.borderColor;
     const themeColor = data.color || "#E5483F";
-    const borderColor = isLegacy ? themeColor : (data.borderColor || "#E5483F");
-    const bgCol = isLegacy ? getRgbaColor(themeColor, 0.05) : (data.color || "#fdf2f2");
-    const borderCol = isLegacy ? getRgbaColor(themeColor, 0.2) : getRgbaColor(borderColor, 0.2);
+    const borderColor = isLegacy ? themeColor : data.borderColor || "#E5483F";
+    const bgCol = isLegacy
+      ? getRgbaColor(themeColor, 0.05)
+      : data.color || "#fdf2f2";
+    const borderCol = isLegacy
+      ? getRgbaColor(themeColor, 0.2)
+      : getRgbaColor(borderColor, 0.2);
 
     return (
       <div
@@ -407,7 +513,7 @@ export default function InteractiveChart({
         })}
       </div>
     );
-  } 
+  }
 
   // 8. LIST BLOCK UI (Tailwinds / Headwinds / Multi-columns)
   if (chartType === "list_block") {
@@ -422,8 +528,10 @@ export default function InteractiveChart({
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 flex-1">
             {data.lists.map((list: any, listIdx: number) => {
-              const listThemeColor = list.borderColor || PALETTE[listIdx % PALETTE.length];
-              const listBgCol = list.color || getRgbaColor(listThemeColor, 0.05);
+              const listThemeColor =
+                list.borderColor || PALETTE[listIdx % PALETTE.length];
+              const listBgCol =
+                list.color || getRgbaColor(listThemeColor, 0.05);
               const listBorderCol = getRgbaColor(listThemeColor, 0.2);
               const bullet = list.bulletType === "circle" ? "●" : "→";
 
@@ -447,12 +555,15 @@ export default function InteractiveChart({
                   )}
                   <ul className="flex flex-col gap-3.5 m-0 p-0 list-none">
                     {(list.items || []).map((item: any, idx: number) => (
-                      <li key={idx} className="flex items-start gap-3 text-[13px] md:text-[14px] text-[#333] leading-relaxed">
-                        <span 
-                          style={{ color: listThemeColor }} 
+                      <li
+                        key={idx}
+                        className="flex items-start gap-3 text-[13px] md:text-[14px] text-[#333] leading-relaxed"
+                      >
+                        <span
+                          style={{ color: listThemeColor }}
                           className={`shrink-0 leading-none ${
-                            list.bulletType === "circle" 
-                              ? "text-[9px] mt-[5px]" 
+                            list.bulletType === "circle"
+                              ? "text-[9px] mt-[5px]"
                               : "text-[14px] font-bold mt-[2px]"
                           }`}
                         >
@@ -460,9 +571,14 @@ export default function InteractiveChart({
                         </span>
                         <div>
                           {item.boldText && (
-                            <span className="font-bold text-[#1a1a1a] mr-1.5">{item.boldText}</span>
+                            <span className="font-bold text-[#1a1a1a] mr-1.5">
+                              {item.boldText}
+                            </span>
                           )}
-                          <span className="rich-text-content" dangerouslySetInnerHTML={{ __html: item.text }} />
+                          <span
+                            className="rich-text-content"
+                            dangerouslySetInnerHTML={{ __html: item.text }}
+                          />
                         </div>
                       </li>
                     ))}
@@ -479,9 +595,13 @@ export default function InteractiveChart({
     const items = data.items || [];
     const isLegacy = !data.borderColor;
     const themeColor = data.color || "#10B981"; // default green fallback
-    const borderColor = isLegacy ? themeColor : (data.borderColor || "#10B981");
-    const bgCol = isLegacy ? getRgbaColor(themeColor, 0.05) : (data.color || "#ecfdf5");
-    const borderCol = isLegacy ? getRgbaColor(themeColor, 0.2) : getRgbaColor(borderColor, 0.2);
+    const borderColor = isLegacy ? themeColor : data.borderColor || "#10B981";
+    const bgCol = isLegacy
+      ? getRgbaColor(themeColor, 0.05)
+      : data.color || "#ecfdf5";
+    const borderCol = isLegacy
+      ? getRgbaColor(themeColor, 0.2)
+      : getRgbaColor(borderColor, 0.2);
     const bullet = data.bulletType === "circle" ? "●" : "→";
 
     return (
@@ -504,12 +624,15 @@ export default function InteractiveChart({
         )}
         <ul className="flex flex-col gap-3.5 m-0 p-0 list-none">
           {items.map((item: any, idx: number) => (
-            <li key={idx} className="flex items-start gap-3 text-[13.5px] md:text-[15px] text-[#333] leading-relaxed">
-              <span 
-                style={{ color: borderColor }} 
+            <li
+              key={idx}
+              className="flex items-start gap-3 text-[13.5px] md:text-[15px] text-[#333] leading-relaxed"
+            >
+              <span
+                style={{ color: borderColor }}
                 className={`shrink-0 leading-none ${
-                  data.bulletType === "circle" 
-                    ? "text-[9px] mt-[5px]" 
+                  data.bulletType === "circle"
+                    ? "text-[9px] mt-[5px]"
                     : "text-[15px] font-bold mt-[2px]"
                 }`}
               >
@@ -517,9 +640,14 @@ export default function InteractiveChart({
               </span>
               <div>
                 {item.boldText && (
-                  <span className="font-bold text-[#1a1a1a] mr-1.5">{item.boldText}</span>
+                  <span className="font-bold text-[#1a1a1a] mr-1.5">
+                    {item.boldText}
+                  </span>
                 )}
-                <span className="rich-text-content" dangerouslySetInnerHTML={{ __html: item.text }} />
+                <span
+                  className="rich-text-content"
+                  dangerouslySetInnerHTML={{ __html: item.text }}
+                />
               </div>
             </li>
           ))}
@@ -535,7 +663,7 @@ export default function InteractiveChart({
     animation: { duration: 700, easing: "easeOutQuart" },
     layout: {
       padding: {
-        bottom: 45,
+        bottom: isMobile ? 75 : 70,
       },
     },
     plugins: {
@@ -572,25 +700,34 @@ export default function InteractiveChart({
               if (data?.series && Array.isArray(data.series)) {
                 const s = data.series[tooltipItem.datasetIndex];
                 const xVal = tooltipItem.label;
-                const match = s?.data?.find((dp: any) => String(dp.x) === String(xVal));
+                const match = s?.data?.find(
+                  (dp: any) => String(dp.x) === String(xVal),
+                );
                 return match || s?.data?.[tooltipItem.dataIndex];
               }
               return null;
             })();
 
             if (item) {
-              const customVal = item.tooltip || item.hoverVal || item.tooltipVal;
+              const customVal =
+                item.tooltip || item.hoverVal || item.tooltipVal;
               if (customVal) {
                 if (chartType === "donut" && tooltipItem.label) {
                   return `${tooltipItem.label}: ${customVal}`;
                 }
-                return datasetLabel ? `${datasetLabel}: ${customVal}` : customVal;
+                return datasetLabel
+                  ? `${datasetLabel}: ${customVal}`
+                  : customVal;
               }
             }
 
-            const useRight = !!tooltipItem.dataset.yAxisID && tooltipItem.dataset.yAxisID === "y1";
-            const prefix = useRight ? (data?.y1Prefix || "") : (data?.yPrefix || "");
-            
+            const useRight =
+              !!tooltipItem.dataset.yAxisID &&
+              tooltipItem.dataset.yAxisID === "y1";
+            const prefix = useRight
+              ? data?.y1Prefix || ""
+              : data?.yPrefix || "";
+
             let suffix = "%";
             const ySuffixVal = useRight ? data?.y1Suffix : data?.ySuffix;
             const yFormatVal = useRight ? data?.y1Format : data?.yFormat;
@@ -608,38 +745,43 @@ export default function InteractiveChart({
                 }
                 if (data?.series && Array.isArray(data.series)) {
                   return data.series.some((s: any) =>
-                    s.data?.some((dp: any) => (dp.y ?? dp.value ?? 0) > 100)
+                    s.data?.some((dp: any) => (dp.y ?? dp.value ?? 0) > 100),
                   );
                 }
                 return false;
               })();
               if (hasLargeValues) suffix = "";
             }
-            
+
             let formattedValue = `${prefix}${rawValue}${suffix}`;
-            
-            if (data?.tooltipValueSuffix !== undefined && data.tooltipValueSuffix !== null) {
+
+            if (
+              data?.tooltipValueSuffix !== undefined &&
+              data.tooltipValueSuffix !== null
+            ) {
               if (data.tooltipValueSuffix !== "") {
                 formattedValue += ` ${data.tooltipValueSuffix}`;
               }
             } else {
               const titleLower = (data?.title || "").toLowerCase();
               const yLabelLower = (data?.yLabel || "").toLowerCase();
-              const isUsAdoption = 
+              const isUsAdoption =
                 (yLabelLower.includes("adopt") && titleLower.includes("us")) ||
                 (titleLower.includes("adopt") && titleLower.includes("us"));
-                
+
               if (isUsAdoption) {
                 formattedValue += " US adoption";
               }
             }
-            
+
             if (chartType === "donut" && tooltipItem.label) {
               return `${tooltipItem.label}: ${formattedValue}`;
             }
-            return datasetLabel ? `${datasetLabel}: ${formattedValue}` : formattedValue;
-          }
-        }
+            return datasetLabel
+              ? `${datasetLabel}: ${formattedValue}`
+              : formattedValue;
+          },
+        },
       },
     },
   };
@@ -647,9 +789,9 @@ export default function InteractiveChart({
   // 4. VERTICAL BAR CHART (Supports flat or grouped bars side-by-side)
   if (chartType === "vbar") {
     const isGrouped = !!data.series;
-    const chartLabels = isGrouped
-      ? data.labels
-      : data.data?.map((d: any) => d.label) || [];
+    const chartLabels = (
+      isGrouped ? data.labels : data.data?.map((d: any) => d.label) || []
+    ).map(formatLabel);
     const datasets = isGrouped
       ? data.series.map((s: any, i: number) => ({
           label: s.name,
@@ -695,15 +837,17 @@ export default function InteractiveChart({
               ...getValueAxisOptions(data?.yLabel),
               stacked: !!data.stacked,
             },
-            ...(data.enableRightYAxis ? {
-              y1: {
-                type: "linear" as const,
-                ...getValueAxisOptions(data?.y1Label, true),
-                position: "right" as const,
-                grid: { drawOnChartArea: false },
-                stacked: !!data.stacked,
-              }
-            } : {}),
+            ...(data.enableRightYAxis
+              ? {
+                  y1: {
+                    ...getValueAxisOptions(data?.y1Label, true),
+                    type: "linear" as const,
+                    position: "right" as const,
+                    grid: { drawOnChartArea: false },
+                    stacked: !!data.stacked,
+                  },
+                }
+              : {}),
             x: {
               grid: { display: false },
               ticks: { font: { size: isRenderMode ? 14 : isMobile ? 10 : 12 } },
@@ -718,9 +862,9 @@ export default function InteractiveChart({
   // 5. HORIZONTAL BAR CHART (Supports flat or grouped horizontal bars)
   if (chartType === "hbar") {
     const isGrouped = !!data.series;
-    const chartLabels = isGrouped
-      ? data.labels
-      : data.data?.map((d: any) => d.label) || [];
+    const chartLabels = (
+      isGrouped ? data.labels : data.data?.map((d: any) => d.label) || []
+    ).map(formatLabel);
     const datasets = isGrouped
       ? data.series.map((s: any, i: number) => ({
           label: s.name,
@@ -827,7 +971,9 @@ export default function InteractiveChart({
         return [...data.labels];
       }
       const allXValues = Array.from(
-        new Set(data.series?.flatMap((s: any) => s.data?.map((p: any) => p.x)) || [])
+        new Set(
+          data.series?.flatMap((s: any) => s.data?.map((p: any) => p.x)) || [],
+        ),
       ).filter(Boolean);
 
       const isAllNumeric = allXValues.every((x: any) => !isNaN(Number(x)));
@@ -855,16 +1001,22 @@ export default function InteractiveChart({
     return (
       <Line
         data={{
-          labels: filteredLabels,
+          labels: filteredLabels.map(formatLabel),
           datasets:
             data.series?.map((s: any, i: number) => ({
               label: s.name,
               data: filteredLabels.map((xVal: any) => {
-                const match = s.data?.find((p: any) => String(p.x) === String(xVal));
-                return match && match.y !== undefined && match.y !== "" ? Number(match.y) : null;
+                const match = s.data?.find(
+                  (p: any) => String(p.x) === String(xVal),
+                );
+                return match && match.y !== undefined && match.y !== ""
+                  ? Number(match.y)
+                  : null;
               }),
               segmentStyles: filteredLabels.map((xVal: any) => {
-                const match = s.data?.find((p: any) => String(p.x) === String(xVal));
+                const match = s.data?.find(
+                  (p: any) => String(p.x) === String(xVal),
+                );
                 return match ? match.segmentStyle || "solid" : "solid";
               }),
               borderColor: s.color || PALETTE[i % PALETTE.length],
@@ -882,10 +1034,15 @@ export default function InteractiveChart({
               yAxisID: s.useRightAxis ? "y1" : "y",
               segment: {
                 borderDash: (ctx: any) => {
-                  const index = ctx.p0DataIndex !== undefined ? ctx.p0DataIndex : ctx.p0?.$context?.index;
+                  const index =
+                    ctx.p0DataIndex !== undefined
+                      ? ctx.p0DataIndex
+                      : ctx.p0?.$context?.index;
                   if (index === undefined) return undefined;
                   const xVal = filteredLabels[index];
-                  const match = s.data?.find((p: any) => String(p.x) === String(xVal));
+                  const match = s.data?.find(
+                    (p: any) => String(p.x) === String(xVal),
+                  );
                   const targetStyle = match ? match.segmentStyle : "solid";
                   if (targetStyle === "dashed") {
                     return [6, 6];
@@ -917,14 +1074,16 @@ export default function InteractiveChart({
           },
           scales: {
             y: getValueAxisOptions(data?.yLabel),
-            ...(data.enableRightYAxis ? {
-              y1: {
-                type: "linear" as const,
-                ...getValueAxisOptions(data?.y1Label, true),
-                position: "right" as const,
-                grid: { drawOnChartArea: false },
-              }
-            } : {}),
+            ...(data.enableRightYAxis
+              ? {
+                  y1: {
+                    ...getValueAxisOptions(data?.y1Label, true),
+                    type: "linear" as const,
+                    position: "right" as const,
+                    grid: { drawOnChartArea: false },
+                  },
+                }
+              : {}),
             x: {
               grid: { display: false },
               ticks: { font: { size: isRenderMode ? 14 : isMobile ? 10 : 12 } },

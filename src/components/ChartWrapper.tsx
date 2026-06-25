@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,58 +13,76 @@ import {
   Tooltip,
   Legend,
   Filler,
-  ChartOptions
-} from 'chart.js';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+  ChartOptions,
+} from "chart.js";
+import { Bar, Line, Doughnut } from "react-chartjs-2";
 
 const watermarkPlugin = {
-  id: 'watermark',
+  id: "watermark",
   afterDraw: (chart: any) => {
-    const ctx = chart.ctx;
-    const width = chart.width;
-    const height = chart.height;
+    const { ctx, width, height, chartArea } = chart;
+
+    // CRITICAL FIX: Do not draw the watermark until the chart grid is fully initialized.
+    // This stops it from snapping to the far right edge of the card.
+    if (!chartArea) return;
 
     ctx.save();
-    
-    const textAI = 'AI';
-    const textBehaviorIndex = ' Behavior Index';
-    const textURL = 'aibehaviorindex.org';
 
-    ctx.textBaseline = 'bottom';
+    const isRenderMode =
+      typeof window !== "undefined" &&
+      window.location.pathname.includes("/chart-render/");
 
-    // Line 1 Font
-    ctx.font = 'bold 11px sans-serif';
+    const font1 = isRenderMode
+      ? "bold 14px sans-serif"
+      : "bold 11px sans-serif";
+    const font2 = isRenderMode
+      ? "normal 11px sans-serif"
+      : "normal 9px sans-serif";
+    const spacing = isRenderMode ? 16 : 14;
+
+    const textAI = "AI";
+    const textBehaviorIndex = " Behavior Index";
+    const textURL = "aibehaviorindex.org";
+
+    ctx.textBaseline = "bottom";
+
+    // Calculate Widths
+    ctx.font = font1;
     const aiWidth = ctx.measureText(textAI).width;
     const behaviorWidth = ctx.measureText(textBehaviorIndex).width;
     const totalLine1Width = aiWidth + behaviorWidth;
-    
-    // Line 2 Font
-    ctx.font = 'normal 9px sans-serif';
+
+    ctx.font = font2;
     const urlWidth = ctx.measureText(textURL).width;
 
-    const marginRight = 16;
-    const marginBottom = 8;
-    
-    // Y positions
+    // --- HORIZONTAL ALIGNMENT ---
+    // Because of the 'if (!chartArea) return;' check above, this is guaranteed
+    // to align perfectly flush with the rightmost line of the chart grid (Images 3 & 4).
+    const alignX = chartArea.right;
+
+    // --- VERTICAL ALIGNMENT ---
+    // Push it safely above the HTML dashed line.
+    const marginBottom = isRenderMode ? 36 : 30;
+
     const yLine2 = height - marginBottom;
-    const yLine1 = yLine2 - 12;
+    const yLine1 = yLine2 - spacing;
 
     // Line 2 (URL)
-    const xLine2Start = width - marginRight - urlWidth;
-    ctx.fillStyle = '#888888';
+    const xLine2Start = alignX - urlWidth;
+    ctx.fillStyle = "#888888";
     ctx.fillText(textURL, xLine2Start, yLine2);
 
     // Line 1 (AI Behavior Index)
-    const xLine1Start = width - marginRight - totalLine1Width;
-    ctx.font = 'bold 11px sans-serif';
-    ctx.fillStyle = '#6C56E5';
+    const xLine1Start = alignX - totalLine1Width;
+    ctx.font = font1;
+    ctx.fillStyle = "#6C56E5";
     ctx.fillText(textAI, xLine1Start, yLine1);
-    
-    ctx.fillStyle = '#1e3a5f';
+
+    ctx.fillStyle = "#1e3a5f";
     ctx.fillText(textBehaviorIndex, xLine1Start + aiWidth, yLine1);
 
     ctx.restore();
-  }
+  },
 };
 
 // Register ChartJS components
@@ -79,21 +97,25 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
-  watermarkPlugin
+  watermarkPlugin,
 );
 
-const PALETTE = ['#088DFF', '#E5483F', '#F39323', '#0468BD', '#A8A8B0'];
+const PALETTE = ["#088DFF", "#E5483F", "#F39323", "#0468BD", "#A8A8B0"];
 
-import { ChartData } from '@/src/types';
+import { ChartData } from "@/src/types";
 
 interface ChartWrapperProps {
   chartId: string;
-  chartType: ChartData['chartType'];
+  chartType: ChartData["chartType"];
   data: any;
 }
 
-export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperProps) {
-  if (chartType === 'hero_stat') {
+export default function ChartWrapper({
+  chartId,
+  chartType,
+  data,
+}: ChartWrapperProps) {
+  if (chartType === "hero_stat") {
     // Render hero_stat as plain HTML for better performance
     return (
       <div className="hero-stat-content">
@@ -106,8 +128,8 @@ export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperP
         )} */}
         {data.trend && data.trend.amount && (
           <div className="hero-stat-trend">
-            {data.trend.direction === 'up' && '↑ '}
-            {data.trend.direction === 'down' && '↓ '}
+            {data.trend.direction === "up" && "↑ "}
+            {data.trend.direction === "down" && "↓ "}
             {data.trend.amount}
           </div>
         )}
@@ -117,41 +139,43 @@ export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperP
 
   // Format tick labels
   const formatAxisValue = (value: any, format?: string) => {
-    if (format === 'percentage') {
-      return value + '%';
+    if (format === "percentage") {
+      return value + "%";
     }
     return value;
   };
 
-  if (chartType === 'vbar') {
+  if (chartType === "vbar") {
     const chartData = {
       labels: data.data.map((d: any) => d.label),
       datasets: [
         {
-          label: data.yLabel || '',
+          label: data.yLabel || "",
           data: data.data.map((d: any) => d.value),
-          backgroundColor: data.data.map((d: any, i: number) => d.color || PALETTE[i % PALETTE.length]),
+          backgroundColor: data.data.map(
+            (d: any, i: number) => d.color || PALETTE[i % PALETTE.length],
+          ),
           borderRadius: 4,
           maxBarThickness: 80,
         },
       ],
     };
 
-    const options: ChartOptions<'bar'> = {
+    const options: ChartOptions<"bar"> = {
       responsive: true,
       maintainAspectRatio: false,
       layout: {
         padding: {
-          bottom: 45
-        }
+          bottom: 45,
+        },
       },
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: (context) => ` ${context.parsed.y}%`
-          }
-        }
+            label: (context) => ` ${context.parsed.y}%`,
+          },
+        },
       },
       scales: {
         y: {
@@ -170,36 +194,38 @@ export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperP
     return <Bar data={chartData} options={options} />;
   }
 
-  if (chartType === 'hbar') {
+  if (chartType === "hbar") {
     const chartData = {
       labels: data.data.map((d: any) => d.label),
       datasets: [
         {
-          label: data.xLabel || '',
+          label: data.xLabel || "",
           data: data.data.map((d: any) => d.value),
-          backgroundColor: data.data.map((d: any, i: number) => d.color || PALETTE[i % PALETTE.length]),
+          backgroundColor: data.data.map(
+            (d: any, i: number) => d.color || PALETTE[i % PALETTE.length],
+          ),
           borderRadius: 4,
           maxBarThickness: 28,
         },
       ],
     };
 
-    const options: ChartOptions<'bar'> = {
-      indexAxis: 'y',
+    const options: ChartOptions<"bar"> = {
+      indexAxis: "y",
       responsive: true,
       maintainAspectRatio: false,
       layout: {
         padding: {
-          bottom: 45
-        }
+          bottom: 45,
+        },
       },
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: (context) => ` ${context.parsed.x}%`
-          }
-        }
+            label: (context) => ` ${context.parsed.x}%`,
+          },
+        },
       },
       scales: {
         x: {
@@ -218,14 +244,16 @@ export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperP
     return <Bar data={chartData} options={options} />;
   }
 
-  if (chartType === 'line') {
+  if (chartType === "line") {
     const chartData = {
       labels: data.series[0].data.map((p: any) => p.x),
       datasets: data.series.map((s: any, i: number) => ({
         label: s.name,
         data: s.data.map((p: any) => p.y),
         borderColor: s.color || PALETTE[i % PALETTE.length],
-        backgroundColor: s.color ? `${s.color}14` : `${PALETTE[i % PALETTE.length]}14`, // Add alpha for fill
+        backgroundColor: s.color
+          ? `${s.color}14`
+          : `${PALETTE[i % PALETTE.length]}14`, // Add alpha for fill
         borderWidth: 3,
         pointBackgroundColor: s.color || PALETTE[i % PALETTE.length],
         tension: 0.3,
@@ -233,25 +261,26 @@ export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperP
       })),
     };
 
-    const options: ChartOptions<'line'> = {
+    const options: ChartOptions<"line"> = {
       responsive: true,
       maintainAspectRatio: false,
       interaction: {
-        mode: 'index',
+        mode: "index",
         intersect: false,
       },
       layout: {
         padding: {
-          bottom: 45
-        }
+          bottom: 45,
+        },
       },
       plugins: {
-        legend: { position: 'bottom' },
+        legend: { position: "bottom" },
         tooltip: {
           callbacks: {
-            label: (context) => ` ${context.dataset.label}: ${context.parsed.y}%`
-          }
-        }
+            label: (context) =>
+              ` ${context.dataset.label}: ${context.parsed.y}%`,
+          },
+        },
       },
       scales: {
         y: {
@@ -270,35 +299,37 @@ export default function ChartWrapper({ chartId, chartType, data }: ChartWrapperP
     return <Line data={chartData} options={options} />;
   }
 
-  if (chartType === 'donut') {
+  if (chartType === "donut") {
     const chartData = {
       labels: data.data.map((d: any) => d.label),
       datasets: [
         {
           data: data.data.map((d: any) => d.value),
-          backgroundColor: data.data.map((d: any, i: number) => d.color || PALETTE[i % PALETTE.length]),
+          backgroundColor: data.data.map(
+            (d: any, i: number) => d.color || PALETTE[i % PALETTE.length],
+          ),
           borderWidth: 2,
-          borderColor: '#fff',
+          borderColor: "#fff",
         },
       ],
     };
 
-    const options: ChartOptions<'doughnut'> = {
+    const options: ChartOptions<"doughnut"> = {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '62%',
+      cutout: "62%",
       layout: {
         padding: {
-          bottom: 45
-        }
+          bottom: 45,
+        },
       },
       plugins: {
-        legend: { position: 'right' },
+        legend: { position: "right" },
         tooltip: {
           callbacks: {
-            label: (context) => ` ${context.label}: ${context.parsed}%`
-          }
-        }
+            label: (context) => ` ${context.label}: ${context.parsed}%`,
+          },
+        },
       },
     };
 

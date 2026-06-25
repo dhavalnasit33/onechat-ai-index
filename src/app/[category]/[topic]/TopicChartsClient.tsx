@@ -158,7 +158,7 @@ export default function TopicChartsClient({
                         </>
                       )}
                     </div>
-                    <h2 className="font-serif text-[15.5px] md:text-[20px] font-bold text-[#1a1a1a] leading-[1.25] flex items-center gap-2">
+                    <h2 className="font-serif text-[15.5px] md:text-[18px] font-bold text-[#1a1a1a] leading-[1.25] flex items-center gap-2">
                       {/* {chart.icon && (
                         <span className="text-lg md:text-xl flex items-center justify-center w-5 h-5 md:w-6 md:h-6 shrink-0">
                           {chart.icon.startsWith("http") ||
@@ -207,11 +207,11 @@ export default function TopicChartsClient({
                           ? "h-[220px] md:h-[320px]"
                           : chart.chartType === "hbar"
                             ? "h-[280px] md:h-[320px]"
-                            : "h-[250px] md:h-[350px]"
+                            : "h-[320px] md:h-[350px]"
                 }`}
               >
                 {chart.subHeading && (
-                  <p className="text-center text-[14px] md:text-[16px] lg:text-[18px] font-bold text-[#1E3A5F] mb-2 md:mb-3 leading-[1.4]">
+                  <p className="text-center text-[14px] md:text-[16px]  font-bold text-[#1E3A5F] mb-2 md:mb-3 leading-[1.4]">
                     {chart.subHeading}
                   </p>
                 )}

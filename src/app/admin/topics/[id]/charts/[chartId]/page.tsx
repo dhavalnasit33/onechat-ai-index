@@ -170,6 +170,8 @@ function buildChartDataPayload(
   bulletType: string = "arrow",
   isMultiList: boolean = false,
   lists: any[] = [],
+  customValueLabels: string = "",
+  useLogarithmicScale: boolean = false,
 ): unknown {
   if (chartType === "hero_stat") {
     return {
@@ -263,6 +265,10 @@ function buildChartDataPayload(
       tooltipValueSuffix: tooltipValueSuffix || undefined,
       xMax: xMax || undefined,
       stacked: stacked || undefined,
+      customValueLabels: customValueLabels
+        ? customValueLabels.split(",").map((s) => s.trim())
+        : undefined,
+      useLogarithmicScale: useLogarithmicScale || undefined,
       enableRightYAxis: enableRightYAxis || undefined,
       y1Label: y1Label || undefined,
       y1Format: y1Format || undefined,
@@ -310,6 +316,10 @@ function buildChartDataPayload(
     tooltipValueSuffix: tooltipValueSuffix || undefined,
     xMax: xMax || undefined,
     stacked: stacked || undefined,
+    customValueLabels: customValueLabels
+      ? customValueLabels.split(",").map((s) => s.trim())
+      : undefined,
+    useLogarithmicScale: useLogarithmicScale || undefined,
     data: rows.map((r) => ({
       label: r.label,
       value: Number(r.value) || 0,
@@ -381,6 +391,8 @@ export default function ChartEditorPage({
   const [y1Max, setY1Max] = useState("");
   const [y1Prefix, setY1Prefix] = useState("");
   const [y1Suffix, setYSuffix1] = useState("");
+  const [customValueLabels, setCustomValueLabels] = useState("");
+  const [useLogarithmicScale, setUseLogarithmicScale] = useState(false);
 
   // Line Series builder state
   const [lineSeries, setLineSeries] = useState<LineSeries[]>([
@@ -476,19 +488,25 @@ export default function ChartEditorPage({
             setXLabel(c.data.xLabel || "");
             setYLabel(c.data.yLabel || "");
             setYFormat(c.data.yFormat || "");
-            setYMax(c.data.yMax !== undefined ? String(c.data.yMax) : "");
-            setXMax(c.data.xMax !== undefined ? String(c.data.xMax) : "");
+            setYMax(c.data.yMax !== undefined && c.data.yMax !== null ? String(c.data.yMax) : "");
+            setXMax(c.data.xMax !== undefined && c.data.xMax !== null ? String(c.data.xMax) : "");
             setYSuffix(c.data.ySuffix || "");
             setYPrefix(c.data.yPrefix || "");
             setEnableRightYAxis(!!c.data.enableRightYAxis);
             setY1Label(c.data.y1Label || "");
             setY1Format(c.data.y1Format || "");
-            setY1Max(c.data.y1Max !== undefined ? String(c.data.y1Max) : "");
+            setY1Max(c.data.y1Max !== undefined && c.data.y1Max !== null ? String(c.data.y1Max) : "");
             setYPrefix(c.data.yPrefix || "");
             setY1Prefix(c.data.y1Prefix || "");
             setYSuffix1(c.data.y1Suffix || "");
             setTooltipTitleTemplate(c.data.tooltipTitleTemplate || "");
             setTooltipValueSuffix(c.data.tooltipValueSuffix || "");
+            setCustomValueLabels(
+              Array.isArray(c.data.customValueLabels)
+                ? c.data.customValueLabels.join(", ")
+                : c.data.customValueLabels || ""
+            );
+            setUseLogarithmicScale(!!c.data.useLogarithmicScale);
             setStacked(!!c.data.stacked);
             setIsGrouped(!!c.data.series);
             setStepped(!!c.data.stepped);
@@ -766,6 +784,8 @@ export default function ChartEditorPage({
         bulletType,
         isMultiList,
         lists,
+        customValueLabels,
+        useLogarithmicScale,
       ),
       sources: sources.map((s) => ({
         ...s,
@@ -1061,6 +1081,16 @@ export default function ChartEditorPage({
                       onChange={(e) => setYSuffix(e.target.value)}
                     />
                   </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">
+                      Custom Value Axis Labels (Comma separated)
+                    </label>
+                    <Input
+                      placeholder="e.g. low, mid, high"
+                      value={customValueLabels}
+                      onChange={(e) => setCustomValueLabels(e.target.value)}
+                    />
+                  </div>
                 </div>
 
                 {chartType !== "donut" && (
@@ -1115,6 +1145,36 @@ export default function ChartEditorPage({
                         checked={enableRightYAxis}
                         onCheckedChange={(checked: boolean) =>
                           setEnableRightYAxis(checked)
+                        }
+                      />
+                    </Card>
+                  </div>
+                )}
+
+                {(chartType === "vbar" || chartType === "hbar" || chartType === "line") && (
+                  <div
+                    className="admin-form-group"
+                    style={{ marginBottom: 20 }}
+                  >
+                    <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "2px",
+                        }}
+                      >
+                        <div className="text-sm font-semibold text-[var(--admin-text)]">
+                          Logarithmic Scale
+                        </div>
+                        <div className="text-xs text-[var(--admin-text-muted)] font-normal font-sans">
+                          Use a logarithmic scale for the value axis (ideal for values spanning multiple orders of magnitude)
+                        </div>
+                      </div>
+                      <Switch
+                        checked={useLogarithmicScale}
+                        onCheckedChange={(checked: boolean) =>
+                          setUseLogarithmicScale(checked)
                         }
                       />
                     </Card>
@@ -3008,6 +3068,8 @@ export default function ChartEditorPage({
                     bulletType,
                     isMultiList,
                     lists,
+                    customValueLabels,
+                    useLogarithmicScale,
                   ),
                 );
               }}
