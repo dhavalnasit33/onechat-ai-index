@@ -213,13 +213,12 @@ export default function EmbedModal({
                     )}*/}
                     {chart.data?.trend && chart.data.trend.amount && (
                       <div
-                        className={`inline-flex items-center gap-1 bg-white text-[11px] font-semibold px-2.5 py-1 rounded-full border mb-4 ${
-                          chart.data.trend.direction === "down"
-                            ? "text-[#b91c1c] border-[#fca5a5]"
-                            : chart.data.trend.direction === "up"
-                              ? "text-[#1d5436] border-[#c7e7d4]"
-                              : "text-[#4a4a55] border-[#d7e3f0]"
-                        }`}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border mb-4"
+                        style={{
+                          backgroundColor: chart.data.trend.bgColor || "white",
+                          color: chart.data.trend.textColor || (chart.data.trend.direction === "down" ? "#b91c1c" : chart.data.trend.direction === "up" ? "#1d5436" : "#4a4a55"),
+                          borderColor: chart.data.trend.borderColor || chart.data.trend.textColor || (chart.data.trend.direction === "down" ? "#fca5a5" : chart.data.trend.direction === "up" ? "#c7e7d4" : "#d7e3f0"),
+                        }}
                       >
                         {chart.data.trend.direction === "up" && <span>↑</span>}
                         {chart.data.trend.direction === "down" && (

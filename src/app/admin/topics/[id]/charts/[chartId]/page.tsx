@@ -172,6 +172,10 @@ function buildChartDataPayload(
   lists: any[] = [],
   customValueLabels: string = "",
   useLogarithmicScale: boolean = false,
+  hideValueTicks: boolean = false,
+  trendBgColor: string = "",
+  trendTextColor: string = "",
+  trendBorderColor: string = "",
 ): unknown {
   if (chartType === "hero_stat") {
     return {
@@ -186,6 +190,9 @@ function buildChartDataPayload(
             trend: {
               direction: trendDirection || undefined,
               amount: trendAmount || undefined,
+              bgColor: trendBgColor || undefined,
+              textColor: trendTextColor || undefined,
+              borderColor: trendBorderColor || undefined,
             },
           }
         : {}),
@@ -269,6 +276,7 @@ function buildChartDataPayload(
         ? customValueLabels.split(",").map((s) => s.trim())
         : undefined,
       useLogarithmicScale: useLogarithmicScale || undefined,
+      hideValueTicks: hideValueTicks || undefined,
       enableRightYAxis: enableRightYAxis || undefined,
       y1Label: y1Label || undefined,
       y1Format: y1Format || undefined,
@@ -320,6 +328,7 @@ function buildChartDataPayload(
       ? customValueLabels.split(",").map((s) => s.trim())
       : undefined,
     useLogarithmicScale: useLogarithmicScale || undefined,
+    hideValueTicks: hideValueTicks || undefined,
     data: rows.map((r) => ({
       label: r.label,
       value: Number(r.value) || 0,
@@ -380,6 +389,9 @@ export default function ChartEditorPage({
   }[]>([]);
   const [trendDirection, setTrendDirection] = useState<"up" | "down" | "">("");
   const [trendAmount, setTrendAmount] = useState("");
+  const [trendBgColor, setTrendBgColor] = useState("");
+  const [trendTextColor, setTrendTextColor] = useState("");
+  const [trendBorderColor, setTrendBorderColor] = useState("");
   const [heroPrefix, setHeroPrefix] = useState("");
   const [heroSuffix, setHeroSuffix] = useState("");
   const [heroSuffixSize, setHeroSuffixSize] = useState<"small" | "large">(
@@ -393,6 +405,7 @@ export default function ChartEditorPage({
   const [y1Suffix, setYSuffix1] = useState("");
   const [customValueLabels, setCustomValueLabels] = useState("");
   const [useLogarithmicScale, setUseLogarithmicScale] = useState(false);
+  const [hideValueTicks, setHideValueTicks] = useState(false);
 
   // Line Series builder state
   const [lineSeries, setLineSeries] = useState<LineSeries[]>([
@@ -507,6 +520,7 @@ export default function ChartEditorPage({
                 : c.data.customValueLabels || ""
             );
             setUseLogarithmicScale(!!c.data.useLogarithmicScale);
+            setHideValueTicks(!!c.data.hideValueTicks);
             setStacked(!!c.data.stacked);
             setIsGrouped(!!c.data.series);
             setStepped(!!c.data.stepped);
@@ -527,6 +541,9 @@ export default function ChartEditorPage({
                   (c.data.trend.direction || "") as "up" | "down" | "",
                 );
                 setTrendAmount(c.data.trend.amount || "");
+                setTrendBgColor(c.data.trend.bgColor || "");
+                setTrendTextColor(c.data.trend.textColor || "");
+                setTrendBorderColor(c.data.trend.borderColor || "");
               }
             } else if (
               c.chartType === "line" ||
@@ -786,6 +803,10 @@ export default function ChartEditorPage({
         lists,
         customValueLabels,
         useLogarithmicScale,
+        hideValueTicks,
+        trendBgColor,
+        trendTextColor,
+        trendBorderColor,
       ),
       sources: sources.map((s) => ({
         ...s,
@@ -1181,6 +1202,36 @@ export default function ChartEditorPage({
                   </div>
                 )}
 
+                {(chartType === "vbar" || chartType === "hbar" || chartType === "line") && (
+                  <div
+                    className="admin-form-group"
+                    style={{ marginBottom: 20 }}
+                  >
+                    <Card className="flex items-center justify-between p-4 bg-[var(--admin-surface-2)]">
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "2px",
+                        }}
+                      >
+                        <div className="text-sm font-semibold text-[var(--admin-text)]">
+                          Hide Value Axis Ticks / Numbers
+                        </div>
+                        <div className="text-xs text-[var(--admin-text-muted)] font-normal font-sans">
+                          Hide the numeric labels on the value axis (useful for illustrative charts)
+                        </div>
+                      </div>
+                      <Switch
+                        checked={hideValueTicks}
+                        onCheckedChange={(checked: boolean) =>
+                          setHideValueTicks(checked)
+                        }
+                      />
+                    </Card>
+                  </div>
+                )}
+
                 {chartType === "line" && (
                   <div
                     className="admin-form-group"
@@ -1444,6 +1495,86 @@ export default function ChartEditorPage({
                       onChange={(e) => setTrendAmount(e.target.value)}
                     />
                   </div>
+                </div>
+                <div className="admin-form-row" style={{ marginTop: 12 }}>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">
+                      Trend Badge Background Color
+                    </label>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <Input
+                        placeholder="#hex (blank for default)"
+                        value={trendBgColor}
+                        onChange={(e) => setTrendBgColor(e.target.value)}
+                      />
+                      <input
+                        type="color"
+                        value={trendBgColor.startsWith("#") && trendBgColor.length === 7 ? trendBgColor : "#ffffff"}
+                        onChange={(e) => setTrendBgColor(e.target.value)}
+                        style={{
+                          width: "38px",
+                          height: "38px",
+                          padding: 0,
+                          border: "1px solid #ccc",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">
+                      Trend Badge Text Color
+                    </label>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <Input
+                        placeholder="#hex (blank for default)"
+                        value={trendTextColor}
+                        onChange={(e) => setTrendTextColor(e.target.value)}
+                      />
+                      <input
+                        type="color"
+                        value={trendTextColor.startsWith("#") && trendTextColor.length === 7 ? trendTextColor : "#000000"}
+                        onChange={(e) => setTrendTextColor(e.target.value)}
+                        style={{
+                          width: "38px",
+                          height: "38px",
+                          padding: 0,
+                          border: "1px solid #ccc",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="admin-form-row" style={{ marginTop: 12 }}>
+                  <div className="admin-form-group">
+                    <label className="admin-form-label">
+                      Trend Badge Border Color
+                    </label>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <Input
+                        placeholder="#hex (blank for default)"
+                        value={trendBorderColor}
+                        onChange={(e) => setTrendBorderColor(e.target.value)}
+                      />
+                      <input
+                        type="color"
+                        value={trendBorderColor.startsWith("#") && trendBorderColor.length === 7 ? trendBorderColor : "#cccccc"}
+                        onChange={(e) => setTrendBorderColor(e.target.value)}
+                        style={{
+                          width: "38px",
+                          height: "38px",
+                          padding: 0,
+                          border: "1px solid #ccc",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="admin-form-group" />
                 </div>
               </div>
             ) : chartType === "timeline" ? (
@@ -3070,6 +3201,10 @@ export default function ChartEditorPage({
                     lists,
                     customValueLabels,
                     useLogarithmicScale,
+                    hideValueTicks,
+                    trendBgColor,
+                    trendTextColor,
+                    trendBorderColor,
                   ),
                 );
               }}

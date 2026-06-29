@@ -19,7 +19,7 @@ import { Bar, Line, Doughnut } from "react-chartjs-2";
 
 const watermarkPlugin = {
   id: "watermark",
-  afterDraw: (chart: any) => {
+  afterDraw: (chart: any, args: any, options: any) => {
     const { ctx, width, height, chartArea } = chart;
 
     // CRITICAL FIX: Do not draw the watermark until the chart grid is fully initialized.
@@ -58,7 +58,8 @@ const watermarkPlugin = {
     // --- HORIZONTAL ALIGNMENT ---
     // Because of the 'if (!chartArea) return;' check above, this is guaranteed
     // to align perfectly flush with the rightmost line of the chart grid (Images 3 & 4).
-    const alignX = chartArea.right;
+    const isDonut = options?.isDonut || false;
+    const alignX = isDonut ? width - 8 : chartArea.right;
 
     // --- VERTICAL ALIGNMENT ---
     // Push it safely above the HTML dashed line.
@@ -256,6 +257,7 @@ export default function InteractiveChart({
       min: minVal,
       max: maxVal,
       ticks: {
+        display: data?.hideValueTicks ? false : true,
         callback: (value: any) => {
           if (customLabels && Array.isArray(customLabels)) {
             const index = Math.round(value);
@@ -343,13 +345,12 @@ export default function InteractiveChart({
         )} */}
         {data.trend && data.trend.amount && (
           <div
-            className={`inline-flex items-center gap-1 bg-white text-[11px] md:text-[13px] font-semibold px-[10px] py-[4px] md:px-[14px] md:py-[6px] rounded-full border mt-2.5 md:mt-4 ${
-              data.trend.direction === "down"
-                ? "text-[#b91c1c] border-[#fca5a5]"
-                : data.trend.direction === "up"
-                  ? "text-[#1d5436] border-[#c7e7d4]"
-                  : "text-[#4a4a55] border-[#d7e3f0]"
-            }`}
+            className="inline-flex items-center gap-1 text-[11px] md:text-[13px] font-semibold px-[10px] py-[4px] md:px-[14px] md:py-[6px] rounded-full border mt-2.5 md:mt-4"
+            style={{
+              backgroundColor: data.trend.bgColor || "white",
+              color: data.trend.textColor || (data.trend.direction === "down" ? "#b91c1c" : data.trend.direction === "up" ? "#1d5436" : "#4a4a55"),
+              borderColor: data.trend.borderColor || data.trend.textColor || (data.trend.direction === "down" ? "#fca5a5" : data.trend.direction === "up" ? "#c7e7d4" : "#d7e3f0"),
+            }}
           >
             {data.trend.direction === "up" && (
               <span className="font-bold">↑</span>
@@ -563,7 +564,7 @@ export default function InteractiveChart({
                           style={{ color: listThemeColor }}
                           className={`shrink-0 leading-none ${
                             list.bulletType === "circle"
-                              ? "text-[9px] mt-[5px]"
+                              ? "text-[12px] mt-[4px]"
                               : "text-[14px] font-bold mt-[2px]"
                           }`}
                         >
@@ -632,7 +633,7 @@ export default function InteractiveChart({
                 style={{ color: borderColor }}
                 className={`shrink-0 leading-none ${
                   data.bulletType === "circle"
-                    ? "text-[9px] mt-[5px]"
+                    ? "text-[12px] mt-[4px]"
                     : "text-[15px] font-bold mt-[2px]"
                 }`}
               >
@@ -677,7 +678,24 @@ export default function InteractiveChart({
         displayColors: true,
         callbacks: {
           title: (tooltipItems: any) => {
-            const xVal = tooltipItems[0].label;
+            const idx = tooltipItems[0].dataIndex;
+            let originalLabel = "";
+
+            if (data?.data && Array.isArray(data.data) && data.data[idx]) {
+              originalLabel = data.data[idx].label || "";
+            } else if (data?.labels && Array.isArray(data.labels) && data.labels[idx]) {
+              originalLabel = data.labels[idx] || "";
+            } else {
+              originalLabel = tooltipItems[0].label;
+            }
+
+            if (Array.isArray(originalLabel)) {
+              originalLabel = originalLabel.join(" ");
+            } else if (typeof originalLabel === "string") {
+              originalLabel = originalLabel.replace(/\\n/g, " ").replace(/\n/g, " ");
+            }
+
+            let xVal = originalLabel;
             if (data?.tooltipTitleTemplate) {
               return data.tooltipTitleTemplate.replace("{x}", xVal);
             }
@@ -956,6 +974,9 @@ export default function InteractiveChart({
                 },
                 boxWidth: 12,
               },
+            },
+            watermark: {
+              isDonut: true,
             },
           },
         }}
