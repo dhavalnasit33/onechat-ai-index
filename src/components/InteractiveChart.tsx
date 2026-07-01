@@ -245,7 +245,7 @@ export default function InteractiveChart({
       }
       if (datasetMin !== Infinity) {
         const power = Math.floor(Math.log10(datasetMin));
-        minVal = Math.pow(10, power);
+        minVal = Math.pow(10, power - 1);
       }
     }
 

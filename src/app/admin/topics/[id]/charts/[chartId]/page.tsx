@@ -717,8 +717,8 @@ export default function ChartEditorPage({
       ...lists,
       {
         title: "",
-        color: "#ecfdf5",
-        borderColor: "#10B981",
+        color: "#F0F9F4",
+        borderColor: "#2D9968",
         bulletType: "arrow",
         items: [{ label: "", value: "" }],
       },
@@ -2003,7 +2003,20 @@ export default function ChartEditorPage({
                     </div>
                     <Switch
                       checked={isMultiList}
-                      onCheckedChange={(checked: boolean) => setIsMultiList(checked)}
+                      onCheckedChange={(checked: boolean) => {
+                        setIsMultiList(checked);
+                        if (checked && lists.length === 0) {
+                          setLists([
+                            {
+                              title: "",
+                              color: "#F0F9F4",
+                              borderColor: "#2D9968",
+                              bulletType: "arrow",
+                              items: [{ label: "", value: "" }],
+                            },
+                          ]);
+                        }
+                      }}
                     />
                   </Card>
                 </div>
