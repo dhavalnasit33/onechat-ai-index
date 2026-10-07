@@ -54,7 +54,7 @@ export default function TermsOfServicePage() {
               1. The publisher
             </h2>
             <p className="font-sans text-[13px] md:text-[14px] text-[#4a4a55] leading-[1.6]">
-              The AI Behavior Index is a research publication operated by OneChat AI LLC, a Delaware limited liability company ("we," "us," "our"). For questions about these Terms, contact <a href="mailto:research@aibehaviorindex.org" className="text-[#6C56E5] font-medium underline hover:text-[#3b2e93] transition-colors">research@aibehaviorindex.org</a>.
+              The AI Behavior Index is a research publication operated by OneChat AI LLC, a Delaware limited liability company ("we," "us," "our"). For questions about these Terms, contact <a href="mailto:support@onechatai.ai" className="text-[#6C56E5] font-medium underline hover:text-[#3b2e93] transition-colors">support@onechatai.ai</a>.
             </p>
           </section>
 
@@ -115,7 +115,7 @@ export default function TermsOfServicePage() {
               <li>Use AI Behavior Index trademarks, logos, or brand elements in ways that suggest false affiliation or endorsement</li>
             </ul>
             <p className="font-sans text-[13px] md:text-[14px] text-[#4a4a55] leading-[1.6]">
-              For commercial licensing inquiries (for example, enterprise data subscriptions, custom data cuts, or redistribution rights), contact <a href="mailto:research@aibehaviorindex.org" className="text-[#6C56E5] font-medium underline hover:text-[#3b2e93] transition-colors">research@aibehaviorindex.org</a>.
+              For commercial licensing inquiries (for example, enterprise data subscriptions, custom data cuts, or redistribution rights), contact <a href="mailto:support@onechatai.ai" className="text-[#6C56E5] font-medium underline hover:text-[#3b2e93] transition-colors">support@onechatai.ai</a>.
             </p>
           </section>
 
@@ -197,8 +197,8 @@ export default function TermsOfServicePage() {
               <div className="text-[22px] leading-none mt-0.5">✉️</div>
               <div>
                 <div className="font-sans text-[13px] font-semibold text-[#15151a] mb-1">Questions about these Terms</div>
-                <a href="mailto:research@aibehaviorindex.org" className="font-sans text-[13px] text-[#6C56E5] font-semibold underline hover:text-[#3b2e93] transition-colors">
-                  research@aibehaviorindex.org
+                <a href="mailto:support@onechatai.ai" className="font-sans text-[13px] text-[#6C56E5] font-semibold underline hover:text-[#3b2e93] transition-colors">
+                  support@onechatai.ai
                 </a>
               </div>
             </div>

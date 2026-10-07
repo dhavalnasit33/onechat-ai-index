@@ -264,10 +264,10 @@ export default async function TopicPage({ params }: PageProps) {
               <p className="text-[12px] md:text-[14px] text-[#555]">
                 Data is refreshed quarterly. Have a study to suggest? Contact{" "}
                 <a
-                  href="mailto:research@aibehaviorindex.org"
+                  href="mailto:support@onechatai.ai"
                   className="text-[#6C56E5] font-semibold hover:underline"
                 >
-                  research@aibehaviorindex.org
+                  support@onechatai.ai
                 </a>
                 .
               </p>

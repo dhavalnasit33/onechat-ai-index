@@ -366,11 +366,11 @@ export default function ForJournalistsPage() {
                 <strong>Press Officer:</strong> Habib Kamara
               </p>
               <a
-                href="mailto:research@aibehaviorindex.org"
+                href="mailto:support@onechatai.ai"
                 className="inline-flex items-center gap-1.5 font-sans text-[13px] font-semibold underline transition-colors"
                 style={{ color: PURPLE }}
               >
-                research@aibehaviorindex.org
+                support@onechatai.ai
                 <ArrowRight size={13} />
               </a>
             </div>

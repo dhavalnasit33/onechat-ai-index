@@ -269,11 +269,11 @@ export default function MethodologyPage() {
             </p>
           </div>
           <a
-            href="mailto:research@aibehaviorindex.org"
+            href="mailto:support@onechatai.ai"
             className="flex-shrink-0 font-sans text-sm font-semibold px-5 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90"
             style={{ background: PURPLE }}
           >
-            research@aibehaviorindex.org
+           support@onechatai.ai
           </a>
         </div>
 

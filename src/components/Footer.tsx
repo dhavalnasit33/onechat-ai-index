@@ -37,10 +37,10 @@ export default function Footer() {
                 — we typically respond within one business day.
               </div>
               <a
-                href="mailto:research@aibehaviorindex.org"
+                href="mailto:support@onechatai.ai"
                 className="font-sans text-[11.5px] md:text-[12px] text-[#0468BD] font-bold no-underline break-all"
               >
-                research@aibehaviorindex.org →
+                support@onechatai.ai →
               </a>
             </div>
           </div>
@@ -62,10 +62,10 @@ export default function Footer() {
               If you run into any issues or have a study to suggest, contact us
               at{" "}
               <a
-                href="mailto:research@aibehaviorindex.org"
+                href="mailto:support@onechatai.ai"
                 className="text-[#4a4a55] underline"
               >
-                research@aibehaviorindex.org
+                support@onechatai.ai
               </a>
               .
             </p>
@@ -119,7 +119,7 @@ export default function Footer() {
           </Link>
           <span className="select-none">·</span>
           <a
-            href="mailto:research@aibehaviorindex.org"
+            href="mailto:support@onechatai.ai"
             className="hover:text-[#15151a] transition-colors no-underline text-inherit relative inline-block after:absolute after:left-1/2 after:bottom-0 after:h-[2px] 
              after:w-0 after:-translate-x-1/2 after:bg-current after:transition-all after:duration-300 
              hover:after:w-full"

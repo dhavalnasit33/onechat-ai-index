@@ -68,7 +68,7 @@ export default function PrivacyPolicyPage() {
             <div className="bg-[#f0edff] border-l-4 border-[#6C56E5] p-4 font-sans text-xs md:text-sm text-[#4b3bb0] rounded-r">
               <strong className="font-semibold block mb-2 text-[#3b2e93]">You provide directly</strong>
               <ul className="list-disc pl-4 space-y-1.5">
-                <li>Email correspondence: when you contact us at <a href="mailto:research@aibehaviorindex.org" className="underline font-medium hover:text-[#3b2e93] transition-colors">research@aibehaviorindex.org</a>, we retain your email address and the content of your message</li>
+                <li>Email correspondence: when you contact us at <a href="mailto:support@onechatai.ai" className="underline font-medium hover:text-[#3b2e93] transition-colors">support@onechatai.ai</a>, we retain your email address and the content of your message</li>
                 <li>Newsletter subscription (if applicable): your email address, only if you actively subscribe</li>
               </ul>
             </div>
@@ -149,7 +149,7 @@ export default function PrivacyPolicyPage() {
               <li>The right to lodge a complaint with a supervisory authority</li>
             </ul>
             <p className="font-sans text-[13px] md:text-[14px] text-[#4a4a55] leading-[1.6]">
-              To exercise these rights, contact us at <a href="mailto:research@aibehaviorindex.org" className="text-[#6C56E5] font-medium underline hover:text-[#3b2e93] transition-colors">research@aibehaviorindex.org</a>. We will respond within the timeframes required by applicable law.
+              To exercise these rights, contact us at <a href="mailto:support@onechatai.ai" className="text-[#6C56E5] font-medium underline hover:text-[#3b2e93] transition-colors">support@onechatai.ai</a>. We will respond within the timeframes required by applicable law.
             </p>
           </section>
 
@@ -174,7 +174,7 @@ export default function PrivacyPolicyPage() {
               7. Children's privacy
             </h2>
             <p className="font-sans text-[13px] md:text-[14px] text-[#4a4a55] leading-[1.6]">
-              The AI Behavior Index is not directed to children under 13 (or under 16 in jurisdictions where that is the applicable age). We do not knowingly collect personal information from children. If you believe a child has provided us with personal information, please contact us at <a href="mailto:research@aibehaviorindex.org" className="text-[#6C56E5] font-medium underline hover:text-[#3b2e93] transition-colors">research@aibehaviorindex.org</a> and we will delete it.
+              The AI Behavior Index is not directed to children under 13 (or under 16 in jurisdictions where that is the applicable age). We do not knowingly collect personal information from children. If you believe a child has provided us with personal information, please contact us at <a href="mailto:support@onechatai.ai" className="text-[#6C56E5] font-medium underline hover:text-[#3b2e93] transition-colors">support@onechatai.ai</a> and we will delete it.
             </p>
           </section>
 
@@ -195,8 +195,8 @@ export default function PrivacyPolicyPage() {
               <div className="text-[22px] leading-none mt-0.5">✉️</div>
               <div>
                 <div className="font-sans text-[13px] font-semibold text-[#15151a] mb-1">Privacy questions, requests, or complaints</div>
-                <a href="mailto:research@aibehaviorindex.org" className="font-sans text-[13px] text-[#6C56E5] font-semibold underline hover:text-[#3b2e93] transition-colors">
-                  research@aibehaviorindex.org
+                <a href="mailto:support@onechatai.ai" className="font-sans text-[13px] text-[#6C56E5] font-semibold underline hover:text-[#3b2e93] transition-colors">
+                 support@onechatai.ai
                 </a>
               </div>
             </div>
